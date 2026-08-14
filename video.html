@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Prompt Visualizer & Motion Studio</title>
+    <script src="js/common.js"></script>
+    <script src="js/tour.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #ec4899;
+            --accent-hover: #db2777;
+            --magic: #10b981;
+            --magic-hover: #059669;
+            --gemini-color: #8b5cf6;
+            --danger: #ef4444;
+            --text: #f8fafc;
+            --subtext: #94a3b8;
+        }
+
+        [data-theme="cyberpunk"] {
+            --bg-color: #180b28;
+            --card-bg: #2d124d;
+            --accent: #d946ef;
+            --accent-hover: #c026d3;
+        }
+
+        [data-theme="emerald"] {
+            --bg-color: #06231c;
+            --card-bg: #0b3c30;
+            --accent: #10b981;
+            --accent-hover: #059669;
+        }
+
+        [data-theme="oled"] {
+            --bg-color: #000000;
+            --card-bg: #121212;
+            --accent: #38bdf8;
+            --accent-hover: #0284c7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            color: #f472b6;
+            margin-bottom: 5px;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+
+        .nav-btn {
+            background: #334155;
+            color: #f8fafc;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .studio-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.3fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 800px) {
+            .studio-grid { grid-template-columns: 1fr; }
+            .nav-bar { flex-wrap: wrap; gap: 8px; justify-content: center; text-align: center; }
+            .nav-bar > * { margin-bottom: 2px; }
+            .output-card div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+            .tag { padding: 8px 12px; font-size: 13px; margin: 2px 0; }
+            body { padding: 10px; }
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .input-box {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: white;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .tag-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .tag {
+            background: #334155;
+            padding: 5px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .tag.active {
+            background: var(--accent);
+            border-color: #fbcfe8;
+            color: white;
+        }
+
+        .neg-tag {
+            background: #334155;
+            padding: 5px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .neg-tag.active {
+            background: var(--danger);
+            border-color: #fca5a5;
+            color: white;
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--subtext);
+            margin-top: 15px;
+            margin-bottom: 6px;
+        }
+
+        /* GEMINI AI ARCHITECT BOX */
+        .gemini-box {
+            background: #020617;
+            border: 1px solid #c084fc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+
+        .gemini-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .gemini-title {
+            color: #c084fc;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .api-btn {
+            background: #334155;
+            color: #f1f5f9;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .gemini-btn {
+            background: linear-gradient(90deg, #ec4899, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: 0.2s;
+            font-size: 13px;
+        }
+
+        .gemini-btn:hover {
+            opacity: 0.9;
+        }
+
+        .ai-suggestions {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .suggestion-card {
+            background: #1e293b;
+            border: 1px solid #475569;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #cbd5e1;
+        }
+
+        .suggestion-card:hover {
+            border-color: #ec4899;
+            background: #334155;
+            color: white;
+        }
+
+        .output-card {
+            margin-top: 20px;
+            background: #020617;
+            border: 1px solid #334155;
+        }
+
+        .prompt-text-box {
+            font-family: monospace;
+            font-size: 13px;
+            color: #f472b6;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 6px;
+            word-break: break-all;
+            min-height: 45px;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: 0.2s;
+        }
+
+        .loading-spinner {
+            display: none;
+            color: #c084fc;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="nav-bar">
+        <a href="index.html" class="nav-btn">🎨 Switch to Image Prompt Studio</a>
+        <button class="nav-btn" style="background: #059669; color: white;" onclick="setUserCustomApiKey()" title="Use your own free Gemini API key if limit runs out">🔑 My API Key</button>
+        <a href="admin.html" class="nav-btn" style="background: #334155; color: #94a3b8;">⚙️ Admin Panel</a>
+        <button class="nav-btn" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; border: 1px solid #f472b6;" onclick="startTour()" title="Interactive Hinglish Guide / Kaise use karein">🧭 Tour Guide (?)</button>
+        <div style="font-weight: bold; font-size: 13px; color: #f472b6;">🎬 AI Video Motion Studio</div>
+        <div style="display: flex; gap: 4px;">
+            <button class="api-btn" onclick="changeAppTheme('default')">🌙</button>
+            <button class="api-btn" onclick="changeAppTheme('cyberpunk')" style="background: #a855f7;">🟣</button>
+            <button class="api-btn" onclick="changeAppTheme('emerald')" style="background: #10b981;">🟢</button>
+            <button class="api-btn" onclick="changeAppTheme('oled')" style="background: #334155;">🖤</button>
+        </div>
+    </div>
+
+    <header>
+        <h1>AI Video Prompt & Motion Director Studio</h1>
+        <p style="color: var(--subtext); margin-bottom: 8px;">Powered by Gemini AI Real-time Video Motion & Physics Expansion</p>
+    </header>
+
+    <div class="studio-grid">
+        <!-- Left Panel: Engine & Motion Setup -->
+        <div class="card">
+            <div class="section-title">1. Target AI Video Engine</div>
+            <select class="input-box" id="engine-select" onchange="updatePrompt()">
+                <option value="runway">Runway Gen-3 Alpha</option>
+                <option value="sora">OpenAI Sora / Sora Turbo</option>
+                <option value="luma">Luma Dream Machine</option>
+                <option value="kling">Kling AI (Kuaishou)</option>
+                <option value="hailuo">Hailuo AI (Minimax)</option>
+                <option value="pika">Pika 1.0 / 2.0</option>
+                <option value="veo">Google Veo</option>
+            </select>
+
+            <div class="section-title">2. Aspect Ratio</div>
+            <div class="tag-group" id="ratio-tags">
+                <span class="tag active" data-ratio="16:9" onclick="selectSingle(this)">16:9 (Landscape)</span>
+                <span class="tag" data-ratio="9:16" onclick="selectSingle(this)">9:16 (Vertical Reel)</span>
+                <span class="tag" data-ratio="1:1" onclick="selectSingle(this)">1:1 (Square)</span>
+                <span class="tag" data-ratio="21:9" onclick="selectSingle(this)">21:9 (Ultrawide)</span>
+            </div>
+
+            <!-- VISION AI IMAGE-TO-VIDEO ARCHITECT -->
+            <div class="section-title" style="margin-top: 25px;">3. Image-to-Video Motion Architect (Vision AI)</div>
+            <div class="vision-box" style="background: #020617; border: 1px dashed #c084fc; border-radius: 8px; padding: 12px; text-align: center;">
+                <input type="file" id="image-upload" accept="image/*" style="display: none;" onchange="handleImageSelected(this)">
+                <button type="button" class="api-btn" style="background: #8b5cf6; width: 100%; padding: 8px; font-weight: bold; font-size: 12px;" onclick="document.getElementById('image-upload').click()">
+                    📁 Upload Reference Image for Motion
+                </button>
+
+                <div id="image-preview-container" style="display: none; margin-top: 10px;">
+                    <img id="image-preview" style="max-width: 100%; max-height: 160px; border-radius: 6px; border: 1px solid #475569;" alt="Image Preview">
+                    <button class="gemini-btn" style="margin-top: 8px; font-size: 12px;" onclick="analyzeImageForVideoMotion()">
+                        🔍 Extract Image Motion Prompt
+                    </button>
+                </div>
+
+                <div id="vision-loading" class="loading-spinner" style="margin-top: 8px; color: #c084fc;">⚡ Analyzing image motion trajectories...</div>
+
+                <div id="vision-result" style="display: none; margin-top: 10px; background: #0f172a; border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; font-size: 12px; color: #cbd5e1;">
+                    <div style="font-weight: bold; color: #c084fc; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>🎬 Extracted Video Motion Concept:</span>
+                        <span style="font-size: 10px; color: #94a3b8; font-weight: normal;">✏️ Editable</span>
+                    </div>
+                    <textarea id="vision-text" class="input-box" rows="3" style="font-family: monospace; font-size: 11px; margin-bottom: 8px; resize: vertical; width: 100%;" placeholder="Extracted video motion prompt... You can edit it!"></textarea>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                        <button class="api-btn" style="background: #8b5cf6; color: white; padding: 8px; font-weight: bold;" onclick="polishVisionPrompt()">🪄 AI Fix Grammar</button>
+                        <button class="api-btn" style="background: #10b981; color: white; padding: 8px; font-weight: bold;" onclick="applyVisionPrompt()">✨ Set as Concept</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIDEO CLIP ANALYZER (Gemini File API) -->
+            <div class="section-title" style="margin-top: 22px;">4. 🎬 Video Clip Analyzer (AI Prompt Extractor)</div>
+            <div class="vision-box" style="background: #020617; border: 1px dashed #f472b6; border-radius: 8px; padding: 12px; text-align: center;">
+
+                <div style="font-size: 11px; color: #94a3b8; margin-bottom: 8px; line-height: 1.5;">
+                    Upload a short video clip (MP4/MOV/WebM) &mdash; Gemini will analyze camera motion, lighting &amp; scene and extract a ready-to-use prompt.
+                    <br><span style="color:#f59e0b;">&#9888;&#65039; Recommended: 5&ndash;30 sec &bull; Max 100 MB</span>
+                </div>
+
+                <input type="file" id="video-upload" accept="video/mp4,video/mov,video/quicktime,video/webm,video/avi,video/x-msvideo" style="display: none;" onchange="handleVideoSelected(this)">
+                <button type="button" class="api-btn" style="background: #ec4899; width: 100%; padding: 10px; font-weight: bold; font-size: 12px;" onclick="document.getElementById('video-upload').click()">
+                    🎬 Upload Video Clip for Analysis
+                </button>
+
+                <div id="video-file-info" style="display:none; margin-top:10px; background:#0f172a; border:1px solid #334155; border-radius:6px; padding:8px; text-align:left; font-size:11px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span id="video-file-name" style="color:#f472b6; font-weight:bold;"></span>
+                        <span id="video-file-size" style="color:#94a3b8;"></span>
+                    </div>
+                    <button class="gemini-btn" style="font-size: 12px;" onclick="uploadAndAnalyzeVideo()">
+                        🔍 Analyze Video &amp; Extract Prompt
+                    </button>
+                </div>
+
+                <!-- Progress Bar -->
+                <div id="video-progress-wrap" style="display:none; margin-top:10px;">
+                    <div style="font-size:11px; color:#c084fc; margin-bottom:5px;" id="video-status-text">⚡ Uploading video to Gemini...</div>
+                    <div style="background:#1e293b; border-radius:20px; height:8px; overflow:hidden;">
+                        <div id="video-progress-bar" style="height:100%; width:0%; background:linear-gradient(90deg,#ec4899,#8b5cf6); border-radius:20px; transition:width 0.4s ease;"></div>
+                    </div>
+                    <div style="font-size:10px; color:#64748b; margin-top:4px;" id="video-progress-pct">0%</div>
+                </div>
+
+                <!-- Result -->
+                <div id="video-analyze-result" style="display:none; margin-top:10px; background:#0f172a; border:1px solid #334155; padding:10px; border-radius:6px; text-align:left; font-size:12px; color:#cbd5e1;">
+                    <div style="font-weight:bold; color:#f472b6; margin-bottom:6px; display:flex; justify-content:space-between;">
+                        <span>🎬 Extracted Video Motion Prompt:</span>
+                        <span style="font-size:10px; color:#94a3b8; font-weight:normal;">✏️ Editable</span>
+                    </div>
+                    <textarea id="video-analyze-text" class="input-box" rows="4" style="font-family:monospace; font-size:11px; margin-bottom:8px; resize:vertical; width:100%;" placeholder="Extracted video motion prompt will appear here..."></textarea>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                        <button class="api-btn" style="background:#8b5cf6; color:white; padding:8px; font-weight:bold;" onclick="polishVideoAnalyzePrompt()">🪄 AI Fix Grammar</button>
+                        <button class="api-btn" style="background:#10b981; color:white; padding:8px; font-weight:bold;" onclick="applyVideoAnalyzePrompt()">✨ Set as Concept</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Motion Customizer & AI Architect -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px; margin-bottom: 6px;">
+                <span class="section-title" style="margin: 0;">Base Video Concept / Motion Idea</span>
+                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                    <button class="api-btn" style="background: #10b981; color: white; padding: 3px 8px; font-size: 10px;" onclick="convertHinglishToEnglishPrompt()" title="Convert Hinglish/Hindi text into rich English Video AI Prompt">🇮🇳 Hinglish ➔ AI Prompt</button>
+                    <button class="api-btn" style="background: #f59e0b; color: white; padding: 3px 8px; font-size: 10px;" onclick="copyrightSafeRewrite()" title="Auto-remove copyrighted character names">🛡️ Copyright Fix</button>
+                    <button class="api-btn" style="background: #8b5cf6; color: white; padding: 3px 8px; font-size: 10px;" onclick="polishBasePrompt()">🪄 AI Fix Grammar</button>
+                </div>
+            </div>
+            <textarea id="subject-input" class="input-box" rows="4" placeholder="Hinglish ya Hindi me bhi likh sakte hain... e.g. 'sports car mumbai ki baarish me drift kar rahi hai' ya 'a sports car drifting on wet street'" oninput="debouncedUpdatePrompt()" style="resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5;">a sports car drifting on wet street</textarea>
+
+            <!-- GEMINI AI REALTIME VIDEO MOTION EXPANDER -->
+            <div class="gemini-box">
+                <div class="gemini-header">
+                    <span class="gemini-title">✨ Gemini Video Motion Director</span>
+                </div>
+                
+                <button class="gemini-btn" onclick="generateAiIdeas()">🎬 Brainstorm Cinematic Video Scenarios</button>
+                <div id="loading" class="loading-spinner">⚡ Gemini is directing video motion trajectories...</div>
+
+                <div id="ai-suggestions" class="ai-suggestions"></div>
+            </div>
+
+            <div class="section-title">Camera Movement & Trajectory</div>
+            <div class="tag-group" id="camera-motion-tags">
+                <span class="tag active" onclick="toggleTag(this)">FPV Drone Flythrough</span>
+                <span class="tag" onclick="toggleTag(this)">Pan Left to Right</span>
+                <span class="tag" onclick="toggleTag(this)">Tilt Up Skyward</span>
+                <span class="tag" onclick="toggleTag(this)">360° Orbiting Shot</span>
+                <span class="tag" onclick="toggleTag(this)">Dramatic Push Zoom In</span>
+                <span class="tag" onclick="toggleTag(this)">Tracking Follow Shot</span>
+                <span class="tag" onclick="toggleTag(this)">Static Tripod Lock</span>
+            </div>
+
+            <div class="section-title">Motion Speed & Physics</div>
+            <div class="tag-group" id="speed-tags">
+                <span class="tag active" onclick="toggleTag(this)">Cinematic Slow Motion 120fps</span>
+                <span class="tag" onclick="toggleTag(this)">Fast Motion Time-lapse</span>
+                <span class="tag" onclick="toggleTag(this)">Subtle Ambient Motion</span>
+                <span class="tag" onclick="toggleTag(this)">Explosive Action Physics</span>
+                <span class="tag" onclick="toggleTag(this)">Fluid Morphing Transition</span>
+            </div>
+
+            <div class="section-title">Lighting & Atmosphere</div>
+            <div class="tag-group" id="lighting-tags">
+                <span class="tag active" onclick="toggleTag(this)">Cinematic Volumetric Rays</span>
+                <span class="tag" onclick="toggleTag(this)">Neon Rain Reflections</span>
+                <span class="tag" onclick="toggleTag(this)">Golden Hour Flare</span>
+                <span class="tag" onclick="toggleTag(this)">Dramatic Shadows & Fog</span>
+            </div>
+
+            <div class="section-title">Video Quality & FPS</div>
+            <div class="tag-group" id="quality-tags">
+                <span class="tag active" onclick="toggleTag(this)">4K Ultra HD</span>
+                <span class="tag" onclick="toggleTag(this)">60 FPS Smooth</span>
+                <span class="tag" onclick="toggleTag(this)">Hyper-Realistic Physics</span>
+                <span class="tag" onclick="toggleTag(this)">35mm Grain Film</span>
+            </div>
+
+            <!-- MULTI-CHARACTER DIALOGUE & SCRIPT BUILDER -->
+            <div class="section-title" style="color: #38bdf8; margin-top: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                <span>🗣️ Multi-Character Dialogue &amp; Script Builder</span>
+                <div style="display: flex; gap: 4px;">
+                    <button type="button" class="api-btn" style="background:#0284c7; color:white; padding:3px 8px; font-size:10px;" onclick="autoDetectCharactersFromConcept()" title="Auto-detect characters from Base Concept prompt">🤖 Auto-Detect</button>
+                    <button type="button" class="api-btn" style="background:#10b981; color:white; padding:3px 8px; font-size:10px;" onclick="addCharacterDialogueRow()">➕ Add Character</button>
+                </div>
+            </div>
+            <div style="background: #020617; border: 1px solid #38bdf8; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                <div style="font-size: 11px; color: #94a3b8; margin-bottom: 10px;">
+                    Har character ka naam (e.g. Ramesh, Suresh) aur unka dialogue add karein &mdash; AI automatically inhe structured cinematic script me convert kar dega.
+                </div>
+                <div id="character-dialogue-list" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Dynamic Character Rows populated by JS -->
+                </div>
+            </div>
+
+            <div class="section-title">Sound Cues & Audio FX (Sora / Veo)</div>
+            <div class="tag-group" id="audio-tags">
+                <span class="tag active" onclick="toggleTag(this)">Roaring Engine Audio</span>
+                <span class="tag" onclick="toggleTag(this)">Thunder & Heavy Rain Sound</span>
+                <span class="tag" onclick="toggleTag(this)">Footsteps Echoing</span>
+                <span class="tag" onclick="toggleTag(this)">Ambient Orchestral Music</span>
+            </div>
+
+            <div class="section-title" style="color: #f87171;">🚫 Negative Motion Builder</div>
+            <div class="tag-group" id="negative-tags">
+                <span class="neg-tag active" onclick="toggleNegTag(this)">Flickering</span>
+                <span class="neg-tag active" onclick="toggleNegTag(this)">Morphing Glitch</span>
+                <span class="neg-tag active" onclick="toggleNegTag(this)">Distorted Faces</span>
+                <span class="neg-tag active" onclick="toggleNegTag(this)">Jittery Camera</span>
+                <span class="neg-tag active" onclick="toggleNegTag(this)">Low Frame Rate</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Output Section -->
+    <div class="card output-card">
+        <div class="section-title">Positive Video Prompt Output:</div>
+        <div id="prompt-output" class="prompt-text-box">Generating...</div>
+
+        <div id="negative-container">
+            <div class="section-title" style="color: #f87171;">Negative Motion Output:</div>
+            <div id="neg-prompt-output" class="prompt-text-box" style="color: #fca5a5;">None</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
+            <button class="btn" onclick="copyPrompt()">📋 Copy Full Video Prompt Package</button>
+            <button class="btn" style="background: #8b5cf6;" onclick="translatePromptToHindi()">🌐 Translate Output to Hindi (हिंदी अनुवाद)</button>
+        </div>
+
+        <div id="hindi-translation-box" style="display: none; margin-top: 12px; background: #0f172a; border: 1px solid #8b5cf6; border-radius: 8px; padding: 12px;">
+            <div style="font-weight: bold; color: #a78bfa; font-size: 12px; margin-bottom: 4px;">🇮🇳 Hindi & Hinglish Meaning / हिंदी अर्थ:</div>
+            <div id="hindi-translation-text" style="font-size: 12px; color: #e2e8f0; line-height: 1.6; white-space: pre-wrap;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // DEBOUNCED PROMPT UPDATER FOR PERFORMANCE
+    const debouncedUpdatePrompt = debounce(updatePrompt, 150);
+
+    // COPYRIGHT_MAP, copyrightSafeRewrite — provided by js/common.js
+
+    // ── VIDEO FILE API ANALYZER ────────────────────────────
+    let selectedVideoFile = null;
+
+
+
+    function handleVideoSelected(input) {
+        const file = input.files[0];
+        if (!file) return;
+        selectedVideoFile = file;
+
+        const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+        document.getElementById('video-file-name').textContent = file.name;
+        document.getElementById('video-file-size').textContent = sizeMB + ' MB';
+        document.getElementById('video-file-info').style.display = 'block';
+        document.getElementById('video-analyze-result').style.display = 'none';
+        document.getElementById('video-progress-wrap').style.display = 'none';
+
+        if (file.size > 100 * 1024 * 1024) {
+            alert('\u26a0\ufe0f File size 100 MB se zyada hai! Chhota clip use karein.');
+            selectedVideoFile = null;
+            document.getElementById('video-file-info').style.display = 'none';
+        }
+    }
+
+    function setVideoProgress(pct, statusText) {
+        document.getElementById('video-progress-bar').style.width = pct + '%';
+        document.getElementById('video-progress-pct').textContent = pct + '%';
+        if (statusText) document.getElementById('video-status-text').textContent = statusText;
+    }
+
+    async function uploadAndAnalyzeVideo() {
+        const apiKey = getApiKey();
+        if (!apiKey) { alert('Pehle Admin Panel se API Key set karein!'); return; }
+        if (!selectedVideoFile) { alert('Kripya pehle ek video clip select karein!'); return; }
+
+        const progressWrap = document.getElementById('video-progress-wrap');
+        const resultDiv    = document.getElementById('video-analyze-result');
+        progressWrap.style.display = 'block';
+        resultDiv.style.display    = 'none';
+
+        const sizeMB = selectedVideoFile.size / 1024 / 1024;
+
+        try {
+            if (sizeMB <= 15) {
+                // ── METHOD A: Base64 inline (fast, for small clips ≤15MB) ──
+                setVideoProgress(10, '⚡ Video reading as base64...');
+                const base64 = await readFileAsBase64(selectedVideoFile);
+                setVideoProgress(50, '⚡ Sending to Gemini for analysis...');
+                await extractVideoPromptInline(apiKey, base64, selectedVideoFile.type || 'video/mp4');
+            } else {
+                // ── METHOD B: Multipart File API upload (for larger clips) ──
+                setVideoProgress(5, '⚡ Preparing multipart upload...');
+                const fileUri = await multipartUploadVideo(apiKey);
+                setVideoProgress(70, '⚡ Gemini video analyze kar raha hai...');
+                await extractVideoPrompt(apiKey, fileUri, selectedVideoFile.type || 'video/mp4');
+            }
+
+            setVideoProgress(100, '✅ Analysis complete!');
+            setTimeout(() => { progressWrap.style.display = 'none'; }, 1500);
+
+        } catch (err) {
+            progressWrap.style.display = 'none';
+            alert('❌ Video analysis failed: ' + err.message +
+                  '\n\nTips:\n• 5–15 sec MP4 clip try karein\n• File size 15MB se kam rakhein\n• Internet connection check karein');
+            console.error('Video Analyzer Error:', err);
+        }
+    }
+
+    // Read file as Base64
+    function readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload  = e => resolve(e.target.result.split(',')[1]);
+            reader.onerror = () => reject(new Error('File read failed'));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Method A: inline base64 (<=15MB)
+    async function extractVideoPromptInline(apiKey, base64Data, mimeType) {
+        const modelInfo = await fetchBestAvailableModel(apiKey);
+        const apiUrl = `https://generativelanguage.googleapis.com/${modelInfo.apiVersion}/${modelInfo.modelPath}:generateContent?key=${apiKey}`;
+
+        const systemPrompt = `You are an expert AI Video Prompt Engineer. Analyze this video clip and generate a detailed cinematic video motion prompt capturing: camera movement & trajectory, subject motion & action, lighting & atmosphere, scene setting, motion speed, and color grading. Return ONLY the final prompt in 2-3 cinematic sentences. No intro text, no labels.`;
+
+        const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [
+                        { text: systemPrompt },
+                        { inlineData: { mimeType: mimeType, data: base64Data } }
+                    ]
+                }]
+            })
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        const candidate = data.candidates?.[0];
+        if (!candidate?.content?.parts?.[0]?.text) throw new Error('Gemini se response nahi mila.');
+
+        const prompt = candidate.content.parts[0].text.trim();
+        document.getElementById('video-analyze-text').value = prompt;
+        document.getElementById('video-analyze-result').style.display = 'block';
+    }
+
+    // Method B: Multipart upload via File API (>15MB)
+    async function multipartUploadVideo(apiKey) {
+        setVideoProgress(10, '⚡ Video uploading via File API (multipart)...');
+
+        const metadata = JSON.stringify({ file: { displayName: selectedVideoFile.name } });
+        const metaBlob = new Blob([metadata], { type: 'application/json' });
+
+        const formData = new FormData();
+        formData.append('metadata', metaBlob);
+        formData.append('file', selectedVideoFile, selectedVideoFile.name);
+
+        const res = await fetch(
+            `https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=multipart&key=${apiKey}`,
+            { method: 'POST', body: formData }
+        );
+
+        if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            throw new Error(errJson?.error?.message || `Upload failed: HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (!data.file?.uri) throw new Error('File URI nahi mili upload response mein.');
+
+        setVideoProgress(40, '⚡ Video uploaded! Processing...');
+
+        // Poll for ACTIVE state
+        if (data.file.state !== 'ACTIVE') {
+            return await pollVideoFileStatus(apiKey, data.file.uri);
+        }
+        return data.file.uri;
+    }
+
+    async function pollVideoFileStatus(apiKey, fileUri) {
+        const fileName = fileUri.split('/files/')[1] || fileUri.split('/').pop();
+        for (let i = 0; i < 20; i++) {
+            await new Promise(r => setTimeout(r, 3000));
+            const res  = await fetch(`https://generativelanguage.googleapis.com/v1beta/files/${fileName}?key=${apiKey}`);
+            const data = await res.json();
+            if (data.file?.state === 'ACTIVE' || data.state === 'ACTIVE') return fileUri;
+            if (data.file?.state === 'FAILED' || data.state === 'FAILED') throw new Error('Gemini video processing fail ho gayi.');
+            setVideoProgress(40 + i * 2, `⚡ Video processing... (${i * 3}s elapsed)`);
+        }
+        throw new Error('Video processing timeout. 15 sec se chhota clip try karein.');
+    }
+
+    async function extractVideoPrompt(apiKey, fileUri, mimeType) {
+        const modelInfo = await fetchBestAvailableModel(apiKey);
+        const apiUrl = `https://generativelanguage.googleapis.com/${modelInfo.apiVersion}/${modelInfo.modelPath}:generateContent?key=${apiKey}`;
+
+        const systemPrompt = `You are an expert AI Video Prompt Engineer. Analyze this video clip carefully and generate a detailed, cinematic video motion prompt that captures:
+1. Camera movement & trajectory (pan, tilt, dolly, drone, tracking etc.)
+2. Subject motion & action
+3. Lighting & atmosphere
+4. Scene setting & environment
+5. Motion speed (slow motion, normal, fast)
+6. Color grading & mood
+Return ONLY the final prompt in 2-3 sentences. No intro text, no labels.`;
+
+        const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [
+                        { text: systemPrompt },
+                        { fileData: { mimeType: mimeType, fileUri: fileUri } }
+                    ]
+                }]
+            })
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+
+        const candidate = data.candidates?.[0];
+        if (!candidate?.content?.parts?.[0]?.text) throw new Error('Gemini se response nahi mila.');
+
+        const prompt = candidate.content.parts[0].text.trim();
+        document.getElementById('video-analyze-text').value = prompt;
+        document.getElementById('video-analyze-result').style.display = 'block';
+    }
+
+    async function polishVideoAnalyzePrompt() {
+        const el = document.getElementById('video-analyze-text');
+        const text = el.value.trim();
+        if (!text) { alert('Pehle prompt extract karein!'); return; }
+        const fixed = await proofreadText(text);
+        if (fixed) { el.value = fixed; }
+    }
+
+    function applyVideoAnalyzePrompt() {
+        const text = document.getElementById('video-analyze-text').value.trim();
+        if (text) {
+            document.getElementById('subject-input').value = text;
+            updatePrompt();
+            alert('\u2705 Video motion prompt base concept me set ho gaya!');
+        }
+    }
+
+    // changeAppTheme, initSavedTheme — provided by js/common.js
+
+    // fetchBestAvailableModel — provided by js/common.js (with sessionStorage caching)
+
+    // GEMINI AI VIDEO MOTION BRAINSTORMING ENGINE
+    async function generateAiIdeas() {
+
+        const apiKey = getApiKey();
+        if (!apiKey) {
+            alert("Pehle '⚙️ Key Settings' par click karke apni Gemini API Key enter karein!");
+            setUserCustomApiKey();
+            return;
+        }
+
+        const subject = document.getElementById('subject-input').value.trim();
+        if (!subject) {
+            alert("Kripya ek chota base video idea likhein (e.g. 'a sports car drifting on wet street')");
+            return;
+        }
+
+        const loading = document.getElementById('loading');
+        const container = document.getElementById('ai-suggestions');
+        
+        loading.style.display = 'block';
+        loading.innerText = '⚡ Checking available Gemini models for video motion generation...';
+        container.innerHTML = '';
+
+        const activeModelInfo = await fetchBestAvailableModel(apiKey);
+
+        if (!activeModelInfo) {
+            loading.style.display = 'none';
+            alert("Gemini API Error: Could not connect to available Gemini models.");
+            return;
+        }
+
+        loading.innerText = `⚡ Gemini Video Director (${activeModelInfo.modelPath.replace('models/', '')}) motion trajectories soch raha hai...`;
+
+        const systemPrompt = `You are an expert AI Video Motion Director and Prompt Engineer for OpenAI Sora, Runway Gen-3, and Luma. 
+The user gave a video idea: "${subject}". 
+Generate exactly 3 creative, highly detailed cinematic video motion scenarios expanding this idea with specific camera movements, physics, and lighting.
+Return ONLY a valid JSON array of 3 strings. Example:
+["scenario 1 detailed video prompt", "scenario 2 detailed video prompt", "scenario 3 detailed video prompt"]`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/${activeModelInfo.apiVersion}/${activeModelInfo.modelPath}:generateContent?key=${apiKey}`;
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: systemPrompt }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json"
+                    }
+                })
+            });
+
+            const data = await response.json();
+            loading.style.display = 'none';
+
+            if (data.error) {
+                alert("Gemini API Error: " + data.error.message);
+                return;
+            }
+
+            const candidate = data.candidates?.[0];
+            if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                alert("Gemini se response nahi mil paya. Safety block ya empty response ho sakta hai.");
+                return;
+            }
+
+            let rawText = candidate.content.parts[0].text.trim();
+            rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+            const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+            const scenarios = JSON.parse(jsonMatch ? jsonMatch[0] : rawText);
+
+            if (!Array.isArray(scenarios)) {
+                throw new Error("Expected an array of scenarios");
+            }
+
+            scenarios.forEach((scen, idx) => {
+                const card = document.createElement('div');
+                card.className = 'suggestion-card';
+
+                const titleEl = document.createElement('strong');
+                titleEl.textContent = `Option ${idx + 1}: `;
+                
+                const textEl = document.createElement('span');
+                textEl.textContent = scen;
+
+                card.appendChild(titleEl);
+                card.appendChild(textEl);
+
+                card.onclick = function() {
+                    document.getElementById('subject-input').value = scen;
+                    updatePrompt();
+                };
+                container.appendChild(card);
+            });
+
+        } catch (err) {
+            loading.style.display = 'none';
+            alert("Failed to process request or parse JSON from Gemini API: " + err.message);
+            console.error("Gemini API Error:", err);
+        }
+    }
+
+    // VISION AI: IMAGE-TO-VIDEO MOTION ARCHITECT
+    let uploadedImageBase64 = null;
+    let uploadedImageMimeType = null;
+
+    function handleImageSelected(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const dataUrl = e.target.result;
+            uploadedImageBase64 = dataUrl.split(',')[1];
+            uploadedImageMimeType = file.type || 'image/jpeg';
+
+            const preview = document.getElementById('image-preview');
+            preview.src = dataUrl;
+            document.getElementById('image-preview-container').style.display = 'block';
+            document.getElementById('vision-result').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function analyzeImageForVideoMotion() {
+        const apiKey = getApiKey();
+        if (!apiKey) {
+            alert("Pehle '⚙️ Key Settings' par click karke apni Gemini API Key enter karein!");
+            setUserCustomApiKey();
+            return;
+        }
+
+        if (!uploadedImageBase64) {
+            alert("Kripya pehle ek image upload karein!");
+            return;
+        }
+
+        const visionLoading = document.getElementById('vision-loading');
+        const visionResult = document.getElementById('vision-result');
+        const visionText = document.getElementById('vision-text');
+
+        visionLoading.style.display = 'block';
+        visionResult.style.display = 'none';
+
+        const activeModelInfo = await fetchBestAvailableModel(apiKey);
+        if (!activeModelInfo) {
+            visionLoading.style.display = 'none';
+            alert("Gemini API Error: Active vision model nahi mil paya.");
+            return;
+        }
+
+        const systemPrompt = `Analyze this static image and generate an Image-to-Video (I2V) motion prompt. 
+Describe how elements in the image should move, including camera movement, subject trajectory, and ambient physics in a single descriptive sentence (max 45 words).`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/${activeModelInfo.apiVersion}/${activeModelInfo.modelPath}:generateContent?key=${apiKey}`;
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: systemPrompt },
+                            {
+                                inlineData: {
+                                    mimeType: uploadedImageMimeType,
+                                    data: uploadedImageBase64
+                                }
+                            }
+                        ]
+                    }]
+                })
+            });
+
+            const data = await response.json();
+            visionLoading.style.display = 'none';
+
+            if (data.error) {
+                alert("Gemini Vision API Error: " + data.error.message);
+                return;
+            }
+
+            const candidate = data.candidates?.[0];
+            if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                alert("Image motion description fetch nahi ho saki.");
+                return;
+            }
+
+            const description = candidate.content.parts[0].text.trim();
+            visionText.value = description;
+            visionResult.style.display = 'block';
+
+        } catch (err) {
+            visionLoading.style.display = 'none';
+            alert("Failed to analyze image: " + err.message);
+            console.error("Gemini Vision Error:", err);
+        }
+    }
+
+    function applyVisionPrompt() {
+        const text = document.getElementById('vision-text').value.trim();
+        if (text) {
+            document.getElementById('subject-input').value = text;
+            updatePrompt();
+            autoDetectCharactersFromConcept();
+            alert("Video motion prompt base concept me set ho gaya hai!");
+        } else {
+            alert("Pehle prompt text enter karein!");
+        }
+    }
+
+    // proofreadText — provided by js/common.js
+
+    async function polishVisionPrompt() {
+        const visionText = document.getElementById('vision-text');
+        const currentText = visionText.value.trim();
+        if (!currentText) {
+            alert("Pehle check karne ke liye text enter karein!");
+            return;
+        }
+
+        const visionLoading = document.getElementById('vision-loading');
+        visionLoading.innerText = '⚡ AI grammar & video motion format check kar raha hai...';
+        visionLoading.style.display = 'block';
+
+        const corrected = await proofreadText(currentText);
+        visionLoading.style.display = 'none';
+
+        if (corrected) {
+            visionText.value = corrected;
+            alert("✅ AI ne video prompt ki grammar fix kar di!");
+        } else {
+            alert("Grammar check fail ho gaya. Please try again.");
+        }
+    }
+
+    async function polishBasePrompt() {
+        const inputEl = document.getElementById('subject-input');
+        const currentText = inputEl.value.trim();
+        if (!currentText) {
+            alert("Pehle base concept text enter karein!");
+            return;
+        }
+
+        const loading = document.getElementById('loading');
+        loading.innerText = '⚡ AI grammar & video format check kar raha hai...';
+        loading.style.display = 'block';
+
+        const corrected = await proofreadText(currentText);
+        loading.style.display = 'none';
+
+        if (corrected) {
+            inputEl.value = corrected;
+            updatePrompt();
+            autoDetectCharactersFromConcept();
+            alert("✅ AI ne Base Video Concept ki grammar fix kar di!");
+        } else {
+            alert("Grammar check fail ho gaya. Please try again.");
+        }
+    }
+
+    // DYNAMIC MULTI-CHARACTER DIALOGUE & SCRIPT BUILDER JS
+    let charRowCount = 0;
+    let detectedCharactersCache = [];
+
+    function addCharacterDialogueRow(defaultName = '', defaultDiag = '', defaultCue = 'Intense Lip-Sync Movement') {
+        charRowCount++;
+        const container = document.getElementById('character-dialogue-list');
+        if (!container) return;
+
+        const row = document.createElement('div');
+        row.className = 'character-dialogue-row';
+        row.id = `char-row-${charRowCount}`;
+        row.style.cssText = 'background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px; position: relative;';
+
+        const datalistId = `char-list-${charRowCount}`;
+        let datalistHtml = `<datalist id="${datalistId}">`;
+        detectedCharactersCache.forEach(c => { datalistHtml += `<option value="${c}">`; });
+        datalistHtml += `<option value="Ramesh / Hero"><option value="Suresh / Villain"><option value="Colossal Warrior"><option value="Female Lead"><option value="Narrator"></datalist>`;
+
+        row.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 11px; font-weight: bold; color: #38bdf8;">Character #${container.children.length + 1}</span>
+                <button type="button" class="api-btn" style="background: #ef4444; color: white; padding: 2px 6px; font-size: 10px;" onclick="removeCharacterDialogueRow('${row.id}')">🗑️ Remove</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 8px; margin-bottom: 6px;">
+                <div>
+                    <div style="font-size: 10px; color: #94a3b8; margin-bottom: 2px;">Character Name / Role (e.g. Ramesh)</div>
+                    <input type="text" class="input-box char-name-input" list="${datalistId}" style="margin-bottom:0; font-size:12px;" placeholder="e.g. Ramesh / Hero" value="${defaultName}" oninput="updatePrompt()">
+                    ${datalistHtml}
+                </div>
+                <div>
+                    <div style="font-size: 10px; color: #94a3b8; margin-bottom: 2px;">Dialogue Text (Boliye jaane wale shabd)</div>
+                    <input type="text" class="input-box char-diag-input" style="margin-bottom:0; font-size:12px;" placeholder="e.g. 'Apun ko gussa mat dilaana!'" value="${defaultDiag}" oninput="updatePrompt()">
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <div style="font-size: 10px; color: #94a3b8; min-width: 90px;">Voice & Expression:</div>
+                <select class="input-box char-cue-select" style="margin-bottom:0; font-size:11px; padding:4px 8px; width:auto;" onchange="updatePrompt()">
+                    <option value="Intense Lip-Sync Movement" ${defaultCue === 'Intense Lip-Sync Movement' ? 'selected' : ''}>Intense Lip-Sync Movement</option>
+                    <option value="Angry Shouting Expression" ${defaultCue === 'Angry Shouting Expression' ? 'selected' : ''}>Angry Shouting Expression</option>
+                    <option value="Deep Aggressive Voice" ${defaultCue === 'Deep Aggressive Voice' ? 'selected' : ''}>Deep Aggressive Voice</option>
+                    <option value="Calm Whispering Tone" ${defaultCue === 'Calm Whispering Tone' ? 'selected' : ''}>Calm Whispering Tone</option>
+                    <option value="Dramatic Monologue Speech" ${defaultCue === 'Dramatic Monologue Speech' ? 'selected' : ''}>Dramatic Monologue Speech</option>
+                    <option value="Evil Laugh Expression" ${defaultCue === 'Evil Laugh Expression' ? 'selected' : ''}>Evil Laugh Expression</option>
+                    <option value="Hindi Dialogue Lip Animation" ${defaultCue === 'Hindi Dialogue Lip Animation' ? 'selected' : ''}>Hindi Dialogue Lip Animation</option>
+                </select>
+            </div>
+        `;
+
+        container.appendChild(row);
+        updatePrompt();
+    }
+
+    function removeCharacterDialogueRow(rowId) {
+        const row = document.getElementById(rowId);
+        if (row) {
+            row.remove();
+            updatePrompt();
+        }
+    }
+
+    // AUTO-DETECT CHARACTERS FROM BASE CONCEPT PROMPT
+    async function autoDetectCharactersFromConcept() {
+        const text = document.getElementById('subject-input').value.trim();
+        if (!text) return;
+
+        // Quick Smart Regex Detection for common characters / subjects in prompt
+        const nounMatches = text.match(/([a-z0-9-]+\s+){0,3}(giant|warrior|hero|villain|king|queen|princess|soldier|robot|cyborg|ninja|samurai|fighter|wizard|detective|man|woman|boy|girl|driver|pilot|beast|monster|dragon|character)\b/gi);
+
+        let detected = [];
+        if (nounMatches && nounMatches.length > 0) {
+            detected = Array.from(new Set(nounMatches.map(m => m.trim()))).slice(0, 5);
+        }
+
+        // AI-Powered Deep Detection if API key is present
+        const apiKey = getApiKey();
+        if (apiKey && text.length > 15) {
+            try {
+                const modelInfo = await fetchBestAvailableModel(apiKey);
+                const apiUrl = `https://generativelanguage.googleapis.com/${modelInfo.apiVersion}/${modelInfo.modelPath}:generateContent?key=${apiKey}`;
+
+                const systemPrompt = `Extract all unique characters or subjects present in this scene concept text: "${text}".
+Return ONLY a valid JSON array of strings containing max 4 character descriptions (e.g. ["Ramesh / Emerald Giant Warrior", "Suresh / Masked Ninja"]). No explanations.`;
+
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: systemPrompt }] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                const data = await res.json();
+                const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (raw) {
+                    const parsed = JSON.parse(raw.replace(/```json/gi, '').replace(/```/g, '').trim());
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        detected = parsed;
+                    }
+                }
+            } catch (err) {
+                console.log("Auto-detect AI fallback to regex:", err);
+            }
+        }
+
+        detectedCharactersCache = detected;
+
+        const container = document.getElementById('character-dialogue-list');
+        if (container && container.children.length === 0 && detected.length > 0) {
+            detected.forEach((charName, idx) => {
+                addCharacterDialogueRow(charName, '', idx === 0 ? 'Intense Lip-Sync Movement' : 'Angry Shouting Expression');
+            });
+            alert(`✅ Auto-detected ${detected.length} characters: ${detected.join(', ')}!\nCharacter dialogue rows added.`);
+        } else if (detected.length > 0) {
+            alert(`✅ Detected characters: ${detected.join(', ')}!\nUse the dropdowns or type character names.`);
+        }
+    }
+
+    // Initialize with 1 default character row
+    setTimeout(() => {
+        const container = document.getElementById('character-dialogue-list');
+        if (container && container.children.length === 0) {
+            addCharacterDialogueRow('Ramesh / Hero', 'Apun ko gussa mat dilaana, samjha!', 'Angry Shouting Expression');
+        }
+    }, 300);
+
+    // UI HANDLERS
+    function toggleTag(el) { el.classList.toggle('active'); updatePrompt(); }
+    function toggleNegTag(el) { el.classList.toggle('active'); updatePrompt(); }
+    function selectSingle(el) {
+        el.parentElement.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        updatePrompt();
+    }
+
+    // PROMPT FORMATTER FOR VIDEO
+    function updatePrompt() {
+        const subject = document.getElementById('subject-input').value.trim();
+        const engine = document.getElementById('engine-select').value;
+
+        const cameraMotion = Array.from(document.querySelectorAll('#camera-motion-tags .tag.active')).map(t => t.innerText);
+        const speed = Array.from(document.querySelectorAll('#speed-tags .tag.active')).map(t => t.innerText);
+        const lighting = Array.from(document.querySelectorAll('#lighting-tags .tag.active')).map(t => t.innerText);
+        const quality = Array.from(document.querySelectorAll('#quality-tags .tag.active')).map(t => t.innerText);
+        const audio = Array.from(document.querySelectorAll('#audio-tags .tag.active')).map(t => t.innerText);
+        const negatives = Array.from(document.querySelectorAll('#negative-tags .neg-tag.active')).map(t => t.innerText);
+
+        // Gather all Dynamic Character Dialogue Rows
+        const dialogueRows = document.querySelectorAll('.character-dialogue-row');
+        let scriptSegments = [];
+
+        dialogueRows.forEach((row, idx) => {
+            const charName = row.querySelector('.char-name-input')?.value.trim();
+            const charDiag = row.querySelector('.char-diag-input')?.value.trim();
+            const charCue  = row.querySelector('.char-cue-select')?.value;
+
+            if (charName || charDiag) {
+                let nameStr = charName || `Character #${idx + 1}`;
+                let cueStr  = charCue ? `[Expression: ${charCue}]` : '';
+                let diagStr = charDiag ? `says "${charDiag}"` : '';
+                scriptSegments.push(`${nameStr} ${cueStr} ${diagStr}`.trim());
+            }
+        });
+
+        let dialogueSegment = "";
+        if (scriptSegments.length > 0) {
+            dialogueSegment = `. Cinematic Multi-Character Script & Lip-Sync: ${scriptSegments.map(s => `(${s})`).join(' ')}`;
+        }
+
+        const activeRatioTag = document.querySelector('#ratio-tags .tag.active');
+        const activeRatio = activeRatioTag ? activeRatioTag.getAttribute('data-ratio') : '16:9';
+
+        let posAttributes = [...new Set([...cameraMotion, ...speed, ...lighting, ...quality])].join(', ');
+        let audioAttributes = audio.join(', ');
+        let negAttributes = negatives.join(', ');
+
+        let finalPos = "";
+        let finalNeg = negAttributes || "None";
+
+        if (engine === 'runway') {
+            let cameraFlag = cameraMotion.length > 0 ? `, camera ${cameraMotion[0].toLowerCase()}` : '';
+            let negFlag = negAttributes ? ` --no ${negAttributes}` : '';
+            finalPos = `${subject}, ${posAttributes}${dialogueSegment}${cameraFlag} --ar ${activeRatio}${negFlag}`;
+            document.getElementById('negative-container').style.display = 'none';
+        } else if (engine === 'sora' || engine === 'veo') {
+            let soundText = audioAttributes ? `. Audio Cues: ${audioAttributes}` : '';
+            finalPos = `A cinematic high-definition video of ${subject}. Camera Motion: ${posAttributes}${dialogueSegment}. Aspect Ratio ${activeRatio}${soundText}.`;
+            document.getElementById('negative-container').style.display = 'none';
+        } else if (engine === 'luma') {
+            finalPos = `${subject}, ${posAttributes}${dialogueSegment} --ar ${activeRatio}`;
+            document.getElementById('negative-container').style.display = 'none';
+        } else {
+            finalPos = `${subject}, ${posAttributes}${dialogueSegment}`;
+            document.getElementById('negative-container').style.display = 'block';
+        }
+
+        document.getElementById('prompt-output').innerText = finalPos;
+        document.getElementById('neg-prompt-output').innerText = finalNeg;
+    }
+
+    // COPY PROMPT WITH FALLBACK
+    function copyPrompt() {
+        const posText = document.getElementById('prompt-output').innerText;
+        const negContainer = document.getElementById('negative-container');
+        const negText = document.getElementById('neg-prompt-output').innerText;
+
+        let fullPackage = posText;
+        if (negContainer.style.display !== 'none' && negText && negText !== 'None') {
+            fullPackage += `\n\nNegative Motion Prompt:\n${negText}`;
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(fullPackage)
+                .then(() => alert('Video Prompt Package Copied to Clipboard!'))
+                .catch(() => fallbackCopy(fullPackage));
+        } else {
+            fallbackCopy(fullPackage);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('Video Prompt Package Copied to Clipboard!');
+        } catch (err) {
+            alert('Failed to copy prompt.');
+        }
+        document.body.removeChild(textArea);
+    }
+
+    updatePrompt();
+</script>
+
+
+</body>
+</html>

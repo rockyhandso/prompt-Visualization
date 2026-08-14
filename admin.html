@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel — AI Prompt Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="js/common.js"></script>
+    <style>
+        :root {
+            --bg: #060b18;
+            --card: #0f1929;
+            --border: #1e3a5f;
+            --accent: #3b82f6;
+            --accent2: #8b5cf6;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --text: #f1f5f9;
+            --subtext: #64748b;
+            --glow: rgba(59,130,246,0.15);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image:
+                radial-gradient(ellipse at 20% 20%, rgba(59,130,246,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139,92,246,0.08) 0%, transparent 50%);
+        }
+
+        /* ─── LOGIN SCREEN ─────────────────────────── */
+        #login-screen {
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+
+        .lock-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 0 20px rgba(59,130,246,0.6));
+            animation: pulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(59,130,246,0.4)); }
+            50%       { filter: drop-shadow(0 0 35px rgba(139,92,246,0.7)); }
+        }
+
+        .login-title {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .login-sub {
+            color: var(--subtext);
+            font-size: 13px;
+            margin-bottom: 30px;
+        }
+
+        .login-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 0 40px rgba(59,130,246,0.1);
+        }
+
+        .pin-display {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .pin-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: transparent;
+            transition: all 0.2s;
+        }
+
+        .pin-dot.filled {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .num-btn {
+            background: #1a2744;
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            padding: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+        .num-btn:hover  { background: #223060; border-color: var(--accent); }
+        .num-btn:active { transform: scale(0.95); background: var(--accent); }
+
+        .num-btn.del {
+            font-size: 14px;
+            background: #1a1a2e;
+            color: var(--danger);
+            border-color: rgba(239,68,68,0.3);
+        }
+
+        .num-btn.enter {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border: none;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .pin-error {
+            color: var(--danger);
+            font-size: 12px;
+            margin-top: 14px;
+            display: none;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25%       { transform: translateX(-8px); }
+            75%       { transform: translateX(8px); }
+        }
+
+        /* ─── ADMIN PANEL ─────────────────────────── */
+        #admin-panel {
+            display: none;
+            width: 100%;
+            max-width: 780px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .panel-title {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            background: #1a2744;
+            color: var(--text);
+            text-decoration: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            transition: 0.2s;
+        }
+
+        .nav-link:hover { background: var(--accent); border-color: var(--accent); }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        .section-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px;
+            transition: box-shadow 0.2s;
+        }
+
+        .section-card:hover { box-shadow: 0 0 20px var(--glow); }
+
+        .section-card.full { grid-column: 1 / -1; }
+
+        .section-card.danger-card { border-color: rgba(239,68,68,0.3); }
+
+        .card-icon { font-size: 28px; margin-bottom: 10px; }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+
+        .card-desc {
+            font-size: 12px;
+            color: var(--subtext);
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #060b18;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .info-label { color: var(--subtext); }
+        .info-value { font-family: monospace; color: var(--accent); font-weight: 600; }
+
+        .field-input {
+            width: 100%;
+            background: #060b18;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .field-input:focus { border-color: var(--accent); }
+
+        .field-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: var(--subtext);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 11px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: white;
+        }
+
+        .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+        .btn-success {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+        }
+
+        .btn-success:hover { opacity: 0.88; }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            color: white;
+        }
+
+        .btn-danger:hover { opacity: 0.88; }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            color: white;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-green { background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4); }
+        .badge-yellow { background: rgba(245,158,11,0.2); color: #f59e0b; border: 1px solid rgba(245,158,11,0.4); }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #0f1929;
+            border: 1px solid var(--success);
+            color: var(--success);
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            display: none;
+            z-index: 999;
+            box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to   { transform: translateY(0);   opacity: 1; }
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid rgba(239,68,68,0.4);
+            color: var(--danger);
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .logout-btn:hover { background: rgba(239,68,68,0.1); }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 14px 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
+<div id="login-screen">
+    <div class="lock-icon">🔐</div>
+    <div class="login-title">Admin Panel</div>
+    <div class="login-sub">Enter your security PIN to continue</div>
+
+    <div class="login-card">
+        <div class="pin-display">
+            <div class="pin-dot" id="d1"></div>
+            <div class="pin-dot" id="d2"></div>
+            <div class="pin-dot" id="d3"></div>
+            <div class="pin-dot" id="d4"></div>
+        </div>
+
+        <div class="numpad">
+            <button class="num-btn" onclick="enterDigit('1')">1</button>
+            <button class="num-btn" onclick="enterDigit('2')">2</button>
+            <button class="num-btn" onclick="enterDigit('3')">3</button>
+            <button class="num-btn" onclick="enterDigit('4')">4</button>
+            <button class="num-btn" onclick="enterDigit('5')">5</button>
+            <button class="num-btn" onclick="enterDigit('6')">6</button>
+            <button class="num-btn" onclick="enterDigit('7')">7</button>
+            <button class="num-btn" onclick="enterDigit('8')">8</button>
+            <button class="num-btn" onclick="enterDigit('9')">9</button>
+            <button class="num-btn del" onclick="deleteDigit()">⌫ DEL</button>
+            <button class="num-btn" onclick="enterDigit('0')">0</button>
+            <button class="num-btn enter" onclick="submitPin()">ENTER</button>
+        </div>
+
+        <div class="pin-error" id="pin-error">⛔ Incorrect PIN. Please try again.</div>
+    </div>
+</div>
+
+<!-- ═══════════════ ADMIN PANEL ═══════════════ -->
+<div id="admin-panel">
+    <div class="panel-header">
+        <div>
+            <div class="panel-title">⚙️ Admin Control Panel</div>
+            <div style="font-size:12px; color:var(--subtext); margin-top:2px;">AI Prompt Studio — Security & Settings Manager</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">🎨 Image Studio</a>
+                <a href="video.html" class="nav-link">🎬 Video Studio</a>
+            </div>
+            <button class="logout-btn" onclick="logout()">🚪 Lock</button>
+        </div>
+    </div>
+
+    <div class="grid-2">
+
+        <!-- ── API KEY MANAGEMENT ── -->
+        <div class="section-card">
+            <div class="card-icon">🔑</div>
+            <div class="card-title">Gemini API Key</div>
+            <div class="card-desc">Update your Gemini API key. It is stored encrypted in your browser using XOR + Base64 obfuscation.</div>
+
+            <div class="info-row">
+                <span class="info-label">Current Key</span>
+                <span class="info-value" id="key-preview">Loading…</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Storage Status</span>
+                <span id="key-status-badge"></span>
+            </div>
+
+            <div class="divider"></div>
+            <div class="field-label">New API Key</div>
+            <input type="password" class="field-input" id="new-api-key" placeholder="Paste new Gemini API Key here…">
+            <button class="action-btn btn-success" onclick="saveApiKey()">💾 Save & Encrypt API Key</button>
+        </div>
+
+        <!-- ── CHANGE PIN ── -->
+        <div class="section-card">
+            <div class="card-icon">🔒</div>
+            <div class="card-title">Change Admin PIN</div>
+            <div class="card-desc">Update your 4‑digit admin security PIN used to access this control panel and key settings.</div>
+
+            <div class="info-row">
+                <span class="info-label">Current PIN</span>
+                <span class="info-value" id="current-pin-display">••••</span>
+            </div>
+
+            <div class="divider"></div>
+            <div class="field-label">New PIN (min 4 digits)</div>
+            <input type="password" class="field-input" id="new-pin" placeholder="Enter new PIN…" maxlength="8" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <div class="field-label">Confirm New PIN</div>
+            <input type="password" class="field-input" id="confirm-pin" placeholder="Re-enter new PIN…" maxlength="8" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <button class="action-btn btn-primary" onclick="changePin()" style="margin-top:4px;">🔄 Update PIN</button>
+        </div>
+
+        <!-- ── ENCRYPTION INFO ── -->
+        <div class="section-card">
+            <div class="card-icon">🛡️</div>
+            <div class="card-title">Security Information</div>
+            <div class="card-desc">Details about the encryption applied to protect your API key.</div>
+
+            <div class="info-row">
+                <span class="info-label">Encryption</span>
+                <span class="info-value">XOR + Base64</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Salt</span>
+                <span class="info-value" style="font-size:10px;">JollyNobelSecuritySalt2026</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Storage</span>
+                <span class="info-value">localStorage (browser)</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Key visible to server?</span>
+                <span class="info-value" style="color:var(--success);">Never</span>
+            </div>
+        </div>
+
+        <!-- ── RESET / DANGER ZONE ── -->
+        <div class="section-card danger-card">
+            <div class="card-icon">⚠️</div>
+            <div class="card-title">Danger Zone</div>
+            <div class="card-desc">These actions are irreversible. Resetting will remove your saved API key and PIN from the browser.</div>
+
+            <button class="action-btn btn-warning" onclick="resetTheme()" style="margin-bottom:10px;">🎨 Reset Theme to Default</button>
+            <button class="action-btn btn-danger" onclick="resetAll()">🗑️ Reset ALL Settings (API Key + PIN)</button>
+        </div>
+
+        <!-- ── QUICK LINKS ── -->
+        <div class="section-card full">
+            <div class="card-icon">🚀</div>
+            <div class="card-title">Quick Navigation</div>
+            <div class="card-desc">Jump to any studio directly from here.</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="index.html" style="text-decoration:none;">
+                    <button class="action-btn btn-primary" style="width:auto; padding:10px 24px;">🎨 AI Image Prompt Studio</button>
+                </a>
+                <a href="video.html" style="text-decoration:none;">
+                    <button class="action-btn btn-success" style="width:auto; padding:10px 24px;">🎬 AI Video Motion Studio</button>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+    // ── ENCRYPTION CORE (from js/common.js) ──────────────────────────────────
+    // encryptKey, decryptKey, getApiKey, SECURITY_SALT, DEFAULT_ADMIN_PIN
+    // are now provided by js/common.js — no duplication needed here.
+
+    function getAdminPin() {
+        return localStorage.getItem('ADMIN_SECURITY_PIN') || DEFAULT_ADMIN_PIN;
+    }
+
+    // ── PIN LOGIN LOGIC ──────────────────────────────────
+    let pinBuffer = '';
+
+    function enterDigit(d) {
+        if (pinBuffer.length >= 4) return;
+        pinBuffer += d;
+        updateDots();
+        if (pinBuffer.length === 4) setTimeout(submitPin, 150);
+    }
+
+    function deleteDigit() {
+        pinBuffer = pinBuffer.slice(0, -1);
+        updateDots();
+    }
+
+    function updateDots() {
+        for (let i = 1; i <= 4; i++) {
+            document.getElementById('d' + i).classList.toggle('filled', i <= pinBuffer.length);
+        }
+    }
+
+    function submitPin() {
+        const correct = getAdminPin();
+        if (pinBuffer === correct) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            loadPanelData();
+        } else {
+            const errEl = document.getElementById('pin-error');
+            errEl.style.display = 'block';
+            errEl.style.animation = 'none';
+            void errEl.offsetWidth;
+            errEl.style.animation = 'shake 0.3s ease';
+            pinBuffer = '';
+            updateDots();
+        }
+    }
+
+    function logout() {
+        document.getElementById('admin-panel').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'block';
+        pinBuffer = '';
+        updateDots();
+        document.getElementById('pin-error').style.display = 'none';
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', function(e) {
+        if (document.getElementById('login-screen').style.display !== 'none') {
+            if (e.key >= '0' && e.key <= '9') enterDigit(e.key);
+            if (e.key === 'Backspace') deleteDigit();
+            if (e.key === 'Enter') submitPin();
+        }
+    });
+
+    // ── PANEL DATA ──────────────────────────────────────
+    function loadPanelData() {
+        const key = getApiKey();
+        const masked = key.length > 8
+            ? key.substring(0, 6) + '••••••' + key.substring(key.length - 4)
+            : '••••••••';
+        document.getElementById('key-preview').textContent = masked;
+
+        const hasCustom = !!localStorage.getItem('GEMINI_SECURE_KEY');
+        const badge = document.getElementById('key-status-badge');
+        badge.className = 'status-badge ' + (hasCustom ? 'badge-green' : 'badge-yellow');
+        badge.textContent = hasCustom ? '✅ Custom Key Saved' : '⚠️ Using Default Key';
+
+        document.getElementById('current-pin-display').textContent =
+            localStorage.getItem('ADMIN_SECURITY_PIN') ? '(custom PIN set)' : '(default: 1234)';
+    }
+
+    // ── SAVE API KEY ─────────────────────────────────────
+    function saveApiKey() {
+        const val = document.getElementById('new-api-key').value.trim();
+        if (!val) { showToast('❌ API Key khali nahi ho sakti!', 'danger'); return; }
+        if (!val.startsWith('AIza')) { showToast('⚠️ Key format galat lag rahi hai (AIza... se shuru honi chahiye)', 'warning'); }
+        const enc = encryptKey(val);
+        localStorage.setItem('GEMINI_SECURE_KEY', enc);
+        document.getElementById('new-api-key').value = '';
+        loadPanelData();
+        showToast('✅ API Key encrypted & saved successfully!');
+    }
+
+    // ── CHANGE PIN ───────────────────────────────────────
+    function changePin() {
+        const np = document.getElementById('new-pin').value.trim();
+        const cp = document.getElementById('confirm-pin').value.trim();
+        if (!np || np.length < 4) { showToast('❌ PIN kam se kam 4 digits ka hona chahiye!', 'danger'); return; }
+        if (np !== cp) { showToast('❌ PINs match nahi kar rahi! Dobara enter karein.', 'danger'); return; }
+        localStorage.setItem('ADMIN_SECURITY_PIN', np);
+        document.getElementById('new-pin').value = '';
+        document.getElementById('confirm-pin').value = '';
+        loadPanelData();
+        showToast('✅ Admin PIN successfully updated!');
+    }
+
+    // ── RESET THEME ──────────────────────────────────────
+    function resetTheme() {
+        localStorage.removeItem('APP_THEME');
+        showToast('🎨 Theme reset to Midnight Blue default!');
+    }
+
+    // ── RESET ALL ────────────────────────────────────────
+    function resetAll() {
+        if (!confirm('⚠️ Are you sure? This will delete your saved API Key and PIN!\nThe app will fall back to default encrypted key and PIN 1234.')) return;
+        localStorage.removeItem('GEMINI_SECURE_KEY');
+        localStorage.removeItem('ADMIN_SECURITY_PIN');
+        localStorage.removeItem('APP_THEME');
+        loadPanelData();
+        showToast('🗑️ All settings reset to factory defaults.');
+    }
+
+    // ── TOAST ─────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.borderColor = type === 'danger' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#10b981';
+        t.style.color       = type === 'danger' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#10b981';
+        t.style.display = 'block';
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { t.style.display = 'none'; }, 3000);
+    }
+</script>
+</body>
+</html>

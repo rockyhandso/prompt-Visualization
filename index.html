@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Visualizer & Multi-Engine Studio</title>
+    <script src="js/common.js"></script>
+    <script src="js/tour.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --magic: #10b981;
+            --magic-hover: #059669;
+            --gemini-color: #ec4899;
+            --danger: #ef4444;
+            --text: #f8fafc;
+            --subtext: #94a3b8;
+        }
+
+        [data-theme="cyberpunk"] {
+            --bg-color: #180b28;
+            --card-bg: #2d124d;
+            --accent: #d946ef;
+            --accent-hover: #c026d3;
+        }
+
+        [data-theme="emerald"] {
+            --bg-color: #06231c;
+            --card-bg: #0b3c30;
+            --accent: #10b981;
+            --accent-hover: #059669;
+        }
+
+        [data-theme="oled"] {
+            --bg-color: #000000;
+            --card-bg: #121212;
+            --accent: #38bdf8;
+            --accent-hover: #0284c7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            color: #818cf8;
+            margin-bottom: 5px;
+        }
+
+        .studio-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.3fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 800px) {
+            .studio-grid { grid-template-columns: 1fr; }
+            .nav-bar { flex-wrap: wrap; gap: 8px; justify-content: center; text-align: center; }
+            .nav-bar > * { margin-bottom: 2px; }
+            .output-card div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+            .tag { padding: 8px 12px; font-size: 13px; margin: 2px 0; }
+            body { padding: 10px; }
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .input-box {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: white;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .tag-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .tag {
+            background: #334155;
+            padding: 5px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .tag.active {
+            background: var(--accent);
+            border-color: #c7d2fe;
+            color: white;
+        }
+
+        .neg-tag {
+            background: #334155;
+            padding: 5px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .neg-tag.active {
+            background: var(--danger);
+            border-color: #fca5a5;
+            color: white;
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--subtext);
+            margin-top: 15px;
+            margin-bottom: 6px;
+        }
+
+        /* GEMINI AI ARCHITECT BOX */
+        .gemini-box {
+            background: #020617;
+            border: 1px solid #db2777;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+
+        .gemini-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .gemini-title {
+            color: #f472b6;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .api-btn {
+            background: #334155;
+            color: #f1f5f9;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .gemini-btn {
+            background: linear-gradient(90deg, #ec4899, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: 0.2s;
+            font-size: 13px;
+        }
+
+        .gemini-btn:hover {
+            opacity: 0.9;
+        }
+
+        .ai-suggestions {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .suggestion-card {
+            background: #1e293b;
+            border: 1px solid #475569;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #cbd5e1;
+        }
+
+        .suggestion-card:hover {
+            border-color: #ec4899;
+            background: #334155;
+            color: white;
+        }
+
+        .output-card {
+            margin-top: 20px;
+            background: #020617;
+            border: 1px solid #334155;
+        }
+
+        .prompt-text-box {
+            font-family: monospace;
+            font-size: 13px;
+            color: #38bdf8;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 6px;
+            word-break: break-all;
+            min-height: 45px;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: 0.2s;
+        }
+
+        .loading-spinner {
+            display: none;
+            color: #f472b6;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+
+        .nav-btn {
+            background: #334155;
+            color: #f8fafc;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="nav-bar">
+        <div style="font-weight: bold; font-size: 13px; color: #818cf8;">🎨 AI Image Prompt Studio</div>
+        <a href="video.html" class="nav-btn" style="background: #ec4899; color: white;">🎬 Switch to Video Motion Studio</a>
+        <button class="nav-btn" style="background: #059669; color: white;" onclick="setUserCustomApiKey()" title="Use your own free Gemini API key if limit runs out">🔑 My API Key</button>
+        <a href="admin.html" class="nav-btn" style="background: #334155; color: #94a3b8;">⚙️ Admin Panel</a>
+        <button class="nav-btn" style="background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; border: 1px solid #60a5fa;" onclick="startTour()" title="Interactive Hinglish Guide / Kaise use karein">🧭 Tour Guide (?)</button>
+        <div style="display: flex; gap: 4px;">
+            <button class="api-btn" onclick="changeAppTheme('default')">🌙</button>
+            <button class="api-btn" onclick="changeAppTheme('cyberpunk')" style="background: #a855f7;">🟣</button>
+            <button class="api-btn" onclick="changeAppTheme('emerald')" style="background: #10b981;">🟢</button>
+            <button class="api-btn" onclick="changeAppTheme('oled')" style="background: #334155;">🖤</button>
+        </div>
+    </div>
+
+    <header>
+        <h1>AI Prompt Visualizer & Multi-Engine Studio</h1>
+        <p style="color: var(--subtext); margin-bottom: 8px;">Powered by Gemini AI Real-time Prompt Expansion</p>
+    </header>
+
+    <div class="studio-grid">
+        <!-- Left Panel: Engine Selector -->
+        <div class="card">
+            <div class="section-title">1. Target AI Engine</div>
+            <select class="input-box" id="engine-select" onchange="updatePrompt()">
+                <option value="gemini">Google Gemini / Imagen 3</option>
+                <option value="midjourney">Midjourney v6</option>
+                <option value="dalle">DALL-E 3</option>
+                <option value="flux">Flux.1 / Stable Diffusion XL</option>
+                <option value="leonardo">Leonardo AI</option>
+            </select>
+
+            <div class="section-title">2. Aspect Ratio</div>
+            <div class="tag-group" id="ratio-tags">
+                <span class="tag active" data-ratio="1:1" onclick="selectSingle(this)">1:1 (Square)</span>
+                <span class="tag" data-ratio="16:9" onclick="selectSingle(this)">16:9 (Cinematic)</span>
+                <span class="tag" data-ratio="4:5" onclick="selectSingle(this)">4:5 (Portrait)</span>
+                <span class="tag" data-ratio="9:16" onclick="selectSingle(this)">9:16 (Story)</span>
+            </div>
+
+            <!-- VISION AI IMAGE TO PROMPT ARCHITECT -->
+            <div class="section-title" style="margin-top: 25px;">3. Image to Prompt Architect (Vision AI)</div>
+            <div class="vision-box" style="background: #020617; border: 1px dashed #38bdf8; border-radius: 8px; padding: 12px; text-align: center;">
+                <input type="file" id="image-upload" accept="image/*" style="display: none;" onchange="handleImageSelected(this)">
+                <button type="button" class="api-btn" style="background: #0284c7; width: 100%; padding: 8px; font-weight: bold; font-size: 12px;" onclick="document.getElementById('image-upload').click()">
+                    📁 Upload Reference Image
+                </button>
+
+                <div id="image-preview-container" style="display: none; margin-top: 10px;">
+                    <img id="image-preview" style="max-width: 100%; max-height: 160px; border-radius: 6px; border: 1px solid #475569;" alt="Image Preview">
+                    <button class="gemini-btn" style="margin-top: 8px; font-size: 12px;" onclick="analyzeImageWithGemini()">
+                        🔍 Extract AI Prompt & Description
+                    </button>
+                </div>
+
+                <div id="vision-loading" class="loading-spinner" style="margin-top: 8px; color: #38bdf8;">⚡ Analyzing image visual features...</div>
+
+                <div id="vision-result" style="display: none; margin-top: 10px; background: #0f172a; border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; font-size: 12px; color: #cbd5e1;">
+                    <div style="font-weight: bold; color: #38bdf8; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>🖼️ Extracted Prompt Concept:</span>
+                        <span style="font-size: 10px; color: #94a3b8; font-weight: normal;">✏️ Editable</span>
+                    </div>
+                    <textarea id="vision-text" class="input-box" rows="3" style="font-family: monospace; font-size: 11px; margin-bottom: 8px; resize: vertical; width: 100%;" placeholder="Extracted prompt will appear here... You can edit it!"></textarea>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                        <button class="api-btn" style="background: #8b5cf6; color: white; padding: 8px; font-weight: bold;" onclick="polishVisionPrompt()">🪄 AI Fix Grammar</button>
+                        <button class="api-btn" style="background: #10b981; color: white; padding: 8px; font-weight: bold;" onclick="applyVisionPrompt()">✨ Set as Concept</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Customizer & AI Architect -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px; margin-bottom: 6px;">
+                <span class="section-title" style="margin: 0;">Base Concept / Short Prompt</span>
+                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                    <button class="api-btn" style="background: #10b981; color: white; padding: 3px 8px; font-size: 10px;" onclick="convertHinglishToEnglishPrompt()" title="Convert Hinglish/Hindi text into rich English AI Prompt">🇮🇳 Hinglish ➔ AI Prompt</button>
+                    <button class="api-btn" style="background: #f59e0b; color: white; padding: 3px 8px; font-size: 10px;" onclick="copyrightSafeRewrite()" title="Auto-remove copyrighted character names">🛡️ Copyright Fix</button>
+                    <button class="api-btn" style="background: #8b5cf6; color: white; padding: 3px 8px; font-size: 10px;" onclick="polishBasePrompt()">🪄 AI Fix Grammar</button>
+                </div>
+            </div>
+            <textarea id="subject-input" class="input-box" rows="4" placeholder="Hinglish ya Hindi me bhi likh sakte hain... e.g. 'mumbai ki sadak par ek bada hara yoddha slow motion me chal raha hai' ya 'a cat in car'" oninput="debouncedUpdatePrompt()" style="resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5;">a cat in car</textarea>
+
+            <!-- GEMINI AI REALTIME PROMPT EXPANDER -->
+            <div class="gemini-box">
+                <div class="gemini-header">
+                    <span class="gemini-title">✨ Gemini AI Prompt Architect</span>
+                </div>
+                
+                <button class="gemini-btn" onclick="generateAiIdeas()">🤖 Brainstorm Detailed Scenarios</button>
+                <div id="loading" class="loading-spinner">⚡ Gemini is thinking up creative scenarios...</div>
+
+                <div id="ai-suggestions" class="ai-suggestions"></div>
+            </div>
+
+            <div class="section-title">Artistic Style</div>
+            <div class="tag-group" id="style-tags">
+                <span class="tag active" onclick="toggleTag(this)">Photorealistic</span>
+                <span class="tag" onclick="toggleTag(this)">Cyberpunk</span>
+                <span class="tag" onclick="toggleTag(this)">Studio Ghibli Anime</span>
+                <span class="tag" onclick="toggleTag(this)">Oil Painting</span>
+                <span class="tag" onclick="toggleTag(this)">3D Unreal Engine 5</span>
+            </div>
+
+            <div class="section-title">Color Palette & Mood</div>
+            <div class="tag-group" id="color-tags">
+                <span class="tag active" onclick="toggleTag(this)">Vibrant Colors</span>
+                <span class="tag" onclick="toggleTag(this)">Teal & Orange</span>
+                <span class="tag" onclick="toggleTag(this)">Neon Cyberpunk</span>
+                <span class="tag" onclick="toggleTag(this)">Warm Sunset Glow</span>
+                <span class="tag" onclick="toggleTag(this)">Monochrome B&W</span>
+                <span class="tag" onclick="toggleTag(this)">Pastel Palette</span>
+                <span class="tag" onclick="toggleTag(this)">Synthwave Purple</span>
+            </div>
+
+            <div class="section-title">Lighting & Atmosphere</div>
+            <div class="tag-group" id="lighting-tags">
+                <span class="tag active" onclick="toggleTag(this)">Soft Studio Light</span>
+                <span class="tag" onclick="toggleTag(this)">Golden Hour</span>
+                <span class="tag" onclick="toggleTag(this)">Cinematic Neon</span>
+                <span class="tag" onclick="toggleTag(this)">Volumetric Rays</span>
+            </div>
+
+            <div class="section-title">Camera & Shot Type</div>
+            <div class="tag-group" id="camera-tags">
+                <span class="tag active" onclick="toggleTag(this)">35mm Lens</span>
+                <span class="tag" onclick="toggleTag(this)">Wide Angle Shot</span>
+                <span class="tag" onclick="toggleTag(this)">Close-Up Portrait</span>
+                <span class="tag" onclick="toggleTag(this)">Drone Aerial View</span>
+                <span class="tag" onclick="toggleTag(this)">Bokeh Depth of Field</span>
+            </div>
+
+            <div class="section-title">Detail & Quality Level</div>
+            <div class="tag-group" id="detail-tags">
+                <span class="tag active" onclick="toggleTag(this)">8K Resolution</span>
+                <span class="tag" onclick="toggleTag(this)">Hyper-Detailed Textures</span>
+                <span class="tag" onclick="toggleTag(this)">Sharp Focus</span>
+                <span class="tag" onclick="toggleTag(this)">Masterpiece Quality</span>
+                <span class="tag" onclick="toggleTag(this)">Octane Render</span>
+            </div>
+
+            <div class="section-title" style="color: #f87171;">🚫 Negative Prompt Builder</div>
+            <div class="tag-group" id="negative-tags">
+                <span class="neg-tag active" onclick="toggleNegTag(this)">Blurry</span>
+                <span class="neg-tag active" onclick="toggleNegTag(this)">Extra Digits</span>
+                <span class="neg-tag active" onclick="toggleNegTag(this)">Low Quality</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Output Section -->
+    <div class="card output-card">
+        <div class="section-title">Positive Prompt Output:</div>
+        <div id="prompt-output" class="prompt-text-box">Generating...</div>
+
+        <div id="negative-container">
+            <div class="section-title" style="color: #f87171;">Negative Prompt Output:</div>
+            <div id="neg-prompt-output" class="prompt-text-box" style="color: #fca5a5;">None</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
+            <button class="btn" onclick="copyPrompt()">📋 Copy Full Prompt Package</button>
+            <button class="btn" style="background: #8b5cf6;" onclick="translatePromptToHindi()">🌐 Translate Output to Hindi (हिंदी अनुवाद)</button>
+        </div>
+
+        <div id="hindi-translation-box" style="display: none; margin-top: 12px; background: #0f172a; border: 1px solid #8b5cf6; border-radius: 8px; padding: 12px;">
+            <div style="font-weight: bold; color: #a78bfa; font-size: 12px; margin-bottom: 4px;">🇮🇳 Hindi & Hinglish Meaning / हिंदी अर्थ:</div>
+            <div id="hindi-translation-text" style="font-size: 12px; color: #e2e8f0; line-height: 1.6; white-space: pre-wrap;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // DEBOUNCED PROMPT UPDATER FOR PERFORMANCE
+    const debouncedUpdatePrompt = debounce(updatePrompt, 150);
+
+    // fetchBestAvailableModel — provided by js/common.js (with sessionStorage caching)
+
+    // GEMINI AI PROMPT BRAINSTORMING ENGINE (WITH DYNAMIC MODEL DISCOVERY)
+    async function generateAiIdeas() {
+        const apiKey = getApiKey();
+        if (!apiKey) {
+            alert("Pehle '⚙️ Key Settings' par click karke apni Gemini API Key enter karein!");
+            setUserCustomApiKey();
+            return;
+        }
+
+        const subject = document.getElementById('subject-input').value.trim();
+        if (!subject) {
+            alert("Kripya ek chota base idea likhein (e.g. 'a cat in car')");
+            return;
+        }
+
+        const loading = document.getElementById('loading');
+        const container = document.getElementById('ai-suggestions');
+        
+        loading.style.display = 'block';
+        loading.innerText = '⚡ Checking available Gemini models for your API key...';
+        container.innerHTML = '';
+
+        // Dynamically fetch the working model for this user's API Key
+        const activeModelInfo = await fetchBestAvailableModel(apiKey);
+
+        if (!activeModelInfo) {
+            loading.style.display = 'none';
+            alert("Gemini API Error: Aapki API Key se koi active model match nahi hua.\n\nKripya check karein:\n1. Kya API key Google AI Studio (https://aistudio.google.com/) se bani hai?\n2. Key valid hai ya expired toh nahi?");
+            return;
+        }
+
+        loading.innerText = `⚡ Gemini (${activeModelInfo.modelPath.replace('models/', '')}) scenario soch raha hai...`;
+
+        const systemPrompt = `You are an expert AI Image Prompt Architect. The user gave a short prompt: "${subject}". 
+Generate exactly 3 creative, highly detailed story scenarios expanding this idea in different ways (e.g., different positions, actions, framing, or emotions).
+Return ONLY a valid JSON array of 3 strings. Example:
+["scenario 1 detailed description", "scenario 2 detailed description", "scenario 3 detailed description"]`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/${activeModelInfo.apiVersion}/${activeModelInfo.modelPath}:generateContent?key=${apiKey}`;
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: systemPrompt }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json"
+                    }
+                })
+            });
+
+            const data = await response.json();
+            loading.style.display = 'none';
+
+            if (data.error) {
+                if (checkAndHandleQuotaError(data.error)) return;
+                alert("Gemini API Error: " + data.error.message);
+                return;
+            }
+
+            const candidate = data.candidates?.[0];
+            if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                alert("Gemini se response nahi mil paya. Safety block ya empty response ho sakta hai.");
+                return;
+            }
+
+            let rawText = candidate.content.parts[0].text.trim();
+            rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+            const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+            const scenarios = JSON.parse(jsonMatch ? jsonMatch[0] : rawText);
+
+            if (!Array.isArray(scenarios)) {
+                throw new Error("Expected an array of scenarios");
+            }
+
+            scenarios.forEach((scen, idx) => {
+                const card = document.createElement('div');
+                card.className = 'suggestion-card';
+
+                const titleEl = document.createElement('strong');
+                titleEl.textContent = `Option ${idx + 1}: `;
+                
+                const textEl = document.createElement('span');
+                textEl.textContent = scen;
+
+                card.appendChild(titleEl);
+                card.appendChild(textEl);
+
+                card.onclick = function() {
+                    document.getElementById('subject-input').value = scen;
+                    updatePrompt();
+                };
+                container.appendChild(card);
+            });
+
+        } catch (err) {
+            loading.style.display = 'none';
+            alert("Failed to process request or parse JSON from Gemini API: " + err.message);
+            console.error("Gemini API Error:", err);
+        }
+    }
+
+    // UI HANDLERS
+    function toggleTag(el) { el.classList.toggle('active'); updatePrompt(); }
+    function toggleNegTag(el) { el.classList.toggle('active'); updatePrompt(); }
+    function selectSingle(el) {
+        el.parentElement.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        updatePrompt();
+    }
+
+    // changeAppTheme, initSavedTheme — provided by js/common.js
+
+    // PROMPT FORMATTER
+    function updatePrompt() {
+        const subject = document.getElementById('subject-input').value.trim();
+        const engine = document.getElementById('engine-select').value;
+
+        const styles = Array.from(document.querySelectorAll('#style-tags .tag.active')).map(t => t.innerText);
+        const colors = Array.from(document.querySelectorAll('#color-tags .tag.active')).map(t => t.innerText);
+        const lighting = Array.from(document.querySelectorAll('#lighting-tags .tag.active')).map(t => t.innerText);
+        const camera = Array.from(document.querySelectorAll('#camera-tags .tag.active')).map(t => t.innerText);
+        const detail = Array.from(document.querySelectorAll('#detail-tags .tag.active')).map(t => t.innerText);
+        const negatives = Array.from(document.querySelectorAll('#negative-tags .neg-tag.active')).map(t => t.innerText);
+
+        const activeRatioTag = document.querySelector('#ratio-tags .tag.active');
+        const activeRatio = activeRatioTag ? activeRatioTag.getAttribute('data-ratio') : '1:1';
+
+        let posAttributes = [...new Set([...styles, ...colors, ...lighting, ...camera, ...detail])].join(', ');
+        let negAttributes = negatives.join(', ');
+
+        let finalPos = "";
+        let finalNeg = negAttributes || "None";
+
+        if (engine === 'gemini') {
+            const styleText = posAttributes ? `. Style: ${posAttributes}` : '';
+            finalPos = `A high-quality image of ${subject}${styleText}. Aspect ratio ${activeRatio}.`;
+            document.getElementById('negative-container').style.display = 'none';
+        } else if (engine === 'midjourney') {
+            const attrText = posAttributes ? `, ${posAttributes}` : '';
+            let negFlag = negAttributes ? ` --no ${negAttributes}` : '';
+            finalPos = `${subject}${attrText} --ar ${activeRatio} --v 6.0${negFlag}`;
+            document.getElementById('negative-container').style.display = 'none';
+        } else {
+            const attrText = posAttributes ? `, ${posAttributes}` : '';
+            finalPos = `${subject}${attrText}`;
+            document.getElementById('negative-container').style.display = 'block';
+        }
+
+        document.getElementById('prompt-output').innerText = finalPos;
+        document.getElementById('neg-prompt-output').innerText = finalNeg;
+    }
+
+    // COPY PROMPT WITH FALLBACK
+    function copyPrompt() {
+        const posText = document.getElementById('prompt-output').innerText;
+        const negContainer = document.getElementById('negative-container');
+        const negText = document.getElementById('neg-prompt-output').innerText;
+
+        let fullPackage = posText;
+        if (negContainer.style.display !== 'none' && negText && negText !== 'None') {
+            fullPackage += `\n\nNegative Prompt:\n${negText}`;
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(fullPackage)
+                .then(() => alert('Prompt Package Copied to Clipboard!'))
+                .catch(() => fallbackCopy(fullPackage));
+        } else {
+            fallbackCopy(fullPackage);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('Prompt Package Copied to Clipboard!');
+        } catch (err) {
+            alert('Failed to copy prompt.');
+        }
+        document.body.removeChild(textArea);
+    }
+
+    // VISION AI: REVERSE IMAGE PROMPT ARCHITECT
+    let uploadedImageBase64 = null;
+    let uploadedImageMimeType = null;
+
+    function handleImageSelected(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const dataUrl = e.target.result;
+            uploadedImageBase64 = dataUrl.split(',')[1];
+            uploadedImageMimeType = file.type || 'image/jpeg';
+
+            const preview = document.getElementById('image-preview');
+            preview.src = dataUrl;
+            document.getElementById('image-preview-container').style.display = 'block';
+            document.getElementById('vision-result').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function analyzeImageWithGemini() {
+        const apiKey = getApiKey();
+        if (!apiKey) {
+            alert("Pehle '⚙️ Key Settings' par click karke apni Gemini API Key enter karein!");
+            setUserCustomApiKey();
+            return;
+        }
+
+        if (!uploadedImageBase64) {
+            alert("Kripya pehle ek image upload karein!");
+            return;
+        }
+
+        const visionLoading = document.getElementById('vision-loading');
+        const visionResult = document.getElementById('vision-result');
+        const visionText = document.getElementById('vision-text');
+
+        visionLoading.style.display = 'block';
+        visionResult.style.display = 'none';
+
+        const activeModelInfo = await fetchBestAvailableModel(apiKey);
+        if (!activeModelInfo) {
+            visionLoading.style.display = 'none';
+            alert("Gemini API Error: Active vision model nahi mil paya.");
+            return;
+        }
+
+        const systemPrompt = `Analyze this image in detail for AI image generation. 
+Describe the main subject, composition, artistic style, lighting, atmosphere, and visual details in a single concise, highly descriptive prompt phrase suitable for Midjourney/DALL-E (max 40 words).`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/${activeModelInfo.apiVersion}/${activeModelInfo.modelPath}:generateContent?key=${apiKey}`;
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: systemPrompt },
+                            {
+                                inlineData: {
+                                    mimeType: uploadedImageMimeType,
+                                    data: uploadedImageBase64
+                                }
+                            }
+                        ]
+                    }]
+                })
+            });
+
+            const data = await response.json();
+            visionLoading.style.display = 'none';
+
+            if (data.error) {
+                alert("Gemini Vision API Error: " + data.error.message);
+                return;
+            }
+
+            const candidate = data.candidates?.[0];
+            if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                alert("Image ki description fetch nahi ho saki.");
+                return;
+            }
+
+            const description = candidate.content.parts[0].text.trim();
+            visionText.value = description;
+            visionResult.style.display = 'block';
+
+        } catch (err) {
+            visionLoading.style.display = 'none';
+            alert("Failed to analyze image: " + err.message);
+            console.error("Gemini Vision Error:", err);
+        }
+    }
+
+    function applyVisionPrompt() {
+        const text = document.getElementById('vision-text').value.trim();
+        if (text) {
+            document.getElementById('subject-input').value = text;
+            updatePrompt();
+            alert("Edited image description base concept me transfer ho gayi hai!");
+        } else {
+            alert("Pehle prompt text enter karein!");
+        }
+    }
+
+    // proofreadText — provided by js/common.js
+
+    async function polishVisionPrompt() {
+        const visionText = document.getElementById('vision-text');
+        const currentText = visionText.value.trim();
+        if (!currentText) {
+            alert("Pehle check karne ke liye text enter karein!");
+            return;
+        }
+
+        const visionLoading = document.getElementById('vision-loading');
+        visionLoading.innerText = '⚡ AI grammar & sentence structure check kar raha hai...';
+        visionLoading.style.display = 'block';
+
+        const corrected = await proofreadText(currentText);
+        visionLoading.style.display = 'none';
+
+        if (corrected) {
+            visionText.value = corrected;
+            alert("✅ AI ne grammar aur sentence structure fix kar diya hai!");
+        } else {
+            alert("Grammar check fail ho gaya. Please try again.");
+        }
+    }
+
+    async function polishBasePrompt() {
+        const inputEl = document.getElementById('subject-input');
+        const currentText = inputEl.value.trim();
+        if (!currentText) {
+            alert("Pehle base concept text enter karein!");
+            return;
+        }
+
+        const loading = document.getElementById('loading');
+        loading.innerText = '⚡ AI grammar & prompt format check kar raha hai...';
+        loading.style.display = 'block';
+
+        const corrected = await proofreadText(currentText);
+        loading.style.display = 'none';
+
+        if (corrected) {
+            inputEl.value = corrected;
+            updatePrompt();
+            alert("✅ AI ne Base Concept ki grammar fix kar di!");
+        } else {
+            alert("Grammar check fail ho gaya. Please try again.");
+        }
+    }
+
+    updatePrompt();
+</script>
+
+
+</body>
+</html>
