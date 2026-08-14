@@ -476,17 +476,30 @@
             <!-- MULTI-CHARACTER DIALOGUE & SCRIPT BUILDER -->
             <div class="section-title" style="color: #38bdf8; margin-top: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
                 <span>🗣️ Multi-Character Dialogue &amp; Script Builder</span>
-                <div style="display: flex; gap: 4px;">
+                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
                     <button type="button" class="api-btn" style="background:#0284c7; color:white; padding:3px 8px; font-size:10px;" onclick="autoDetectCharactersFromConcept()" title="Auto-detect characters from Base Concept prompt">🤖 Auto-Detect</button>
                     <button type="button" class="api-btn" style="background:#10b981; color:white; padding:3px 8px; font-size:10px;" onclick="addCharacterDialogueRow()">➕ Add Character</button>
                 </div>
             </div>
             <div style="background: #020617; border: 1px solid #38bdf8; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
                 <div style="font-size: 11px; color: #94a3b8; margin-bottom: 10px;">
-                    Har character ka naam (e.g. Ramesh, Suresh) aur unka dialogue add karein &mdash; AI automatically inhe structured cinematic script me convert kar dega.
+                    Har character ka naam (e.g. Ramesh, Suresh) aur unka dialogue add karein &mdash; nicha diye gaye button se ye structured script format me Base Concept me jud jayega.
                 </div>
                 <div id="character-dialogue-list" style="display: flex; flex-direction: column; gap: 10px;">
                     <!-- Dynamic Character Rows populated by JS -->
+                </div>
+
+                <!-- Action Button: Merge Script into Base Concept -->
+                <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr; gap: 6px;">
+                    <button type="button" class="api-btn" style="background: linear-gradient(135deg, #0284c7, #059669); color: white; padding: 9px; font-size: 12px; font-weight: bold; border: 1px solid #38bdf8;" onclick="insertScriptIntoBaseConcept()" title="In sabhi characters aur dialogues ko structured cinematic script me convert karke Base Concept box me bhej dein">
+                        ⚡ Add Character Script into Base Concept Box
+                    </button>
+                </div>
+
+                <!-- Real-time Structured Script Preview -->
+                <div id="script-preview-box" style="margin-top: 10px; background: #0b1329; border: 1px dashed #0284c7; border-radius: 6px; padding: 8px; font-size: 11px; color: #93c5fd; font-family: monospace; display: none;">
+                    <div style="font-size: 10px; color: #38bdf8; font-weight: bold; margin-bottom: 3px;">📜 Structured Script Preview:</div>
+                    <span id="script-preview-text"></span>
                 </div>
             </div>
 
@@ -759,11 +772,33 @@ Return ONLY the final prompt in 2-3 sentences. No intro text, no labels.`;
             return;
         }
 
+        // 1. Gather Base Concept
         const subject = document.getElementById('subject-input').value.trim();
         if (!subject) {
             alert("Kripya ek chota base video idea likhein (e.g. 'a sports car drifting on wet street')");
             return;
         }
+
+        // 2. Gather All Dynamic Character Dialogue Rows
+        const dialogueRows = document.querySelectorAll('.character-dialogue-row');
+        let characterDetails = [];
+        dialogueRows.forEach((row, idx) => {
+            const charName = row.querySelector('.char-name-input')?.value.trim();
+            const charDiag = row.querySelector('.char-diag-input')?.value.trim();
+            const charCue  = row.querySelector('.char-cue-select')?.value;
+            if (charName || charDiag) {
+                characterDetails.push({
+                    name: charName || `Character #${idx + 1}`,
+                    dialogue: charDiag || "No spoken lines",
+                    expression: charCue || "Intense Lip-Sync Movement"
+                });
+            }
+        });
+
+        // 3. Gather Active Camera & Style Tags
+        const cameraMotion = Array.from(document.querySelectorAll('#camera-motion-tags .tag.active')).map(t => t.innerText).join(', ');
+        const speed = Array.from(document.querySelectorAll('#speed-tags .tag.active')).map(t => t.innerText).join(', ');
+        const lighting = Array.from(document.querySelectorAll('#lighting-tags .tag.active')).map(t => t.innerText).join(', ');
 
         const loading = document.getElementById('loading');
         const container = document.getElementById('ai-suggestions');
@@ -780,13 +815,30 @@ Return ONLY the final prompt in 2-3 sentences. No intro text, no labels.`;
             return;
         }
 
-        loading.innerText = `⚡ Gemini Video Director (${activeModelInfo.modelPath.replace('models/', '')}) motion trajectories soch raha hai...`;
+        loading.innerText = `⚡ Gemini Video Director (${activeModelInfo.modelPath.replace('models/', '')}) characters, dialogues & motion trajectories ko blend kar raha hai...`;
 
-        const systemPrompt = `You are an expert AI Video Motion Director and Prompt Engineer for OpenAI Sora, Runway Gen-3, and Luma. 
-The user gave a video idea: "${subject}". 
-Generate exactly 3 creative, highly detailed cinematic video motion scenarios expanding this idea with specific camera movements, physics, and lighting.
-Return ONLY a valid JSON array of 3 strings. Example:
-["scenario 1 detailed video prompt", "scenario 2 detailed video prompt", "scenario 3 detailed video prompt"]`;
+        // Format Character Context for Gemini
+        let charContextPrompt = "";
+        if (characterDetails.length > 0) {
+            charContextPrompt = `\nActive Scene Characters & Dialogues:\n` + 
+                characterDetails.map((c, i) => `${i + 1}. Character: "${c.name}", Spoken Dialogue: "${c.dialogue}", Facial Expression/Acting Cue: "${c.expression}"`).join('\n') +
+                `\nIMPORTANT: Incorporate these exact characters, their emotional dynamics, lip-sync speech actions, and interactions into each scenario!`;
+        }
+
+        let cameraContextPrompt = cameraMotion ? `\nPreferred Camera Movements: ${cameraMotion}` : "";
+        let lightingContextPrompt = lighting ? `\nLighting & Mood: ${lighting}` : "";
+
+        const systemPrompt = `You are an elite Hollywood AI Video Director and Scriptwriter for OpenAI Sora, Runway Gen-3, Luma Dream Machine, and Kling AI.
+Base Scene Concept: "${subject}"${charContextPrompt}${cameraContextPrompt}${lightingContextPrompt}
+
+Task: Generate exactly 3 distinct, highly creative, cinematic video motion scenarios expanding this concept. 
+Each scenario must be a complete cinematic video prompt integrating:
+1. Subject action and camera trajectory (pan, tracking, zoom).
+2. The specific characters with their dialogues and lip-sync acting cues seamlessly embedded into the action.
+3. Lighting, atmospheric physics, and motion pacing.
+
+Return ONLY a valid JSON array of 3 strings. Example format:
+["scenario 1 with characters and dialogue", "scenario 2 with characters and dialogue", "scenario 3 with characters and dialogue"]`;
 
         const apiUrl = `https://generativelanguage.googleapis.com/${activeModelInfo.apiVersion}/${activeModelInfo.modelPath}:generateContent?key=${apiKey}`;
 
@@ -1151,6 +1203,50 @@ Return ONLY a valid JSON array of strings containing max 4 character description
         updatePrompt();
     }
 
+    // ── STRUCTURED SCRIPT BUILDER HELPER ──────────────────────
+    function generateStructuredScriptText() {
+        const dialogueRows = document.querySelectorAll('.character-dialogue-row');
+        let scriptSegments = [];
+
+        dialogueRows.forEach((row, idx) => {
+            const charName = row.querySelector('.char-name-input')?.value.trim();
+            const charDiag = row.querySelector('.char-diag-input')?.value.trim();
+            const charCue  = row.querySelector('.char-cue-select')?.value;
+
+            if (charName || charDiag) {
+                let nameStr = charName || `Character #${idx + 1}`;
+                let cueStr  = charCue ? `[Expression: ${charCue}]` : '';
+                let diagStr = charDiag ? `says "${charDiag}"` : '';
+                scriptSegments.push(`${nameStr} ${cueStr} ${diagStr}`.trim());
+            }
+        });
+
+        if (scriptSegments.length === 0) return "";
+        return `[Cinematic Character Script: ${scriptSegments.map(s => `(${s})`).join(' ')}]`;
+    }
+
+    function insertScriptIntoBaseConcept() {
+        const scriptText = generateStructuredScriptText();
+        if (!scriptText) {
+            alert("Pehle kam se kam ek character ka naam ya dialogue enter karein!");
+            return;
+        }
+
+        const inputEl = document.getElementById('subject-input');
+        let currentVal = inputEl.value.trim();
+
+        // Check if a script block already exists in Base Concept, replace or append
+        const regexScriptBlock = /\[Cinematic Character Script:.*?\]/i;
+        if (regexScriptBlock.test(currentVal)) {
+            inputEl.value = currentVal.replace(regexScriptBlock, scriptText);
+        } else {
+            inputEl.value = currentVal ? `${currentVal} with ${scriptText}` : scriptText;
+        }
+
+        updatePrompt();
+        alert("✅ Character Dialogue Script structured format mein Base Video Concept box mein add ho gaya!");
+    }
+
     // PROMPT FORMATTER FOR VIDEO
     function updatePrompt() {
         const subject = document.getElementById('subject-input').value.trim();
@@ -1162,6 +1258,19 @@ Return ONLY a valid JSON array of strings containing max 4 character description
         const quality = Array.from(document.querySelectorAll('#quality-tags .tag.active')).map(t => t.innerText);
         const audio = Array.from(document.querySelectorAll('#audio-tags .tag.active')).map(t => t.innerText);
         const negatives = Array.from(document.querySelectorAll('#negative-tags .neg-tag.active')).map(t => t.innerText);
+
+        // Update Real-time Structured Script Preview Box
+        const structuredScript = generateStructuredScriptText();
+        const previewBox = document.getElementById('script-preview-box');
+        const previewText = document.getElementById('script-preview-text');
+        if (previewBox && previewText) {
+            if (structuredScript) {
+                previewText.textContent = structuredScript;
+                previewBox.style.display = 'block';
+            } else {
+                previewBox.style.display = 'none';
+            }
+        }
 
         // Gather all Dynamic Character Dialogue Rows
         const dialogueRows = document.querySelectorAll('.character-dialogue-row');
@@ -1181,7 +1290,8 @@ Return ONLY a valid JSON array of strings containing max 4 character description
         });
 
         let dialogueSegment = "";
-        if (scriptSegments.length > 0) {
+        // If subject doesn't already contain embedded script, attach it cleanly
+        if (scriptSegments.length > 0 && !subject.includes('[Cinematic Character Script:')) {
             dialogueSegment = `. Cinematic Multi-Character Script & Lip-Sync: ${scriptSegments.map(s => `(${s})`).join(' ')}`;
         }
 
