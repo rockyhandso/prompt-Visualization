@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -393,6 +393,43 @@
 
     // Init
     renderHistory();
+
+    // Auto-prefill from API error banner
+    (function checkPrefill() {
+        try {
+            const raw = sessionStorage.getItem('FEEDBACK_PREFILL');
+            if (!raw) return;
+            const prefill = JSON.parse(raw);
+            sessionStorage.removeItem('FEEDBACK_PREFILL');
+
+            // Set category
+            if (prefill.autoCategory) {
+                const pill = document.querySelector(`#fb-category .cat-pill[data-cat="${prefill.autoCategory}"]`);
+                if (pill) selectCat(pill);
+            }
+            // Set page
+            if (prefill.autoPage) {
+                const sel = document.getElementById('fb-page');
+                for (let i = 0; i < sel.options.length; i++) {
+                    if (sel.options[i].value.includes(prefill.autoPage.split('(')[0].trim())) {
+                        sel.selectedIndex = i; break;
+                    }
+                }
+            }
+            // Set message
+            if (prefill.autoMessage) {
+                document.getElementById('fb-message').value = prefill.autoMessage;
+            }
+
+            // Highlight the form
+            const card = document.querySelector('.card');
+            if (card) {
+                card.style.border = '1.5px solid #f59e0b';
+                card.style.boxShadow = '0 0 20px rgba(245,158,11,0.15)';
+                setTimeout(() => { card.style.border = ''; card.style.boxShadow = ''; }, 4000);
+            }
+        } catch(e) {}
+    })();
 </script>
 
 </body>

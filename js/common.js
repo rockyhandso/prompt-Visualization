@@ -442,7 +442,128 @@ function changeAppTheme(themeName) {
     if (savedTheme) changeAppTheme(savedTheme);
 })();
 
-// ── 8. RIGHT SIDE PANEL (Feedback, Tour, Utilities) ────────────────────
+// ── 7.5 API ERROR FEEDBACK BANNER ──────────────────────────────────────
+(function injectErrorBannerCSS() {
+    const css = document.createElement('style');
+    css.textContent = `
+        .api-error-banner {
+            background: linear-gradient(135deg, #1e0000, #2d1215);
+            border: 1px solid #7f1d1d;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            animation: errorSlideIn 0.35s ease;
+        }
+        @keyframes errorSlideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .api-error-banner .aeb-header {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 14px; font-weight: 700; color: #fca5a5;
+            margin-bottom: 8px;
+        }
+        .api-error-banner .aeb-header .aeb-pulse {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #ef4444; display: inline-block;
+            animation: aebPulse 1.2s ease infinite;
+        }
+        @keyframes aebPulse {
+            0%,100% { opacity:1; transform:scale(1); }
+            50% { opacity:0.4; transform:scale(0.7); }
+        }
+        .api-error-banner .aeb-msg {
+            font-size: 12px; color: #d4d4d8; line-height: 1.6;
+            margin-bottom: 12px; word-break: break-word;
+        }
+        .api-error-banner .aeb-actions {
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .api-error-banner .aeb-btn {
+            padding: 8px 16px; border-radius: 8px; font-size: 12px;
+            font-weight: 700; cursor: pointer; border: none;
+            transition: 0.2s; text-decoration: none; display: inline-flex;
+            align-items: center; gap: 5px;
+        }
+        .aeb-btn-feedback {
+            background: #f59e0b; color: #0f172a;
+            animation: aebGlow 1.5s ease infinite alternate;
+        }
+        @keyframes aebGlow {
+            from { box-shadow: 0 0 4px rgba(245,158,11,0.3); }
+            to   { box-shadow: 0 0 16px rgba(245,158,11,0.6); }
+        }
+        .aeb-btn-feedback:hover {
+            background: #fbbf24; transform: translateY(-1px);
+        }
+        .aeb-btn-retry {
+            background: #334155; color: #e2e8f0;
+        }
+        .aeb-btn-retry:hover { background: #475569; }
+        .aeb-btn-dismiss {
+            background: transparent; color: #64748b; font-weight: 500;
+        }
+        .aeb-btn-dismiss:hover { color: #94a3b8; }
+    `;
+    document.head.appendChild(css);
+})();
+
+/**
+ * showApiErrorBanner - Shows an inline error + highlighted feedback button
+ * @param {string} errorMsg - The API error message
+ * @param {HTMLElement|string} containerOrId - Container element or its ID to insert banner into
+ * @param {Function} [retryFn] - Optional retry function to call on "Try Again"
+ */
+function showApiErrorBanner(errorMsg, containerOrId, retryFn) {
+    const container = typeof containerOrId === 'string'
+        ? document.getElementById(containerOrId)
+        : containerOrId;
+    if (!container) { alert(errorMsg); return; }
+
+    // Remove any existing banner in this container
+    const old = container.querySelector('.api-error-banner');
+    if (old) old.remove();
+
+    const currentPage = location.pathname.split('/').pop() || 'index.html';
+
+    // Pre-fill feedback data in sessionStorage for the feedback page
+    const feedbackCtx = {
+        autoCategory: 'bug',
+        autoPage: currentPage.includes('video') ? 'Video Studio (video.html)' : 'Image Studio (index.html)',
+        autoMessage: `API Error: ${errorMsg}\n\nPage: ${currentPage}\nTime: ${new Date().toLocaleString('en-IN')}\nBrowser: ${navigator.userAgent.substring(0, 80)}`
+    };
+    sessionStorage.setItem('FEEDBACK_PREFILL', JSON.stringify(feedbackCtx));
+
+    const banner = document.createElement('div');
+    banner.className = 'api-error-banner';
+    banner.innerHTML = `
+        <div class="aeb-header">
+            <span class="aeb-pulse"></span>
+            ⚠️ API Error Detected
+        </div>
+        <div class="aeb-msg">
+            ${escapeHtml(errorMsg)}
+        </div>
+        <div class="aeb-actions">
+            <a href="feedback.html" class="aeb-btn aeb-btn-feedback">
+                💬 Report This Issue
+            </a>
+            ${retryFn ? '<button class="aeb-btn aeb-btn-retry" id="aeb-retry-btn">🔄 Try Again</button>' : ''}
+            <button class="aeb-btn aeb-btn-dismiss" onclick="this.closest('.api-error-banner').remove()">✕ Dismiss</button>
+        </div>
+    `;
+    container.prepend(banner);
+
+    // Attach retry handler
+    if (retryFn) {
+        const retryBtn = banner.querySelector('#aeb-retry-btn');
+        if (retryBtn) retryBtn.onclick = function() { banner.remove(); retryFn(); };
+    }
+
+    // Auto-scroll to banner
+    banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 (function initSidePanel() {
     // Inject CSS
     const panelCSS = document.createElement('style');

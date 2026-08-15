@@ -527,13 +527,13 @@ Return ONLY a valid JSON array of 3 strings. Example:
 
             if (data.error) {
                 if (checkAndHandleQuotaError(data.error)) return;
-                alert("Gemini API Error: " + data.error.message);
+                showApiErrorBanner("Gemini API Error: " + data.error.message, 'ai-suggestions', generateAiIdeas);
                 return;
             }
 
             const candidate = data.candidates?.[0];
             if (!candidate || !candidate.content?.parts?.[0]?.text) {
-                alert("Gemini se response nahi mil paya. Safety block ya empty response ho sakta hai.");
+                showApiErrorBanner("Gemini se response nahi mil paya. Safety block ya empty response ho sakta hai.", 'ai-suggestions', generateAiIdeas);
                 return;
             }
 
@@ -569,7 +569,7 @@ Return ONLY a valid JSON array of 3 strings. Example:
 
         } catch (err) {
             loading.style.display = 'none';
-            alert("Failed to process request or parse JSON from Gemini API: " + err.message);
+            showApiErrorBanner("Failed to process request: " + err.message, 'ai-suggestions', generateAiIdeas);
             console.error("Gemini API Error:", err);
         }
     }
