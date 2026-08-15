@@ -656,6 +656,33 @@ function showApiErrorBanner(errorMsg, containerOrId, retryFn) {
             color: #cbd5e1 !important;
         }
 
+        .dock-themes {
+            display: flex;
+            gap: 4px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            padding: 4px 8px;
+            border-radius: 20px;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .dock-theme-btn {
+            background: #1e293b;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            padding: 0;
+        }
+        .dock-theme-btn:hover { transform: scale(1.2); }
+
         @media (max-width: 600px) {
             .floating-right-dock {
                 right: 6px;
@@ -672,6 +699,7 @@ function showApiErrorBanner(errorMsg, containerOrId, retryFn) {
             .dock-item .dock-text { display: none; }
             .dock-item { padding: 8px; border-radius: 50%; }
             .dock-item .dock-icon { margin-left: 0; }
+            .dock-themes { display: none; }
         }
     `;
     document.head.appendChild(dockCSS);
@@ -700,6 +728,12 @@ function showApiErrorBanner(errorMsg, containerOrId, retryFn) {
                 <span class="dock-text">⚙️ Admin</span>
                 <span class="dock-icon">⚙️</span>
             </a>
+            <div class="dock-themes" title="Theme badlein">
+                <button type="button" class="dock-theme-btn" onclick="changeAppTheme('default')" title="Default Dark">🌙</button>
+                <button type="button" class="dock-theme-btn" onclick="changeAppTheme('cyberpunk')" style="background:#a855f7;" title="Cyberpunk">🟣</button>
+                <button type="button" class="dock-theme-btn" onclick="changeAppTheme('emerald')" style="background:#10b981;" title="Emerald">🟢</button>
+                <button type="button" class="dock-theme-btn" onclick="changeAppTheme('oled')" style="background:#334155;" title="OLED">🖤</button>
+            </div>
         `;
 
         document.body.appendChild(dock);
