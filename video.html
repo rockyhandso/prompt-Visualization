@@ -810,7 +810,7 @@ Return ONLY the final prompt in 2-3 sentences. No intro text, no labels.`;
 
         if (!activeModelInfo) {
             loading.style.display = 'none';
-            alert("Gemini API Error: Could not connect to available Gemini models.");
+            showApiErrorBanner("Gemini API Error: Could not connect to available Gemini models. Kripya API Key check karein ya thodi der baad try karein.", 'ai-suggestions', generateAiIdeas);
             return;
         }
 

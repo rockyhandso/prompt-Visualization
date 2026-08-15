@@ -497,7 +497,7 @@
 
         if (!activeModelInfo) {
             loading.style.display = 'none';
-            alert("Gemini API Error: Aapki API Key se koi active model match nahi hua.\n\nKripya check karein:\n1. Kya API key Google AI Studio (https://aistudio.google.com/) se bani hai?\n2. Key valid hai ya expired toh nahi?");
+            showApiErrorBanner("Gemini API Error: Aapki API Key se koi active model match nahi hua. Kripya check karein ki key valid hai ya Google AI Studio se bani hai.", 'ai-suggestions', generateAiIdeas);
             return;
         }
 

@@ -421,6 +421,7 @@ function escapeHTML(str) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
+const escapeHtml = escapeHTML;
 
 function safeSetText(elementId, text) {
     const el = document.getElementById(elementId);
@@ -515,53 +516,64 @@ function changeAppTheme(themeName) {
  * @param {Function} [retryFn] - Optional retry function to call on "Try Again"
  */
 function showApiErrorBanner(errorMsg, containerOrId, retryFn) {
-    const container = typeof containerOrId === 'string'
-        ? document.getElementById(containerOrId)
-        : containerOrId;
-    if (!container) { alert(errorMsg); return; }
+    try {
+        const container = typeof containerOrId === 'string'
+            ? document.getElementById(containerOrId)
+            : containerOrId;
+        if (!container) { alert(errorMsg); return; }
 
-    // Remove any existing banner in this container
-    const old = container.querySelector('.api-error-banner');
-    if (old) old.remove();
+        // Remove any existing banner in this container
+        const old = container.querySelectorAll('.api-error-banner');
+        old.forEach(el => el.remove());
 
-    const currentPage = location.pathname.split('/').pop() || 'index.html';
+        const currentPage = location.pathname.split('/').pop() || 'index.html';
 
-    // Pre-fill feedback data in sessionStorage for the feedback page
-    const feedbackCtx = {
-        autoCategory: 'bug',
-        autoPage: currentPage.includes('video') ? 'Video Studio (video.html)' : 'Image Studio (index.html)',
-        autoMessage: `API Error: ${errorMsg}\n\nPage: ${currentPage}\nTime: ${new Date().toLocaleString('en-IN')}\nBrowser: ${navigator.userAgent.substring(0, 80)}`
-    };
-    sessionStorage.setItem('FEEDBACK_PREFILL', JSON.stringify(feedbackCtx));
+        // Pre-fill feedback data in sessionStorage for the feedback page
+        const feedbackCtx = {
+            autoCategory: 'bug',
+            autoPage: currentPage.includes('video') ? 'Video Studio (video.html)' : 'Image Studio (index.html)',
+            autoMessage: `API Error: ${errorMsg}\n\nPage: ${currentPage}\nTime: ${new Date().toLocaleString('en-IN')}\nBrowser: ${navigator.userAgent.substring(0, 80)}`
+        };
+        try { sessionStorage.setItem('FEEDBACK_PREFILL', JSON.stringify(feedbackCtx)); } catch(e){}
 
-    const banner = document.createElement('div');
-    banner.className = 'api-error-banner';
-    banner.innerHTML = `
-        <div class="aeb-header">
-            <span class="aeb-pulse"></span>
-            ⚠️ API Error Detected
-        </div>
-        <div class="aeb-msg">
-            ${escapeHtml(errorMsg)}
-        </div>
-        <div class="aeb-actions">
-            <a href="feedback.html" class="aeb-btn aeb-btn-feedback">
-                💬 Report This Issue
-            </a>
-            ${retryFn ? '<button class="aeb-btn aeb-btn-retry" id="aeb-retry-btn">🔄 Try Again</button>' : ''}
-            <button class="aeb-btn aeb-btn-dismiss" onclick="this.closest('.api-error-banner').remove()">✕ Dismiss</button>
-        </div>
-    `;
-    container.prepend(banner);
+        const banner = document.createElement('div');
+        banner.className = 'api-error-banner';
+        banner.innerHTML = `
+            <div class="aeb-header">
+                <span class="aeb-pulse"></span>
+                ⚠️ API Error / High Demand Detected
+            </div>
+            <div class="aeb-msg">
+                ${escapeHTML(String(errorMsg))}
+            </div>
+            <div class="aeb-actions">
+                <a href="feedback.html" class="aeb-btn aeb-btn-feedback">
+                    💬 Report This Issue
+                </a>
+                <button class="aeb-btn" style="background:#059669; color:white;" onclick="setUserCustomApiKey()">
+                    🔑 Use My Own Key
+                </button>
+                ${retryFn ? '<button class="aeb-btn aeb-btn-retry" id="aeb-retry-btn">🔄 Try Again</button>' : ''}
+                <button class="aeb-btn aeb-btn-dismiss" onclick="this.closest('.api-error-banner').remove()">✕ Dismiss</button>
+            </div>
+        `;
+        container.prepend(banner);
 
-    // Attach retry handler
-    if (retryFn) {
-        const retryBtn = banner.querySelector('#aeb-retry-btn');
-        if (retryBtn) retryBtn.onclick = function() { banner.remove(); retryFn(); };
+        // Attach retry handler (clears model cache to force fresh discovery)
+        if (retryFn) {
+            const retryBtn = banner.querySelector('#aeb-retry-btn');
+            if (retryBtn) retryBtn.onclick = function() {
+                try { sessionStorage.removeItem('GEMINI_MODEL_CACHE'); } catch(e){}
+                banner.remove();
+                retryFn();
+            };
+        }
+
+        banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch(err) {
+        console.error("Error displaying banner:", err);
+        alert(errorMsg);
     }
-
-    // Auto-scroll to banner
-    banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 (function initSidePanel() {
