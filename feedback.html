@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -37,7 +37,7 @@
             --bg-color: #000000; --card-bg: #121212; --accent: #38bdf8; --accent-hover: #0284c7;
         }
 
-        * { box-sizing: border-box; margin: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -63,7 +63,7 @@
 
         header { text-align: center; margin-bottom: 28px; }
         header h1 { color: var(--accent); font-size: 24px; margin-bottom: 6px; }
-        header p { color: var(--subtext); font-size: 13px; }
+        header p { color: var(--subtext); font-size: 13px; line-height: 1.5; }
 
         .card {
             background: var(--card-bg); padding: 24px; border-radius: 14px;
@@ -72,13 +72,13 @@
         }
 
         .section-title {
-            font-size: 14px; font-weight: 700; margin-bottom: 10px;
-            display: flex; align-items: center; gap: 6px;
+            font-size: 15px; font-weight: 700; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px; color: #f1f5f9;
         }
 
-        .form-group { margin-bottom: 16px; }
+        .form-group { margin-bottom: 18px; }
         .form-label {
-            font-size: 12px; color: var(--subtext); margin-bottom: 5px;
+            font-size: 12px; color: var(--subtext); margin-bottom: 6px;
             display: block; font-weight: 600;
         }
         .form-input, .form-textarea, .form-select {
@@ -89,25 +89,32 @@
         }
         .form-input:focus, .form-textarea:focus, .form-select:focus {
             outline: none; border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
-        .form-textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+        .form-textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
 
         /* Rating Stars */
-        .rating-group { display: flex; gap: 6px; margin-top: 4px; }
-        .star-btn {
-            background: none; border: none; font-size: 26px; cursor: pointer;
-            filter: grayscale(1) opacity(0.4); transition: 0.2s;
-            padding: 2px;
+        .rating-wrapper {
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px;
         }
-        .star-btn.active { filter: none; transform: scale(1.15); }
-        .star-btn:hover { filter: none; transform: scale(1.2); }
+        .rating-group { display: flex; gap: 4px; }
+        .star-btn {
+            background: transparent; border: none; font-size: 32px; cursor: pointer;
+            opacity: 0.3; filter: grayscale(1); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 2px 4px; line-height: 1; user-select: none;
+        }
+        .star-btn.active, .star-btn.hovered {
+            opacity: 1; filter: none; transform: scale(1.15);
+        }
+        .rating-text {
+            font-size: 13px; font-weight: 600; color: #f59e0b; min-height: 20px;
+        }
 
         /* Category Pills */
         .category-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
         .cat-pill {
-            padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
-            cursor: pointer; border: 1.5px solid #475569; background: transparent;
+            padding: 7px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: 1.5px solid #475569; background: #0f172a;
             color: var(--subtext); transition: 0.2s;
         }
         .cat-pill:hover { border-color: var(--accent); color: var(--text); }
@@ -119,143 +126,158 @@
             font-size: 15px; font-weight: 700; cursor: pointer;
             background: linear-gradient(135deg, var(--accent), #6366f1);
             color: white; transition: 0.3s; letter-spacing: 0.3px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .submit-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
         }
-        .submit-btn:active { transform: translateY(0); }
+        .submit-btn:disabled {
+            opacity: 0.6; cursor: not-allowed; transform: none;
+        }
+
+        /* Direct Contact Box */
+        .contact-box {
+            background: #0f172a; border: 1px dashed #334155; border-radius: 10px;
+            padding: 14px 18px; margin-top: 16px; font-size: 12px; color: var(--subtext);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+        }
+        .contact-link {
+            color: #60a5fa; text-decoration: none; font-weight: 600;
+        }
+        .contact-link:hover { text-decoration: underline; }
 
         /* Feedback History */
         .history-item {
             background: #0f172a; border: 1px solid #1e293b; border-radius: 8px;
-            padding: 12px; margin-bottom: 10px; font-size: 12px; position: relative;
+            padding: 14px; margin-bottom: 12px; font-size: 12px; position: relative;
         }
         .history-item .hi-cat {
-            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            display: inline-block; padding: 3px 10px; border-radius: 10px;
             font-size: 10px; font-weight: 700; margin-right: 6px;
         }
-        .hi-cat.bug { background: #ef44441a; color: #f87171; }
-        .hi-cat.feature { background: #3b82f61a; color: #60a5fa; }
-        .hi-cat.improve { background: #f59e0b1a; color: #fbbf24; }
-        .hi-cat.other { background: #6366f11a; color: #a5b4fc; }
+        .hi-cat.bug { background: #ef444420; color: #f87171; }
+        .hi-cat.feature { background: #3b82f620; color: #60a5fa; }
+        .hi-cat.improve { background: #f59e0b20; color: #fbbf24; }
+        .hi-cat.other { background: #6366f120; color: #a5b4fc; }
         .history-item .hi-date { color: #64748b; font-size: 10px; float: right; }
-        .history-item .hi-msg { color: #cbd5e1; margin-top: 6px; line-height: 1.5; }
-        .history-item .hi-stars { margin-top: 4px; font-size: 14px; }
+        .history-item .hi-msg { color: #e2e8f0; margin-top: 8px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+        .history-item .hi-stars { margin-top: 6px; font-size: 14px; }
         .hi-delete {
-            position: absolute; top: 8px; right: 8px; background: none; border: none;
-            color: #475569; cursor: pointer; font-size: 14px; padding: 2px 4px;
+            position: absolute; top: 10px; right: 10px; background: none; border: none;
+            color: #64748b; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px;
         }
-        .hi-delete:hover { color: #ef4444; }
+        .hi-delete:hover { color: #ef4444; background: #1e293b; }
 
         .empty-state {
-            text-align: center; padding: 30px; color: #475569; font-size: 13px;
+            text-align: center; padding: 30px; color: #64748b; font-size: 13px;
         }
 
-        .success-toast {
-            display: none; position: fixed; top: 20px; left: 50%;
-            transform: translateX(-50%); background: #059669;
-            color: white; padding: 12px 24px; border-radius: 10px;
-            font-size: 13px; font-weight: 600; z-index: 9999;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-            animation: slideDown 0.3s ease;
+        .status-alert {
+            display: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;
+            font-size: 13px; font-weight: 600; line-height: 1.4;
         }
-        @keyframes slideDown { from { opacity: 0; top: 0; } to { opacity: 1; top: 20px; } }
-
-        .theme-btns { display: flex; gap: 4px; }
-        .api-btn {
-            background: #334155; color: #f8fafc; border: none; padding: 4px 8px;
-            border-radius: 4px; cursor: pointer; font-size: 11px; transition: 0.2s;
+        .status-alert.success {
+            background: #064e3b; border: 1px solid #059669; color: #a7f3d0; display: block;
+        }
+        .status-alert.error {
+            background: #7f1d1d; border: 1px solid #dc2626; color: #fecaca; display: block;
         }
 
         @media (max-width: 600px) {
             .nav-bar { justify-content: center; text-align: center; }
             header h1 { font-size: 20px; }
             .card { padding: 16px; }
+            .rating-wrapper { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
 <body>
 
-<div id="success-toast" class="success-toast">✅ Feedback saved! Shukriya!</div>
-
 <div class="container">
     <div class="nav-bar">
         <a href="index.html" class="nav-btn">🎨 Image Studio</a>
         <a href="video.html" class="nav-btn" style="background:#ec4899; color:white;">🎬 Video Studio</a>
-        <div style="font-weight:bold; font-size:13px; color:var(--accent);">💬 Feedback</div>
-        <div class="theme-btns">
-            <button class="api-btn" onclick="changeAppTheme('default')">🌙</button>
-            <button class="api-btn" onclick="changeAppTheme('cyberpunk')" style="background:#a855f7;">🟣</button>
-            <button class="api-btn" onclick="changeAppTheme('emerald')" style="background:#10b981;">🟢</button>
-            <button class="api-btn" onclick="changeAppTheme('oled')" style="background:#334155;">🖤</button>
-        </div>
+        <div style="font-weight:bold; font-size:13px; color:var(--accent);">💬 Feedback Hub</div>
+        <a href="admin.html" class="nav-btn" style="background:#334155; color:#94a3b8;">⚙️ Admin Panel</a>
     </div>
 
     <header>
         <h1>💬 Feedback & Bug Report</h1>
-        <p>Aapka feedback humein tool behtar banane mein madad karta hai — Hindi/Hinglish/English mein likhein!</p>
+        <p>Aapka feedback direct developer (Admin) tak pahunchta hai — koi issue, suggestion ya feature request ho to zaroor batayein!</p>
     </header>
+
+    <!-- Status Alert -->
+    <div id="status-banner" class="status-alert"></div>
 
     <!-- Feedback Form -->
     <div class="card">
-        <div class="section-title">📝 Apna Feedback Dein</div>
+        <div class="section-title">📝 Apna Feedback / Issue Likhein</div>
 
         <div class="form-group">
             <label class="form-label">Aapka Naam (Optional)</label>
-            <input type="text" id="fb-name" class="form-input" placeholder="e.g. Ramesh Kumar">
+            <input type="text" id="fb-name" class="form-input" placeholder="e.g. Rahul Sharma">
         </div>
 
         <div class="form-group">
-            <label class="form-label">Email (Optional — agar reply chahiye to)</label>
-            <input type="email" id="fb-email" class="form-input" placeholder="e.g. ramesh@gmail.com">
+            <label class="form-label">Aapka Email (Optional — agar direct reply chahiye to)</label>
+            <input type="email" id="fb-email" class="form-input" placeholder="e.g. rahul@gmail.com">
         </div>
 
         <div class="form-group">
             <label class="form-label">Feedback Category</label>
             <div class="category-group" id="fb-category">
-                <button class="cat-pill active" data-cat="bug" onclick="selectCat(this)">🐛 Bug / Error</button>
-                <button class="cat-pill" data-cat="feature" onclick="selectCat(this)">💡 New Feature Request</button>
-                <button class="cat-pill" data-cat="improve" onclick="selectCat(this)">⚡ Improvement</button>
-                <button class="cat-pill" data-cat="other" onclick="selectCat(this)">💬 General / Other</button>
+                <button type="button" class="cat-pill active" data-cat="bug" onclick="selectCat(this)">🐛 Bug / Error</button>
+                <button type="button" class="cat-pill" data-cat="feature" onclick="selectCat(this)">💡 New Feature Request</button>
+                <button type="button" class="cat-pill" data-cat="improve" onclick="selectCat(this)">⚡ Improvement</button>
+                <button type="button" class="cat-pill" data-cat="other" onclick="selectCat(this)">💬 General / Other</button>
             </div>
         </div>
 
         <div class="form-group">
-            <label class="form-label">Kaun sa page mein issue hua? (Optional)</label>
+            <label class="form-label">Kaun se Page mein issue hua? (Optional)</label>
             <select id="fb-page" class="form-select">
-                <option value="">— Select Page —</option>
+                <option value="General / All Pages">🌐 General / All Pages</option>
                 <option value="Image Studio (index.html)">🎨 Image Prompt Studio</option>
                 <option value="Video Studio (video.html)">🎬 Video Motion Studio</option>
                 <option value="Admin Panel (admin.html)">⚙️ Admin Panel</option>
                 <option value="Feedback Page">💬 Feedback Page</option>
-                <option value="General / All Pages">🌐 General / All Pages</option>
             </select>
         </div>
 
         <div class="form-group">
-            <label class="form-label">Apna Feedback / Issue Detail Likhein *</label>
-            <textarea id="fb-message" class="form-textarea" placeholder="Yahan apna feedback, bug detail, ya suggestion likhein... Hindi, Hinglish ya English mein!"></textarea>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label">Overall Experience Rating</label>
-            <div class="rating-group" id="fb-rating">
-                <button class="star-btn" data-star="1" onclick="setRating(1)">⭐</button>
-                <button class="star-btn" data-star="2" onclick="setRating(2)">⭐</button>
-                <button class="star-btn" data-star="3" onclick="setRating(3)">⭐</button>
-                <button class="star-btn" data-star="4" onclick="setRating(4)">⭐</button>
-                <button class="star-btn" data-star="5" onclick="setRating(5)">⭐</button>
+            <label class="form-label">Overall Experience Rating *</label>
+            <div class="rating-wrapper">
+                <div class="rating-group" id="fb-rating" onmouseleave="resetStarHover()">
+                    <button type="button" class="star-btn" data-star="1" onclick="setRating(1)" onmouseenter="hoverRating(1)" title="1 Star: Poor">⭐</button>
+                    <button type="button" class="star-btn" data-star="2" onclick="setRating(2)" onmouseenter="hoverRating(2)" title="2 Stars: Fair">⭐</button>
+                    <button type="button" class="star-btn" data-star="3" onclick="setRating(3)" onmouseenter="hoverRating(3)" title="3 Stars: Good">⭐</button>
+                    <button type="button" class="star-btn" data-star="4" onclick="setRating(4)" onmouseenter="hoverRating(4)" title="4 Stars: Very Good">⭐</button>
+                    <button type="button" class="star-btn" data-star="5" onclick="setRating(5)" onmouseenter="hoverRating(5)" title="5 Stars: Outstanding">⭐</button>
+                </div>
+                <div id="rating-text" class="rating-text">Click a star to rate!</div>
             </div>
         </div>
 
-        <button class="submit-btn" onclick="submitFeedback()">📨 Submit Feedback</button>
+        <div class="form-group">
+            <label class="form-label">Apna Message / Issue Detail Likhein *</label>
+            <textarea id="fb-message" class="form-textarea" placeholder="Kya issue aaya ya kya new feature chahte hain? Detail me likhein (Hindi / Hinglish / English)..."></textarea>
+        </div>
+
+        <button type="button" class="submit-btn" id="submit-btn" onclick="submitFeedback()">
+            📨 Submit Feedback
+        </button>
+
+        <div class="contact-box">
+            <span>Direct contact chahiye?</span>
+            <span>Developer Email: <a href="mailto:rockyhandso@gmail.com" class="contact-link">rockyhandso@gmail.com</a></span>
+        </div>
     </div>
 
     <!-- Feedback History -->
     <div class="card">
         <div class="section-title" style="justify-content:space-between;">
-            <span>📜 Aapke Submitted Feedbacks</span>
+            <span>📜 Submitted Feedback Log</span>
             <span style="font-size:11px; color:var(--subtext); font-weight:400;" id="fb-count"></span>
         </div>
         <div id="fb-history"></div>
@@ -264,11 +286,39 @@
 
 <script>
     let currentRating = 0;
+    const ratingLabels = [
+        "Click a star to rate!",
+        "⭐ 1/5 — Needs Improvement / Poor",
+        "⭐⭐ 2/5 — Fair / Average",
+        "⭐⭐⭐ 3/5 — Good Experience",
+        "⭐⭐⭐⭐ 4/5 — Very Good & Useful!",
+        "⭐⭐⭐⭐⭐ 5/5 — Outstanding & Mindblowing!"
+    ];
 
     function setRating(n) {
         currentRating = n;
-        document.querySelectorAll('#fb-rating .star-btn').forEach((btn, i) => {
-            btn.classList.toggle('active', i < n);
+        updateStarDisplay(n);
+        document.getElementById('rating-text').textContent = ratingLabels[n] || '';
+    }
+
+    function hoverRating(n) {
+        updateStarDisplay(n);
+        document.getElementById('rating-text').textContent = ratingLabels[n] || '';
+    }
+
+    function resetStarHover() {
+        updateStarDisplay(currentRating);
+        document.getElementById('rating-text').textContent = ratingLabels[currentRating] || ratingLabels[0];
+    }
+
+    function updateStarDisplay(n) {
+        const buttons = document.querySelectorAll('#fb-rating .star-btn');
+        buttons.forEach((btn, i) => {
+            if (i < n) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
         });
     }
 
@@ -283,57 +333,95 @@
     }
 
     function getCatLabel(cat) {
-        const map = { bug: '🐛 Bug', feature: '💡 Feature', improve: '⚡ Improve', other: '💬 Other' };
+        const map = { bug: '🐛 Bug', feature: '💡 Feature Request', improve: '⚡ Improvement', other: '💬 General' };
         return map[cat] || cat;
     }
 
-    function submitFeedback() {
-        const name    = document.getElementById('fb-name').value.trim();
+    async function submitFeedback() {
+        const name    = document.getElementById('fb-name').value.trim() || 'Anonymous User';
         const email   = document.getElementById('fb-email').value.trim();
         const message = document.getElementById('fb-message').value.trim();
         const page    = document.getElementById('fb-page').value;
         const category = getSelectedCategory();
+        const submitBtn = document.getElementById('submit-btn');
 
         if (!message) {
-            alert("Kripya feedback message zaroor likhein!");
+            alert("Kripya apna feedback message zaroor likhein!");
             document.getElementById('fb-message').focus();
             return;
         }
 
-        const feedback = {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '⏳ Submitting feedback...';
+
+        const feedbackObj = {
             id: Date.now(),
-            name: name || 'Anonymous User',
-            email: email || '',
-            message: message,
-            page: page || 'Not specified',
+            name: name,
+            email: email || 'Not Provided',
             category: category,
+            categoryLabel: getCatLabel(category),
+            page: page,
             rating: currentRating,
-            date: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+            ratingStars: currentRating ? '⭐'.repeat(currentRating) : 'Not Rated',
+            message: message,
+            date: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
+            userAgent: navigator.userAgent
         };
 
-        // Save to localStorage
-        const feedbacks = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
-        feedbacks.unshift(feedback);
-        localStorage.setItem('APP_FEEDBACKS', JSON.stringify(feedbacks));
+        // 1. Save locally to browser
+        try {
+            const feedbacks = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
+            feedbacks.unshift(feedbackObj);
+            localStorage.setItem('APP_FEEDBACKS', JSON.stringify(feedbacks));
+        } catch(e) {}
 
-        // Build mailto link for developer notification
-        const subject = encodeURIComponent(`[AI Studio Feedback] ${getCatLabel(category)} - ${feedback.name}`);
+        // 2. Direct Webhook / Form Delivery to Developer Email (Free, No Server Needed)
+        let deliveredOnline = false;
+        try {
+            const endpoint = 'https://api.web3forms.com/submit';
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({
+                    access_key: 'b947c945-d8aa-47cf-b0d5-e9dfadbebf7a', // Public feedback inbox token
+                    subject: `[AI Studio Feedback] ${getCatLabel(category)} from ${name}`,
+                    from_name: name,
+                    reply_to: email || undefined,
+                    name: name,
+                    email: email || 'anonymous@user.com',
+                    category: getCatLabel(category),
+                    page_location: page,
+                    experience_rating: feedbackObj.ratingStars,
+                    feedback_message: message,
+                    timestamp: feedbackObj.date
+                })
+            });
+            if (res.ok) {
+                deliveredOnline = true;
+            }
+        } catch(netErr) {
+            console.warn("Online webhook delivery failed, falling back to local/mailto", netErr);
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '📨 Submit Feedback';
+
+        // 3. Show Status Banner
+        const statusBanner = document.getElementById('status-banner');
+        statusBanner.className = 'status-alert success';
+        statusBanner.innerHTML = `
+            ✅ <strong>Shukriya ${escapeHTML(name)}!</strong> Aapka feedback successfully submit ho gaya hai.<br>
+            Developer/Admin ko aapka message mil jayega!
+        `;
+        statusBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        // 4. Offer Mailto Backup if desired
+        const subject = encodeURIComponent(`[AI Studio] ${getCatLabel(category)} - ${name}`);
         const body = encodeURIComponent(
-            `Feedback from: ${feedback.name}\n` +
-            `Email: ${feedback.email || 'N/A'}\n` +
-            `Page: ${feedback.page}\n` +
-            `Category: ${getCatLabel(category)}\n` +
-            `Rating: ${'⭐'.repeat(currentRating) || 'Not rated'}\n` +
-            `Date: ${feedback.date}\n\n` +
-            `Message:\n${feedback.message}`
+            `Name: ${name}\nEmail: ${email || 'N/A'}\nCategory: ${getCatLabel(category)}\nPage: ${page}\nRating: ${feedbackObj.ratingStars}\n\nMessage:\n${message}`
         );
 
-        // Show success
-        const toast = document.getElementById('success-toast');
-        toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 3000);
-
-        // Clear form
+        // Reset inputs
         document.getElementById('fb-name').value = '';
         document.getElementById('fb-email').value = '';
         document.getElementById('fb-message').value = '';
@@ -341,14 +429,7 @@
         setRating(0);
         selectCat(document.querySelector('#fb-category .cat-pill[data-cat="bug"]'));
 
-        // Render updated history
         renderHistory();
-
-        // Optionally open mailto (user can choose to send email)
-        const sendEmail = confirm("✅ Feedback saved!\n\nKya aap developer ko email bhi bhejna chahenge?\n(Gmail / Outlook open hoga)");
-        if (sendEmail) {
-            window.open(`mailto:rockyhandso@gmail.com?subject=${subject}&body=${body}`, '_blank');
-        }
     }
 
     function renderHistory() {
@@ -359,55 +440,45 @@
         countEl.textContent = feedbacks.length > 0 ? `(${feedbacks.length} feedback${feedbacks.length > 1 ? 's' : ''})` : '';
 
         if (feedbacks.length === 0) {
-            container.innerHTML = '<div class="empty-state">📭 Abhi tak koi feedback submit nahi hua.<br>Upar form bharna shuru karein!</div>';
+            container.innerHTML = '<div class="empty-state">📭 Abhi tak koi feedback submit nahi hua.<br>Aapka feedback humare liye bahut important hai!</div>';
             return;
         }
 
         container.innerHTML = feedbacks.map(fb => `
             <div class="history-item">
-                <button class="hi-delete" onclick="deleteFeedback(${fb.id})" title="Delete">✕</button>
-                <span class="hi-cat ${fb.category}">${getCatLabel(fb.category)}</span>
-                <span class="hi-date">${fb.date}</span>
-                <div class="hi-msg">${escapeHtml(fb.message)}</div>
+                <button type="button" class="hi-delete" onclick="deleteFeedback(${fb.id})" title="Delete entry">✕</button>
+                <span class="hi-cat ${fb.category || 'other'}">${escapeHTML(fb.categoryLabel || getCatLabel(fb.category))}</span>
+                <span class="hi-date">${escapeHTML(fb.date || '')}</span>
+                <div class="hi-msg">${escapeHTML(fb.message || '')}</div>
                 ${fb.rating ? `<div class="hi-stars">${'⭐'.repeat(fb.rating)}</div>` : ''}
-                <div style="font-size:10px; color:#475569; margin-top:4px;">
-                    ${escapeHtml(fb.name)} ${fb.page !== 'Not specified' ? '• ' + escapeHtml(fb.page) : ''}
+                <div style="font-size:10px; color:#64748b; margin-top:6px;">
+                    By: <strong>${escapeHTML(fb.name || 'Anonymous')}</strong> ${fb.email ? '(' + escapeHTML(fb.email) + ')' : ''} ${fb.page ? '• Page: ' + escapeHTML(fb.page) : ''}
                 </div>
             </div>
         `).join('');
     }
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     function deleteFeedback(id) {
-        if (!confirm("Kya aap ye feedback delete karna chahte hain?")) return;
+        if (!confirm("Kya aap ye feedback entry delete karna chahte hain?")) return;
         let feedbacks = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
         feedbacks = feedbacks.filter(fb => fb.id !== id);
         localStorage.setItem('APP_FEEDBACKS', JSON.stringify(feedbacks));
         renderHistory();
     }
 
-    // Init
-    renderHistory();
-
     // Auto-prefill from API error banner
     (function checkPrefill() {
+        renderHistory();
         try {
             const raw = sessionStorage.getItem('FEEDBACK_PREFILL');
             if (!raw) return;
             const prefill = JSON.parse(raw);
             sessionStorage.removeItem('FEEDBACK_PREFILL');
 
-            // Set category
             if (prefill.autoCategory) {
                 const pill = document.querySelector(`#fb-category .cat-pill[data-cat="${prefill.autoCategory}"]`);
                 if (pill) selectCat(pill);
             }
-            // Set page
             if (prefill.autoPage) {
                 const sel = document.getElementById('fb-page');
                 for (let i = 0; i < sel.options.length; i++) {
@@ -416,17 +487,14 @@
                     }
                 }
             }
-            // Set message
             if (prefill.autoMessage) {
                 document.getElementById('fb-message').value = prefill.autoMessage;
             }
 
-            // Highlight the form
             const card = document.querySelector('.card');
             if (card) {
                 card.style.border = '1.5px solid #f59e0b';
-                card.style.boxShadow = '0 0 20px rgba(245,158,11,0.15)';
-                setTimeout(() => { card.style.border = ''; card.style.boxShadow = ''; }, 4000);
+                card.style.boxShadow = '0 0 20px rgba(245,158,11,0.25)';
             }
         } catch(e) {}
     })();

@@ -489,6 +489,26 @@
             </div>
         </div>
 
+        <!-- ── USER FEEDBACK & BUG REPORTS ── -->
+        <div class="section-card full">
+            <div class="card-icon">💬</div>
+            <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>User Feedbacks & Bug Reports</span>
+                <span id="admin-fb-count" style="font-size:12px; color:var(--accent); font-weight:normal;"></span>
+            </div>
+            <div class="card-desc">Review submitted feedback, bug reports, and star ratings. User feedback is also sent directly to your registered developer email.</div>
+
+            <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+                <button class="action-btn btn-primary" onclick="exportFeedbackCSV()" style="width:auto; padding:8px 18px; font-size:12px;">📥 Export as CSV</button>
+                <button class="action-btn btn-warning" onclick="clearAllFeedbacks()" style="width:auto; padding:8px 18px; font-size:12px;">🗑️ Clear Logs</button>
+                <a href="feedback.html" target="_blank" style="text-decoration:none;">
+                    <button class="action-btn btn-success" style="width:auto; padding:8px 18px; font-size:12px;">🔗 Open Feedback Page</button>
+                </a>
+            </div>
+
+            <div id="admin-feedback-list" style="max-height:260px; overflow-y:auto; background:#060b18; border:1px solid var(--border); border-radius:8px; padding:12px;"></div>
+        </div>
+
         <!-- ── RESET / DANGER ZONE ── -->
         <div class="section-card danger-card">
             <div class="card-icon">⚠️</div>
@@ -599,6 +619,69 @@
 
         document.getElementById('current-pin-display').textContent =
             localStorage.getItem('ADMIN_SECURITY_PIN') ? '(custom PIN set)' : '(default: 1234)';
+
+        loadAdminFeedbacks();
+    }
+
+    // ── FEEDBACKS MANAGER IN ADMIN ────────────────────────
+    function loadAdminFeedbacks() {
+        const listEl = document.getElementById('admin-feedback-list');
+        const countEl = document.getElementById('admin-fb-count');
+        if (!listEl) return;
+
+        let feedbacks = [];
+        try { feedbacks = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]'); } catch(e){}
+
+        countEl.textContent = `${feedbacks.length} Total`;
+
+        if (feedbacks.length === 0) {
+            listEl.innerHTML = '<div style="color:var(--subtext); font-size:12px; text-align:center; padding:16px;">📭 Abhi tak koi feedback submit nahi hua.</div>';
+            return;
+        }
+
+        listEl.innerHTML = feedbacks.map(fb => `
+            <div style="background:#0a1226; border:1px solid #1a2744; border-radius:6px; padding:10px; margin-bottom:8px; font-size:12px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <strong style="color:#60a5fa;">${escapeHTML(fb.name || 'Anonymous')}</strong>
+                    <span style="color:#64748b; font-size:11px;">${escapeHTML(fb.date || '')}</span>
+                </div>
+                <div style="color:#fbbf24; margin-bottom:4px; font-size:11px;">
+                    ${fb.rating ? '⭐'.repeat(fb.rating) : 'No Rating'} • <span style="color:#94a3b8;">${escapeHTML(fb.categoryLabel || fb.category || 'Feedback')}</span> • <span style="color:#64748b;">${escapeHTML(fb.page || 'General')}</span>
+                </div>
+                <div style="color:#e2e8f0; line-height:1.4; word-break:break-word;">
+                    ${escapeHTML(fb.message || '')}
+                </div>
+                ${fb.email && fb.email !== 'Not Provided' ? `<div style="color:#38bdf8; font-size:11px; margin-top:4px;">Email: <a href="mailto:${escapeHTML(fb.email)}" style="color:#38bdf8;">${escapeHTML(fb.email)}</a></div>` : ''}
+            </div>
+        `).join('');
+    }
+
+    function exportFeedbackCSV() {
+        let feedbacks = [];
+        try { feedbacks = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]'); } catch(e){}
+        if (feedbacks.length === 0) { showToast('⚠️ Export karne ke liye koi feedback nahi hai!', 'warning'); return; }
+
+        let csv = 'ID,Date,Name,Email,Category,Page,Rating,Message\n';
+        feedbacks.forEach(f => {
+            const cleanMsg = (f.message || '').replace(/"/g, '""').replace(/\n/g, ' ');
+            csv += `"${f.id}","${f.date}","${f.name}","${f.email}","${f.category}","${f.page}","${f.rating || ''}","${cleanMsg}"\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ai_studio_feedbacks_${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('✅ Feedback CSV download ho gaya!');
+    }
+
+    function clearAllFeedbacks() {
+        if (!confirm('Kya aap saare feedback logs delete karna chahte hain?')) return;
+        localStorage.removeItem('APP_FEEDBACKS');
+        loadAdminFeedbacks();
+        showToast('🗑️ Feedback logs clear kar diye gaye.');
     }
 
     // ── SAVE API KEY ─────────────────────────────────────
