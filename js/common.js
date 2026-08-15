@@ -576,180 +576,139 @@ function showApiErrorBanner(errorMsg, containerOrId, retryFn) {
     }
 }
 
-(function initSidePanel() {
-    // Inject CSS
-    const panelCSS = document.createElement('style');
-    panelCSS.textContent = `
-        #side-panel-overlay {
-            position: fixed; inset: 0; z-index: 99990;
-            background: rgba(0,0,0,0.5); display: none;
-            opacity: 0; transition: opacity 0.25s ease;
-        }
-        #side-panel-overlay.open { display: block; opacity: 1; }
-
-        #side-panel {
-            position: fixed; top: 0; right: -320px; z-index: 99991;
-            width: min(300px, 85vw); height: 100vh;
-            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-            border-left: 1px solid #334155;
-            box-shadow: -8px 0 30px rgba(0,0,0,0.5);
-            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow-y: auto; padding: 0;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-        }
-        #side-panel.open { right: 0; }
-
-        .sp-header {
-            padding: 18px 20px 14px; border-bottom: 1px solid #1e293b;
-            display: flex; justify-content: space-between; align-items: center;
-            background: #0f172a;
-        }
-        .sp-header-title {
-            font-size: 15px; font-weight: 700; color: #f8fafc;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .sp-close {
-            background: none; border: none; color: #64748b; font-size: 22px;
-            cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: 0.2s;
-        }
-        .sp-close:hover { color: #ef4444; background: #1e293b; }
-
-        .sp-section {
-            padding: 14px 20px; border-bottom: 1px solid #1e293b1a;
-        }
-        .sp-section-title {
-            font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
-            text-transform: uppercase; color: #64748b; margin-bottom: 10px;
+// ── 8. FLOATING RIGHT-SIDE ACTION DOCK (Always Visible) ─────────────────
+(function initRightDock() {
+    const dockCSS = document.createElement('style');
+    dockCSS.textContent = `
+        .floating-right-dock {
+            position: fixed;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: auto;
         }
 
-        .sp-link {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px 12px; border-radius: 8px; margin-bottom: 4px;
-            text-decoration: none; color: #cbd5e1; font-size: 13px;
-            font-weight: 500; transition: 0.2s; cursor: pointer;
-            border: none; background: none; width: 100%; text-align: left;
-        }
-        .sp-link:hover { background: #334155; color: #f8fafc; }
-        .sp-link .sp-icon {
-            width: 32px; height: 32px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 16px; flex-shrink: 0;
-        }
-        .sp-link .sp-label { line-height: 1.3; }
-        .sp-link .sp-sublabel {
-            font-size: 10px; color: #64748b; display: block; margin-top: 1px;
+        .dock-item {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            text-decoration: none;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #f8fafc;
+            border-radius: 30px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+            white-space: nowrap;
         }
 
-        /* Nav bar toggle button */
-        #sp-toggle-btn {
-            background: #334155; color: #cbd5e1; border: 1px solid #475569;
-            border-radius: 6px; padding: 5px 10px; font-size: 16px;
-            cursor: pointer; transition: 0.2s; font-weight: 700;
-            display: inline-flex; align-items: center; justify-content: center;
-            flex-shrink: 0; line-height: 1;
+        .dock-item .dock-icon {
+            font-size: 16px;
+            margin-left: 6px;
         }
-        #sp-toggle-btn:hover {
-            background: #475569; color: #f8fafc;
-            box-shadow: 0 0 8px rgba(100,116,139,0.3);
+
+        .dock-item .dock-text {
+            font-size: 12px;
+            line-height: 1;
+        }
+
+        .dock-item:hover {
+            transform: translateX(-4px) scale(1.04);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+        }
+
+        .dock-feedback {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-color: #fbbf24;
+            color: #0f172a !important;
+            font-weight: 700;
+            animation: dockPulse 2s infinite alternate;
+        }
+        @keyframes dockPulse {
+            from { box-shadow: 0 0 4px rgba(245, 158, 11, 0.4); }
+            to   { box-shadow: 0 0 16px rgba(245, 158, 11, 0.8); }
+        }
+
+        .dock-tour {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            border-color: #60a5fa;
+            color: #ffffff !important;
+        }
+
+        .dock-key {
+            background: #065f46;
+            border-color: #059669;
+            color: #a7f3d0 !important;
+        }
+
+        .dock-admin {
+            background: #1e1e2e;
+            border-color: #4b5563;
+            color: #cbd5e1 !important;
+        }
+
+        @media (max-width: 600px) {
+            .floating-right-dock {
+                right: 6px;
+                top: auto;
+                bottom: 16px;
+                transform: none;
+                flex-direction: row;
+                gap: 6px;
+                background: rgba(15, 23, 42, 0.85);
+                padding: 6px;
+                border-radius: 40px;
+                border: 1px solid #334155;
+            }
+            .dock-item .dock-text { display: none; }
+            .dock-item { padding: 8px; border-radius: 50%; }
+            .dock-item .dock-icon { margin-left: 0; }
         }
     `;
-    document.head.appendChild(panelCSS);
+    document.head.appendChild(dockCSS);
 
-    function createPanel() {
-        // Overlay
-        const overlay = document.createElement('div');
-        overlay.id = 'side-panel-overlay';
-        overlay.onclick = closeSidePanel;
-        document.body.appendChild(overlay);
+    function createDock() {
+        if (document.getElementById('floating-right-dock')) return;
 
-        // Panel
-        const panel = document.createElement('div');
-        panel.id = 'side-panel';
+        const dock = document.createElement('div');
+        dock.id = 'floating-right-dock';
+        dock.className = 'floating-right-dock';
 
-        const isVideo = location.pathname.toLowerCase().includes('video');
-        const isFeedback = location.pathname.toLowerCase().includes('feedback');
-        const isAdmin = location.pathname.toLowerCase().includes('admin');
-
-        panel.innerHTML = `
-            <div class="sp-header">
-                <span class="sp-header-title">⚡ Quick Menu</span>
-                <button class="sp-close" onclick="closeSidePanel()">✕</button>
-            </div>
-
-            <div class="sp-section">
-                <div class="sp-section-title">Navigation</div>
-                <a href="index.html" class="sp-link">
-                    <span class="sp-icon" style="background:#6366f11a;">🎨</span>
-                    <span class="sp-label">Image Prompt Studio<span class="sp-sublabel">Midjourney, DALL·E, Gemini prompts</span></span>
-                </a>
-                <a href="video.html" class="sp-link">
-                    <span class="sp-icon" style="background:#ec48991a;">🎬</span>
-                    <span class="sp-label">Video Motion Studio<span class="sp-sublabel">Sora, Runway, Luma scripts</span></span>
-                </a>
-                <a href="admin.html" class="sp-link">
-                    <span class="sp-icon" style="background:#3341551a;">⚙️</span>
-                    <span class="sp-label">Admin Panel<span class="sp-sublabel">API Key & Settings</span></span>
-                </a>
-            </div>
-
-            <div class="sp-section">
-                <div class="sp-section-title">Tools & Help</div>
-                <button class="sp-link" onclick="if(typeof startTour==='function'){startTour();closeSidePanel();}">
-                    <span class="sp-icon" style="background:#3b82f61a;">🧭</span>
-                    <span class="sp-label">Tour Guide<span class="sp-sublabel">Step-by-step Hinglish guide</span></span>
-                </button>
-                <a href="feedback.html" class="sp-link">
-                    <span class="sp-icon" style="background:#f59e0b1a;">💬</span>
-                    <span class="sp-label">Feedback & Bug Report<span class="sp-sublabel">Issue report ya suggestion dein</span></span>
-                </a>
-                <button class="sp-link" onclick="setUserCustomApiKey();closeSidePanel();">
-                    <span class="sp-icon" style="background:#059669a1;">🔑</span>
-                    <span class="sp-label">My API Key<span class="sp-sublabel">Apni Gemini key lagayein</span></span>
-                </button>
-            </div>
-
-            <div class="sp-section" style="border-bottom:none;">
-                <div class="sp-section-title">Theme</div>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button class="sp-link" style="width:auto; flex:1; justify-content:center;" onclick="changeAppTheme('default')">🌙 Dark</button>
-                    <button class="sp-link" style="width:auto; flex:1; justify-content:center;" onclick="changeAppTheme('cyberpunk')">🟣 Cyber</button>
-                    <button class="sp-link" style="width:auto; flex:1; justify-content:center;" onclick="changeAppTheme('emerald')">🟢 Emerald</button>
-                    <button class="sp-link" style="width:auto; flex:1; justify-content:center;" onclick="changeAppTheme('oled')">🖤 OLED</button>
-                </div>
-            </div>
+        dock.innerHTML = `
+            <a href="feedback.html" class="dock-item dock-feedback" title="Apna Feedback ya Bug Report dein">
+                <span class="dock-text">💬 Feedback</span>
+                <span class="dock-icon">💬</span>
+            </a>
+            <button type="button" class="dock-item dock-tour" onclick="if(typeof startTour==='function'){startTour();}" title="Interactive Hinglish Tour Guide">
+                <span class="dock-text">🧭 Tour Guide</span>
+                <span class="dock-icon">🧭</span>
+            </button>
+            <button type="button" class="dock-item dock-key" onclick="setUserCustomApiKey()" title="Enter your personal Gemini API Key">
+                <span class="dock-text">🔑 My API Key</span>
+                <span class="dock-icon">🔑</span>
+            </button>
+            <a href="admin.html" class="dock-item dock-admin" title="Admin Security Control Panel">
+                <span class="dock-text">⚙️ Admin</span>
+                <span class="dock-icon">⚙️</span>
+            </a>
         `;
-        document.body.appendChild(panel);
+
+        document.body.appendChild(dock);
     }
 
-    function addToggleToNav() {
-        const nav = document.querySelector('.nav-bar');
-        if (!nav || document.getElementById('sp-toggle-btn')) return;
-        const btn = document.createElement('button');
-        btn.id = 'sp-toggle-btn';
-        btn.title = 'Menu — Tour, Feedback, Themes';
-        btn.innerHTML = '☰';
-        btn.onclick = openSidePanel;
-        nav.appendChild(btn);
-    }
-
-    window.openSidePanel = function () {
-        document.getElementById('side-panel')?.classList.add('open');
-        document.getElementById('side-panel-overlay')?.classList.add('open');
-    };
-    window.closeSidePanel = function () {
-        document.getElementById('side-panel')?.classList.remove('open');
-        document.getElementById('side-panel-overlay')?.classList.remove('open');
-    };
-
-    // Escape key to close
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeSidePanel();
-    });
-
-    // Init when DOM ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => { createPanel(); addToggleToNav(); });
+        document.addEventListener('DOMContentLoaded', createDock);
     } else {
-        createPanel(); addToggleToNav();
+        createDock();
     }
 })();
+
