@@ -16,7 +16,7 @@
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
       import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
-      import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+      import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
@@ -35,6 +35,7 @@
         window._rtdb = rtdb;
         window._rtdbRef = ref;
         window._rtdbOnValue = onValue;
+        window._rtdbRemove = remove;
         document.dispatchEvent(new Event('rtdbReady'));
       } catch(e) { console.error("Admin RTDB error", e); }
     </script>
@@ -515,24 +516,62 @@
             </div>
         </div>
 
-        <!-- ── USER FEEDBACK & BUG REPORTS ── -->
+        <!-- ── USER FEEDBACK & BUG REPORTS MANAGER ── -->
         <div class="section-card full">
             <div class="card-icon">💬</div>
             <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
-                <span>User Feedbacks & Bug Reports</span>
+                <span>User Feedbacks & Bug Reports Manager</span>
                 <span id="admin-fb-count" style="font-size:12px; color:var(--accent); font-weight:normal;"></span>
             </div>
-            <div class="card-desc">Review submitted feedback, bug reports, and star ratings. User feedback is also sent directly to your registered developer email.</div>
+            <div class="card-desc">Real-time feedback dashboard. Easily inspect, search, filter, and delete user feedback directly from Firebase Realtime Database.</div>
 
-            <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
-                <button class="action-btn btn-primary" onclick="exportFeedbackCSV()" style="width:auto; padding:8px 18px; font-size:12px;">📥 Export as CSV</button>
-                <button class="action-btn btn-warning" onclick="clearAllFeedbacks()" style="width:auto; padding:8px 18px; font-size:12px;">🗑️ Clear Logs</button>
-                <a href="feedback.html" target="_blank" style="text-decoration:none;">
-                    <button class="action-btn btn-success" style="width:auto; padding:8px 18px; font-size:12px;">🔗 Open Feedback Page</button>
-                </a>
+            <!-- Summary Stats Widgets -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:10px; margin:14px 0;">
+                <div style="background:#0a1226; border:1px solid var(--border); border-radius:6px; padding:10px; text-align:center;">
+                    <div style="font-size:10px; color:var(--subtext); font-weight:600;">TOTAL</div>
+                    <div style="font-size:20px; font-weight:bold; color:var(--accent); margin-top:2px;" id="fb-stat-total">0</div>
+                </div>
+                <div style="background:#0a1226; border:1px solid var(--border); border-radius:6px; padding:10px; text-align:center;">
+                    <div style="font-size:10px; color:var(--subtext); font-weight:600;">BUGS 🐛</div>
+                    <div style="font-size:20px; font-weight:bold; color:#ef4444; margin-top:2px;" id="fb-stat-bugs">0</div>
+                </div>
+                <div style="background:#0a1226; border:1px solid var(--border); border-radius:6px; padding:10px; text-align:center;">
+                    <div style="font-size:10px; color:var(--subtext); font-weight:600;">FEATURES 💡</div>
+                    <div style="font-size:20px; font-weight:bold; color:#3b82f6; margin-top:2px;" id="fb-stat-features">0</div>
+                </div>
+                <div style="background:#0a1226; border:1px solid var(--border); border-radius:6px; padding:10px; text-align:center;">
+                    <div style="font-size:10px; color:var(--subtext); font-weight:600;">AVG RATING</div>
+                    <div style="font-size:20px; font-weight:bold; color:#f59e0b; margin-top:2px;" id="fb-stat-rating">0.0 ⭐</div>
+                </div>
             </div>
 
-            <div id="admin-feedback-list" style="max-height:260px; overflow-y:auto; background:#060b18; border:1px solid var(--border); border-radius:8px; padding:12px;"></div>
+            <!-- Search and Filters Bar -->
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; align-items:center;">
+                <input type="text" id="admin-fb-search" placeholder="🔍 Search feedback message, name, email..." 
+                       style="flex:1; min-width:200px; padding:8px 12px; font-size:12px; background:#060b18; border:1px solid var(--border); border-radius:6px; color:var(--text);"
+                       oninput="loadAdminFeedbacks()">
+                <select id="admin-fb-cat-filter" onchange="loadAdminFeedbacks()" 
+                        style="padding:8px 12px; font-size:12px; background:#060b18; border:1px solid var(--border); border-radius:6px; color:var(--text);">
+                    <option value="all">All Categories</option>
+                    <option value="bug">🐛 Bugs Only</option>
+                    <option value="feature">💡 Feature Requests</option>
+                    <option value="improve">⚡ Improvements</option>
+                    <option value="other">💬 General</option>
+                </select>
+                <select id="admin-fb-star-filter" onchange="loadAdminFeedbacks()" 
+                        style="padding:8px 12px; font-size:12px; background:#060b18; border:1px solid var(--border); border-radius:6px; color:var(--text);">
+                    <option value="all">All Ratings</option>
+                    <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
+                    <option value="4">⭐⭐⭐⭐ 4 Stars</option>
+                    <option value="3">⭐⭐⭐ 3 Stars</option>
+                    <option value="2">⭐⭐ 2 Stars</option>
+                    <option value="1">⭐ 1 Star</option>
+                </select>
+                <button class="action-btn btn-primary" onclick="exportFeedbackCSV()" style="width:auto; padding:8px 14px; font-size:12px;">📥 Export CSV</button>
+            </div>
+
+            <!-- Feedback Items List -->
+            <div id="admin-feedback-list" style="max-height:400px; overflow-y:auto; background:#060b18; border:1px solid var(--border); border-radius:8px; padding:12px;"></div>
         </div>
 
         <!-- ── RESET / DANGER ZONE ── -->
@@ -676,30 +715,108 @@
         const countEl = document.getElementById('admin-fb-count');
         if (!listEl) return;
 
-        countEl.textContent = `${adminRtdbList.length} Total`;
+        // 1. Calculate Summary Stats
+        const total = adminRtdbList.length;
+        const bugs = adminRtdbList.filter(f => f.category === 'bug').length;
+        const features = adminRtdbList.filter(f => f.category === 'feature').length;
+        const ratedItems = adminRtdbList.filter(f => f.rating > 0);
+        const avgRating = ratedItems.length > 0 
+            ? (ratedItems.reduce((acc, f) => acc + (Number(f.rating) || 0), 0) / ratedItems.length).toFixed(1)
+            : '0.0';
 
-        if (adminRtdbList.length === 0) {
-            listEl.innerHTML = '<div style="color:var(--subtext); font-size:12px; text-align:center; padding:16px;">📭 Abhi tak koi feedback submit nahi hua.</div>';
+        if (document.getElementById('fb-stat-total')) document.getElementById('fb-stat-total').textContent = total;
+        if (document.getElementById('fb-stat-bugs')) document.getElementById('fb-stat-bugs').textContent = bugs;
+        if (document.getElementById('fb-stat-features')) document.getElementById('fb-stat-features').textContent = features;
+        if (document.getElementById('fb-stat-rating')) document.getElementById('fb-stat-rating').textContent = `${avgRating} ⭐`;
+
+        // 2. Filter list
+        const searchQuery = (document.getElementById('admin-fb-search')?.value || '').toLowerCase().trim();
+        const catFilter = document.getElementById('admin-fb-cat-filter')?.value || 'all';
+        const starFilter = document.getElementById('admin-fb-star-filter')?.value || 'all';
+
+        let filtered = adminRtdbList.filter(fb => {
+            if (catFilter !== 'all' && fb.category !== catFilter) return false;
+            if (starFilter !== 'all' && String(fb.rating) !== starFilter) return false;
+            if (searchQuery) {
+                const haystack = `${fb.name || ''} ${fb.email || ''} ${fb.message || ''} ${fb.page || ''}`.toLowerCase();
+                if (!haystack.includes(searchQuery)) return false;
+            }
+            return true;
+        });
+
+        countEl.textContent = `${filtered.length} of ${total} Showing`;
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = '<div style="color:var(--subtext); font-size:12px; text-align:center; padding:24px;">📭 Koi feedback match nahi hua.</div>';
             return;
         }
 
-        listEl.innerHTML = adminRtdbList.map(fb => `
-            <div style="background:#0a1226; border:1px solid #1a2744; border-radius:6px; padding:10px; margin-bottom:8px; font-size:12px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                    <strong style="color:#60a5fa;">${escapeHTML(fb.name || 'Anonymous')}</strong>
-                    <span style="color:#64748b; font-size:11px;">
-                        ${escapeHTML(fb.date || '')}
+        listEl.innerHTML = filtered.map(fb => {
+            const key = fb.id || fb.rtdbKey;
+            const safeMsg = (fb.message || '').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
+            return `
+            <div style="background:#0a1226; border:1px solid #1a2744; border-radius:8px; padding:12px; margin-bottom:10px; font-size:12px; transition:border-color 0.2s;" onmouseenter="this.style.borderColor='#3b82f6'" onmouseleave="this.style.borderColor='#1a2744'">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                    <div>
+                        <strong style="color:#60a5fa; font-size:13px;">${escapeHTML(fb.name || 'Anonymous')}</strong>
+                        ${fb.email && fb.email !== 'Not Provided' ? `<span style="color:#94a3b8; font-size:11px; margin-left:6px;">(&lt;${escapeHTML(fb.email)}&gt;)</span>` : ''}
+                    </div>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <span style="color:#64748b; font-size:11px;">${escapeHTML(fb.date || '')}</span>
+                        <button type="button" onclick="deleteAdminFeedback('${key}')" 
+                                style="background:#ef444422; color:#ef4444; border:1px solid #ef444444; border-radius:4px; padding:3px 8px; font-size:11px; cursor:pointer;" 
+                                title="Delete entry from Firebase">🗑️ Delete</button>
+                    </div>
+                </div>
+                
+                <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px; font-size:11px; flex-wrap:wrap;">
+                    <span style="background:#1e293b; color:#fbbf24; padding:2px 8px; border-radius:4px; font-weight:600;">
+                        ${fb.rating ? '⭐'.repeat(fb.rating) : 'No Rating'}
                     </span>
+                    <span style="background:#1e293b; color:#38bdf8; padding:2px 8px; border-radius:4px;">
+                        ${escapeHTML(fb.categoryLabel || fb.category || 'Feedback')}
+                    </span>
+                    <span style="color:#64748b;">Page: <strong>${escapeHTML(fb.page || 'General')}</strong></span>
                 </div>
-                <div style="color:#fbbf24; margin-bottom:4px; font-size:11px;">
-                    ${fb.rating ? '⭐'.repeat(fb.rating) : 'No Rating'} • <span style="color:#94a3b8;">${escapeHTML(fb.categoryLabel || fb.category || 'Feedback')}</span> • <span style="color:#64748b;">${escapeHTML(fb.page || 'General')}</span>
-                </div>
-                <div style="color:#e2e8f0; line-height:1.4; word-break:break-word;">
+
+                <div style="color:#f1f5f9; background:#040814; border:1px solid #111c38; border-radius:6px; padding:10px; line-height:1.5; word-break:break-word; font-size:12px; margin-bottom:8px;">
                     ${escapeHTML(fb.message || '')}
                 </div>
-                ${fb.email && fb.email !== 'Not Provided' ? `<div style="color:#38bdf8; font-size:11px; margin-top:4px;">Email: <a href="mailto:${escapeHTML(fb.email)}" style="color:#38bdf8;">${escapeHTML(fb.email)}</a></div>` : ''}
+
+                <div style="display:flex; gap:8px; justify-content:flex-end;">
+                    <button type="button" onclick="copyFbText('${safeMsg}')" 
+                            style="background:#1e293b; color:#cbd5e1; border:1px solid #334155; border-radius:4px; padding:3px 10px; font-size:11px; cursor:pointer;">
+                        📋 Copy Message
+                    </button>
+                    ${fb.email && fb.email !== 'Not Provided' ? `
+                        <a href="mailto:${escapeHTML(fb.email)}?subject=Re: AI Studio Feedback (${encodeURIComponent(fb.category || 'Support')})" 
+                           style="background:#2563eb; color:#ffffff; border-radius:4px; padding:3px 10px; font-size:11px; text-decoration:none; display:inline-block;">
+                            ✉️ Reply Email
+                        </a>
+                    ` : ''}
+                </div>
             </div>
-        `).join('');
+        `}).join('');
+    }
+
+    async function deleteAdminFeedback(id) {
+        if (!confirm("Kya aap is feedback entry ko Realtime Database se permanently delete karna chahte hain?")) return;
+        if (window._rtdb && window._rtdbRef && window._rtdbRemove && id) {
+            try {
+                await window._rtdbRemove(window._rtdbRef(window._rtdb, 'feedbacks/' + id));
+                showToast('✅ Feedback entry delete ho gayi!');
+            } catch(e) {
+                showToast('❌ Deletion error: ' + (e.message || String(e)), 'danger');
+            }
+        }
+    }
+
+    function copyFbText(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('📋 Feedback message clipboard me copy ho gaya!');
+        }).catch(() => {
+            showToast('❌ Copy nahi ho paya', 'warning');
+        });
     }
 
     function exportFeedbackCSV() {
@@ -719,10 +836,6 @@
         a.click();
         URL.revokeObjectURL(url);
         showToast('✅ Feedback CSV download ho gaya!');
-    }
-
-    function clearAllFeedbacks() {
-        showToast('⚠️ Data Firebase Console se manage karein.');
     }
 
     // ── SAVE API KEY ─────────────────────────────────────
