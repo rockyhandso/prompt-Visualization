@@ -12,38 +12,6 @@
       gtag('js', new Date());
       gtag('config', 'G-MV1SEZRYY6');
     </script>
-    <!-- Firebase + Firestore -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
-      import { getFirestore, collection, addDoc, getDocs, orderBy, query, serverTimestamp }
-             from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
-
-      const firebaseConfig = {
-        apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
-        authDomain: "prompt-visualization.firebaseapp.com",
-        projectId: "prompt-visualization",
-        storageBucket: "prompt-visualization.firebasestorage.app",
-        messagingSenderId: "93895633100",
-        appId: "1:93895633100:web:3aba969e689d23b7313a69",
-        measurementId: "G-6BQZE1T6JG"
-      };
-
-      const app = initializeApp(firebaseConfig);
-      getAnalytics(app);
-      const db = getFirestore(app);
-
-      // Expose to global scope for inline script
-      window._fbDb = db;
-      window._fbAddDoc = addDoc;
-      window._fbCollection = collection;
-      window._fbGetDocs = getDocs;
-      window._fbQuery = query;
-      window._fbOrderBy = orderBy;
-      window._fbServerTimestamp = serverTimestamp;
-      window._firebaseReady = true;
-      document.dispatchEvent(new Event('firebaseReady'));
-    </script>
     <script src="js/common.js"></script>
 
     <style>
@@ -317,16 +285,17 @@
 
 <script type="module">
     // ═══════════════════════════════════════════════
-    //  Firebase + Firestore — unified module script
+    //  Firebase Realtime Database — unified module script
     // ═══════════════════════════════════════════════
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
     import { getAnalytics }  from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
-    import { getFirestore, collection, addDoc, serverTimestamp }
-             from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+    import { getDatabase, ref, push, serverTimestamp }
+             from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
         authDomain: "prompt-visualization.firebaseapp.com",
+        databaseURL: "https://prompt-visualization-default-rtdb.firebaseio.com",
         projectId: "prompt-visualization",
         storageBucket: "prompt-visualization.firebasestorage.app",
         messagingSenderId: "93895633100",
@@ -334,9 +303,9 @@
         measurementId: "G-6BQZE1T6JG"
     };
 
-    const app       = initializeApp(firebaseConfig);
+    const app  = initializeApp(firebaseConfig);
     getAnalytics(app);
-    const db        = getFirestore(app);
+    const rtdb = getDatabase(app);
 
     // ─── UI State ───────────────────────────────────
     let currentRating = 0;
@@ -405,7 +374,7 @@
         }
 
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '⏳ Firebase mein save ho raha hai...';
+        submitBtn.innerHTML = '⏳ Realtime Database mein save ho raha hai...';
         statusBanner.className = '';
         statusBanner.innerHTML = '';
 
@@ -424,22 +393,23 @@
             serverTime: serverTimestamp()
         };
 
-        let firestoreSaved = false;
-        let firestoreDocId = null;
+        let rtdbSaved = false;
+        let rtdbKey = null;
 
-        // ── 1. Firebase Firestore (Primary) ──
+        // ── 1. Firebase Realtime Database (Primary) ──
         try {
-            const docRef = await addDoc(collection(db, 'feedbacks'), feedbackObj);
-            firestoreSaved = true;
-            firestoreDocId = docRef.id;
-            console.log('✅ Firestore mein save ho gaya! ID:', docRef.id);
+            const feedbackRef = ref(rtdb, 'feedbacks');
+            const newDocRef = await push(feedbackRef, feedbackObj);
+            rtdbSaved = true;
+            rtdbKey = newDocRef.key;
+            console.log('✅ Realtime Database mein save ho gaya! Key:', newDocRef.key);
         } catch (fbErr) {
-            console.error('❌ Firestore error:', fbErr.code, fbErr.message);
+            console.error('❌ Realtime DB error:', fbErr.code, fbErr.message);
         }
 
         // ── 2. localStorage Backup ──
         try {
-            const localObj = { ...feedbackObj, id: Date.now(), firestoreId: firestoreDocId, serverTime: null };
+            const localObj = { ...feedbackObj, id: Date.now(), rtdbKey: rtdbKey, serverTime: null };
             const arr = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
             arr.unshift(localObj);
             localStorage.setItem('APP_FEEDBACKS', JSON.stringify(arr));
@@ -460,7 +430,7 @@
                     page_location: page,
                     experience_rating: feedbackObj.ratingStars,
                     feedback_message: message,
-                    firestore_id: firestoreDocId || 'N/A',
+                    rtdb_key: rtdbKey || 'N/A',
                     timestamp: feedbackObj.date
                 })
             });
@@ -470,19 +440,20 @@
         submitBtn.innerHTML = '📨 Submit Feedback';
 
         // ── 4. Success / Error Banner ──
-        if (firestoreSaved) {
+        if (rtdbSaved) {
             statusBanner.className = 'status-alert success';
             statusBanner.innerHTML = `
-                ✅ <strong>Shukriya ${escapeHTML(name)}!</strong> Aapka feedback Firebase Firestore mein save ho gaya!<br>
-                <span style="font-size:11px; opacity:0.8;">🔥 Doc ID: <code>${firestoreDocId}</code></span>
+                ✅ <strong>Shukriya ${escapeHTML(name)}!</strong> Aapka feedback Firebase Realtime Database mein save ho gaya!<br>
+                <span style="font-size:11px; opacity:0.8;">🔥 Entry Key: <code>${rtdbKey}</code></span>
             `;
         } else {
             statusBanner.className = 'status-alert warning';
             statusBanner.innerHTML = `
-                ⚠️ Firebase mein save nahi hua — <strong>locally backup ho gaya hai.</strong><br>
-                <span style="font-size:11px; opacity:0.8;">Possible reason: Firestore rules deploy nahi hue. Console check karein.</span>
+                ⚠️ Realtime Database mein save nahi hua — <strong>locally backup ho gaya hai.</strong><br>
+                <span style="font-size:11px; opacity:0.8;">Possible reason: Realtime Database Rules allow nahi kar rahe. Console check karein.</span>
             `;
         }
+
         statusBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
         // ── 5. Reset Form ──

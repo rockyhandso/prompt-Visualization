@@ -1,6 +1,8 @@
 {
   "rules": {
-    ".read": false,
-    ".write": false
+    "feedbacks": {
+      ".read": false,
+      ".write": "newData.hasChildren(['message'])"
+    }
   }
 }
