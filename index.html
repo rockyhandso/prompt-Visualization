@@ -12,6 +12,22 @@
       gtag('js', new Date());
       gtag('config', 'G-MV1SEZRYY6');
     </script>
+    <!-- Firebase -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
+      const firebaseConfig = {
+        apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
+        authDomain: "prompt-visualization.firebaseapp.com",
+        projectId: "prompt-visualization",
+        storageBucket: "prompt-visualization.firebasestorage.app",
+        messagingSenderId: "93895633100",
+        appId: "1:93895633100:web:3aba969e689d23b7313a69",
+        measurementId: "G-6BQZE1T6JG"
+      };
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+    </script>
     <script src="js/common.js"></script>
     <script src="js/tour.js"></script>
 
