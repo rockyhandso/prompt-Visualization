@@ -12,10 +12,13 @@
       gtag('js', new Date());
       gtag('config', 'G-MV1SEZRYY6');
     </script>
-    <!-- Firebase -->
+    <!-- Firebase + Firestore -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
       import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
+      import { getFirestore, collection, addDoc, getDocs, orderBy, query, serverTimestamp }
+             from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+
       const firebaseConfig = {
         apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
         authDomain: "prompt-visualization.firebaseapp.com",
@@ -25,8 +28,21 @@
         appId: "1:93895633100:web:3aba969e689d23b7313a69",
         measurementId: "G-6BQZE1T6JG"
       };
+
       const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
+      getAnalytics(app);
+      const db = getFirestore(app);
+
+      // Expose to global scope for inline script
+      window._fbDb = db;
+      window._fbAddDoc = addDoc;
+      window._fbCollection = collection;
+      window._fbGetDocs = getDocs;
+      window._fbQuery = query;
+      window._fbOrderBy = orderBy;
+      window._fbServerTimestamp = serverTimestamp;
+      window._firebaseReady = true;
+      document.dispatchEvent(new Event('firebaseReady'));
     </script>
     <script src="js/common.js"></script>
 
@@ -367,10 +383,9 @@
         }
 
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '⏳ Submitting feedback...';
+        submitBtn.innerHTML = '⏳ Firestore mein save ho raha hai...';
 
         const feedbackObj = {
-            id: Date.now(),
             name: name,
             email: email || 'Not Provided',
             category: category,
@@ -380,63 +395,80 @@
             ratingStars: currentRating ? '⭐'.repeat(currentRating) : 'Not Rated',
             message: message,
             date: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
-            userAgent: navigator.userAgent
+            submittedAt: new Date().toISOString(),
+            userAgent: navigator.userAgent.substring(0, 120)
         };
 
-        // 1. Save locally to browser
+        let firestoreSaved = false;
+        let firestoreDocId = null;
+
+        // 1. Save to Firebase Firestore (Primary)
         try {
+            if (window._fbDb && window._fbAddDoc && window._fbCollection) {
+                const docData = {
+                    ...feedbackObj,
+                    serverTime: window._fbServerTimestamp ? window._fbServerTimestamp() : null
+                };
+                const docRef = await window._fbAddDoc(
+                    window._fbCollection(window._fbDb, 'feedbacks'),
+                    docData
+                );
+                firestoreSaved = true;
+                firestoreDocId = docRef.id;
+                console.log('✅ Firestore mein save ho gaya! Doc ID:', docRef.id);
+            } else {
+                console.warn('Firebase not ready yet, using fallback');
+            }
+        } catch (fbErr) {
+            console.error('Firestore save error:', fbErr);
+        }
+
+        // 2. Save to localStorage (Fallback / Local copy)
+        try {
+            const localId = Date.now();
+            const localObj = { ...feedbackObj, id: localId, firestoreId: firestoreDocId };
             const feedbacks = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
-            feedbacks.unshift(feedbackObj);
+            feedbacks.unshift(localObj);
             localStorage.setItem('APP_FEEDBACKS', JSON.stringify(feedbacks));
         } catch(e) {}
 
-        // 2. Direct Webhook / Form Delivery to Developer Email (Free, No Server Needed)
-        let deliveredOnline = false;
+        // 3. Web3Forms Email Notification
         try {
-            const endpoint = 'https://api.web3forms.com/submit';
-            const res = await fetch(endpoint, {
+            await fetch('https://api.web3forms.com/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify({
-                    access_key: 'b947c945-d8aa-47cf-b0d5-e9dfadbebf7a', // Public feedback inbox token
+                    access_key: 'b947c945-d8aa-47cf-b0d5-e9dfadbebf7a',
                     subject: `[AI Studio Feedback] ${getCatLabel(category)} from ${name}`,
                     from_name: name,
                     reply_to: email || undefined,
-                    name: name,
-                    email: email || 'anonymous@user.com',
+                    name, email: email || 'anonymous@user.com',
                     category: getCatLabel(category),
                     page_location: page,
                     experience_rating: feedbackObj.ratingStars,
                     feedback_message: message,
+                    firestore_id: firestoreDocId || 'N/A',
                     timestamp: feedbackObj.date
                 })
             });
-            if (res.ok) {
-                deliveredOnline = true;
-            }
-        } catch(netErr) {
-            console.warn("Online webhook delivery failed, falling back to local/mailto", netErr);
-        }
+        } catch(e) {}
 
         submitBtn.disabled = false;
         submitBtn.innerHTML = '📨 Submit Feedback';
 
-        // 3. Show Status Banner
+        // 4. Show Success Banner
         const statusBanner = document.getElementById('status-banner');
         statusBanner.className = 'status-alert success';
         statusBanner.innerHTML = `
-            ✅ <strong>Shukriya ${escapeHTML(name)}!</strong> Aapka feedback successfully submit ho gaya hai.<br>
-            Developer/Admin ko aapka message mil jayega!
+            ✅ <strong>Shukriya ${escapeHTML(name)}!</strong> Aapka feedback Firebase Database mein save ho gaya hai!<br>
+            ${firestoreSaved
+                ? `<span style="font-size:11px; opacity:0.8;">🔥 Firebase Firestore ID: <code>${firestoreDocId}</code></span>`
+                : `<span style="font-size:11px; opacity:0.8;">📴 Locally saved (offline mode)</span>`
+            }
         `;
         statusBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-        // 4. Offer Mailto Backup if desired
-        const subject = encodeURIComponent(`[AI Studio] ${getCatLabel(category)} - ${name}`);
-        const body = encodeURIComponent(
-            `Name: ${name}\nEmail: ${email || 'N/A'}\nCategory: ${getCatLabel(category)}\nPage: ${page}\nRating: ${feedbackObj.ratingStars}\n\nMessage:\n${message}`
-        );
-
-        // Reset inputs
+        // Reset form
         document.getElementById('fb-name').value = '';
         document.getElementById('fb-email').value = '';
         document.getElementById('fb-message').value = '';
@@ -452,18 +484,19 @@
         const container = document.getElementById('fb-history');
         const countEl = document.getElementById('fb-count');
 
-        countEl.textContent = feedbacks.length > 0 ? `(${feedbacks.length} feedback${feedbacks.length > 1 ? 's' : ''})` : '';
+        countEl.textContent = feedbacks.length > 0 ? `(${feedbacks.length} saved)` : '';
 
         if (feedbacks.length === 0) {
-            container.innerHTML = '<div class="empty-state">📭 Abhi tak koi feedback submit nahi hua.<br>Aapka feedback humare liye bahut important hai!</div>';
+            container.innerHTML = '<div class="empty-state">📭 Abhi tak koi feedback submit nahi hua.<br>Aapka feedback Firebase mein save hoga!</div>';
             return;
         }
 
         container.innerHTML = feedbacks.map(fb => `
             <div class="history-item">
-                <button type="button" class="hi-delete" onclick="deleteFeedback(${fb.id})" title="Delete entry">✕</button>
+                <button type="button" class="hi-delete" onclick="deleteFeedback(${fb.id})" title="Delete local entry">✕</button>
                 <span class="hi-cat ${fb.category || 'other'}">${escapeHTML(fb.categoryLabel || getCatLabel(fb.category))}</span>
                 <span class="hi-date">${escapeHTML(fb.date || '')}</span>
+                ${fb.firestoreId ? `<span style="float:right; font-size:9px; color:#10b981; background:#064e3b; padding:1px 5px; border-radius:8px; margin-left:4px;">🔥 Firebase</span>` : ''}
                 <div class="hi-msg">${escapeHTML(fb.message || '')}</div>
                 ${fb.rating ? `<div class="hi-stars">${'⭐'.repeat(fb.rating)}</div>` : ''}
                 <div style="font-size:10px; color:#64748b; margin-top:6px;">
