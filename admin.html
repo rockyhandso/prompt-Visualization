@@ -676,29 +676,18 @@
         const countEl = document.getElementById('admin-fb-count');
         if (!listEl) return;
 
-        let localList = [];
-        try { localList = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]'); } catch(e){}
+        countEl.textContent = `${adminRtdbList.length} Total`;
 
-        const combined = [...adminRtdbList];
-        localList.forEach(loc => {
-            if (!combined.some(c => c.rtdbKey && c.rtdbKey === loc.rtdbKey)) {
-                combined.push(loc);
-            }
-        });
-
-        countEl.textContent = `${combined.length} Total`;
-
-        if (combined.length === 0) {
+        if (adminRtdbList.length === 0) {
             listEl.innerHTML = '<div style="color:var(--subtext); font-size:12px; text-align:center; padding:16px;">📭 Abhi tak koi feedback submit nahi hua.</div>';
             return;
         }
 
-        listEl.innerHTML = combined.map(fb => `
+        listEl.innerHTML = adminRtdbList.map(fb => `
             <div style="background:#0a1226; border:1px solid #1a2744; border-radius:6px; padding:10px; margin-bottom:8px; font-size:12px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                     <strong style="color:#60a5fa;">${escapeHTML(fb.name || 'Anonymous')}</strong>
                     <span style="color:#64748b; font-size:11px;">
-                        ${fb.rtdbKey ? `<span style="color:#10b981; background:#064e3b; padding:1px 5px; border-radius:4px; margin-right:4px;">🔥 Live RTDB</span>` : ''}
                         ${escapeHTML(fb.date || '')}
                     </span>
                 </div>
@@ -714,14 +703,12 @@
     }
 
     function exportFeedbackCSV() {
-        let feedbacks = [];
-        try { feedbacks = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]'); } catch(e){}
-        if (feedbacks.length === 0) { showToast('⚠️ Export karne ke liye koi feedback nahi hai!', 'warning'); return; }
+        if (adminRtdbList.length === 0) { showToast('⚠️ Export karne ke liye koi feedback nahi hai!', 'warning'); return; }
 
         let csv = 'ID,Date,Name,Email,Category,Page,Rating,Message\n';
-        feedbacks.forEach(f => {
+        adminRtdbList.forEach(f => {
             const cleanMsg = (f.message || '').replace(/"/g, '""').replace(/\n/g, ' ');
-            csv += `"${f.id}","${f.date}","${f.name}","${f.email}","${f.category}","${f.page}","${f.rating || ''}","${cleanMsg}"\n`;
+            csv += `"${f.id || f.rtdbKey}","${f.date}","${f.name}","${f.email}","${f.category}","${f.page}","${f.rating || ''}","${cleanMsg}"\n`;
         });
 
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -735,10 +722,7 @@
     }
 
     function clearAllFeedbacks() {
-        if (!confirm('Kya aap saare feedback logs delete karna chahte hain?')) return;
-        localStorage.removeItem('APP_FEEDBACKS');
-        loadAdminFeedbacks();
-        showToast('🗑️ Feedback logs clear kar diye gaye.');
+        showToast('⚠️ Data Firebase Console se manage karein.');
     }
 
     // ── SAVE API KEY ─────────────────────────────────────

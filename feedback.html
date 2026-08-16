@@ -416,15 +416,7 @@
             }
         }
 
-        // ── 2. localStorage Backup ──
-        try {
-            const localObj = { ...feedbackObj, id: Date.now(), rtdbKey: rtdbKey, serverTime: null };
-            const arr = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
-            arr.unshift(localObj);
-            localStorage.setItem('APP_FEEDBACKS', JSON.stringify(arr));
-        } catch(e) {}
-
-        // ── 3. Web3Forms Email Notification ──
+        // ── 2. Web3Forms Email Notification ──
         try {
             await fetch('https://api.web3forms.com/submit', {
                 method: 'POST',
@@ -448,7 +440,7 @@
         submitBtn.disabled = false;
         submitBtn.innerHTML = '📨 Submit Feedback';
 
-        // ── 4. Success / Error Banner ──
+        // ── 3. Success / Error Banner ──
         if (rtdbSaved) {
             statusBanner.className = 'status-alert success';
             statusBanner.innerHTML = `
@@ -457,14 +449,13 @@
         } else {
             statusBanner.className = 'status-alert warning';
             statusBanner.innerHTML = `
-                ⚠️ Realtime Database error: <code>${escapeHTML(rtdbError || 'Connection failed')}</code><br>
-                <span style="font-size:11px; opacity:0.8;">Local backup save ho gaya hai.</span>
+                ⚠️ Realtime Database error: <code>${escapeHTML(rtdbError || 'Connection failed')}</code>
             `;
         }
 
         statusBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-        // ── 5. Reset Form ──
+        // ── 4. Reset Form ──
         document.getElementById('fb-name').value = '';
         document.getElementById('fb-email').value = '';
         document.getElementById('fb-message').value = '';
@@ -493,7 +484,8 @@
                 renderHistory();
             }, (error) => {
                 console.warn("RTDB live listener blocked/error:", error);
-                renderHistory(); // fallback to local
+                rtdbFeedbacks = [];
+                renderHistory();
             });
         } catch (e) {
             renderHistory();
@@ -501,24 +493,16 @@
     }
 
     function renderHistory() {
-        const localList = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
-        const combined = [...rtdbFeedbacks];
-        localList.forEach(loc => {
-            if (!combined.some(c => c.rtdbKey && c.rtdbKey === loc.rtdbKey)) {
-                combined.push(loc);
-            }
-        });
-
         const container = document.getElementById('fb-history');
         const countEl   = document.getElementById('fb-count');
-        countEl.textContent = combined.length > 0 ? `(${combined.length} entries)` : '';
+        countEl.textContent = rtdbFeedbacks.length > 0 ? `(${rtdbFeedbacks.length} entries)` : '';
 
-        if (combined.length === 0) {
+        if (rtdbFeedbacks.length === 0) {
             container.innerHTML = '<div class="empty-state">📭 Abhi tak koi feedback submit nahi hua.</div>';
             return;
         }
 
-        container.innerHTML = combined.map(fb => `
+        container.innerHTML = rtdbFeedbacks.map(fb => `
             <div class="history-item">
                 <button type="button" class="hi-delete" onclick="window.deleteFeedback('${fb.id || fb.rtdbKey}')" title="Delete entry">✕</button>
                 <span class="hi-cat ${fb.category || 'other'}">${escapeHTML(fb.categoryLabel || getCatLabel(fb.category))}</span>
@@ -542,11 +526,6 @@
                 console.log("Deleted from RTDB:", id);
             } catch(e) { console.warn("RTDB delete error", e); }
         }
-        let arr = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
-        arr = arr.filter(fb => String(fb.id) !== String(id) && fb.rtdbKey !== id);
-        localStorage.setItem('APP_FEEDBACKS', JSON.stringify(arr));
-        rtdbFeedbacks = rtdbFeedbacks.filter(fb => String(fb.id) !== String(id) && fb.rtdbKey !== id);
-        renderHistory();
     };
 
     // ─── Auto-prefill from API error ─────────────────
