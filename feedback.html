@@ -285,11 +285,11 @@
 
 <script type="module">
     // ═══════════════════════════════════════════════
-    //  Firebase Realtime Database — unified module script
+    //  Firebase Realtime Database — Live Sync Script
     // ═══════════════════════════════════════════════
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
     import { getAnalytics }  from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
-    import { getDatabase, ref, push, serverTimestamp }
+    import { getDatabase, ref, push, onValue, serverTimestamp }
              from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -303,9 +303,14 @@
         measurementId: "G-6BQZE1T6JG"
     };
 
-    const app  = initializeApp(firebaseConfig);
-    getAnalytics(app);
-    const rtdb = getDatabase(app);
+    let rtdb = null;
+    try {
+        const app = initializeApp(firebaseConfig);
+        getAnalytics(app);
+        rtdb = getDatabase(app, "https://prompt-visualization-default-rtdb.firebaseio.com");
+    } catch (e) {
+        console.error("Firebase init error:", e);
+    }
 
     // ─── UI State ───────────────────────────────────
     let currentRating = 0;
@@ -395,16 +400,20 @@
 
         let rtdbSaved = false;
         let rtdbKey = null;
+        let rtdbError = null;
 
         // ── 1. Firebase Realtime Database (Primary) ──
-        try {
-            const feedbackRef = ref(rtdb, 'feedbacks');
-            const newDocRef = await push(feedbackRef, feedbackObj);
-            rtdbSaved = true;
-            rtdbKey = newDocRef.key;
-            console.log('✅ Realtime Database mein save ho gaya! Key:', newDocRef.key);
-        } catch (fbErr) {
-            console.error('❌ Realtime DB error:', fbErr.code, fbErr.message);
+        if (rtdb) {
+            try {
+                const feedbackRef = ref(rtdb, 'feedbacks');
+                const newDocRef = await push(feedbackRef, feedbackObj);
+                rtdbSaved = true;
+                rtdbKey = newDocRef.key;
+                console.log('✅ Realtime Database mein save ho gaya! Key:', newDocRef.key);
+            } catch (fbErr) {
+                console.error('❌ Realtime DB Push Error:', fbErr);
+                rtdbError = fbErr.message || fbErr.code || String(fbErr);
+            }
         }
 
         // ── 2. localStorage Backup ──
@@ -443,14 +452,14 @@
         if (rtdbSaved) {
             statusBanner.className = 'status-alert success';
             statusBanner.innerHTML = `
-                ✅ <strong>Shukriya ${escapeHTML(name)}!</strong> Aapka feedback Firebase Realtime Database mein save ho gaya!<br>
-                <span style="font-size:11px; opacity:0.8;">🔥 Entry Key: <code>${rtdbKey}</code></span>
+                ✅ <strong>Shukriya ${escapeHTML(name)}!</strong> Aapka feedback Firebase Realtime Database mein TURANT save ho gaya!<br>
+                <span style="font-size:11px; opacity:0.8;">🔥 Live Database Key: <code>${rtdbKey}</code></span>
             `;
         } else {
             statusBanner.className = 'status-alert warning';
             statusBanner.innerHTML = `
-                ⚠️ Realtime Database mein save nahi hua — <strong>locally backup ho gaya hai.</strong><br>
-                <span style="font-size:11px; opacity:0.8;">Possible reason: Realtime Database Rules allow nahi kar rahe. Console check karein.</span>
+                ⚠️ Realtime Database error: <code>${escapeHTML(rtdbError || 'Connection failed')}</code><br>
+                <span style="font-size:11px; opacity:0.8;">Local backup save ho gaya hai. Agar Permission Denied hai to Firebase Console -> Realtime Database -> Rules tab mein <code>".read": true, ".write": true</code> set karein.</span>
             `;
         }
 
@@ -463,28 +472,63 @@
         document.getElementById('fb-page').selectedIndex = 0;
         window.setRating(0);
         window.selectCat(document.querySelector('#fb-category .cat-pill[data-cat="bug"]'));
-
-        renderHistory();
     };
 
-    // ─── History ──────────────────────────────────────
+    // ─── Real-time Live History Listener ──────────────
+    let rtdbFeedbacks = [];
+    function listenRealtimeFeedbacks() {
+        if (!rtdb) { renderHistory(); return; }
+        try {
+            const feedbackRef = ref(rtdb, 'feedbacks');
+            onValue(feedbackRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    rtdbFeedbacks = Object.keys(data).map(key => ({
+                        id: key,
+                        rtdbKey: key,
+                        ...data[key]
+                    })).reverse(); // latest first
+                } else {
+                    rtdbFeedbacks = [];
+                }
+                renderHistory();
+            }, (error) => {
+                console.warn("RTDB live listener blocked/error:", error);
+                renderHistory(); // fallback to local
+            });
+        } catch (e) {
+            renderHistory();
+        }
+    }
+
     function renderHistory() {
-        const feedbacks = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
+        const localList = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
+        // combine RTDB list and local list
+        const combined = [...rtdbFeedbacks];
+        // add any local items not present in rtdbFeedbacks
+        localList.forEach(loc => {
+            if (!combined.some(c => c.rtdbKey && c.rtdbKey === loc.rtdbKey)) {
+                combined.push(loc);
+            }
+        });
+
         const container = document.getElementById('fb-history');
         const countEl   = document.getElementById('fb-count');
-        countEl.textContent = feedbacks.length > 0 ? `(${feedbacks.length} local)` : '';
-        if (feedbacks.length === 0) {
-            container.innerHTML = '<div class="empty-state">📭 Abhi tak koi feedback submit nahi hua.<br>Submit karo — data Firebase mein jayega!</div>';
+        countEl.textContent = combined.length > 0 ? `(${combined.length} live entries)` : '';
+
+        if (combined.length === 0) {
+            container.innerHTML = '<div class="empty-state">📭 Abhi tak koi feedback submit nahi hua.<br>Submit karo — Realtime Database mein turant show hoga!</div>';
             return;
         }
-        container.innerHTML = feedbacks.map(fb => `
+
+        container.innerHTML = combined.map(fb => `
             <div class="history-item">
-                <button type="button" class="hi-delete" onclick="window.deleteFeedback(${fb.id})" title="Delete local entry">✕</button>
+                <button type="button" class="hi-delete" onclick="window.deleteFeedback('${fb.id || fb.rtdbKey}')" title="Delete entry">✕</button>
                 <span class="hi-cat ${fb.category || 'other'}">${escapeHTML(fb.categoryLabel || getCatLabel(fb.category))}</span>
                 <span class="hi-date">${escapeHTML(fb.date || '')}</span>
-                ${fb.firestoreId
-                    ? `<span style="float:right;font-size:9px;color:#10b981;background:#064e3b;padding:1px 6px;border-radius:8px;">🔥 Firebase</span>`
-                    : `<span style="float:right;font-size:9px;color:#f59e0b;background:#451a03;padding:1px 6px;border-radius:8px;">📴 Local only</span>`
+                ${fb.rtdbKey
+                    ? `<span style="float:right;font-size:9px;color:#10b981;background:#064e3b;padding:1px 6px;border-radius:8px;">🔥 Live RTDB</span>`
+                    : `<span style="float:right;font-size:9px;color:#f59e0b;background:#451a03;padding:1px 6px;border-radius:8px;">📴 Local</span>`
                 }
                 <div class="hi-msg">${escapeHTML(fb.message || '')}</div>
                 ${fb.rating ? `<div class="hi-stars">${'⭐'.repeat(fb.rating)}</div>` : ''}
@@ -498,16 +542,17 @@
     }
 
     window.deleteFeedback = function(id) {
-        if (!confirm("Kya aap ye local entry delete karna chahte hain?")) return;
+        if (!confirm("Kya aap ye feedback entry delete karna chahte hain?")) return;
         let arr = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
-        arr = arr.filter(fb => fb.id !== id);
+        arr = arr.filter(fb => fb.id !== id && fb.rtdbKey !== id);
         localStorage.setItem('APP_FEEDBACKS', JSON.stringify(arr));
+        rtdbFeedbacks = rtdbFeedbacks.filter(fb => fb.id !== id && fb.rtdbKey !== id);
         renderHistory();
     };
 
     // ─── Auto-prefill from API error ─────────────────
     (function init() {
-        renderHistory();
+        listenRealtimeFeedbacks();
         try {
             const raw = sessionStorage.getItem('FEEDBACK_PREFILL');
             if (!raw) return;

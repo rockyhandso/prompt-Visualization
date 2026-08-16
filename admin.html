@@ -12,13 +12,16 @@
       gtag('js', new Date());
       gtag('config', 'G-MV1SEZRYY6');
     </script>
-    <!-- Firebase -->
+    <!-- Firebase + Realtime Database -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
       import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
+      import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+
       const firebaseConfig = {
         apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
         authDomain: "prompt-visualization.firebaseapp.com",
+        databaseURL: "https://prompt-visualization-default-rtdb.firebaseio.com",
         projectId: "prompt-visualization",
         storageBucket: "prompt-visualization.firebasestorage.app",
         messagingSenderId: "93895633100",
@@ -26,7 +29,14 @@
         measurementId: "G-6BQZE1T6JG"
       };
       const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
+      getAnalytics(app);
+      try {
+        const rtdb = getDatabase(app, "https://prompt-visualization-default-rtdb.firebaseio.com");
+        window._rtdb = rtdb;
+        window._rtdbRef = ref;
+        window._rtdbOnValue = onValue;
+        document.dispatchEvent(new Event('rtdbReady'));
+      } catch(e) { console.error("Admin RTDB error", e); }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="js/common.js"></script>
@@ -640,26 +650,57 @@
     }
 
     // ── FEEDBACKS MANAGER IN ADMIN ────────────────────────
+    let adminRtdbList = [];
+
+    function initAdminRtdbListener() {
+        if (window._rtdb && window._rtdbRef && window._rtdbOnValue) {
+            try {
+                const fRef = window._rtdbRef(window._rtdb, 'feedbacks');
+                window._rtdbOnValue(fRef, (snap) => {
+                    const val = snap.val();
+                    if (val) {
+                        adminRtdbList = Object.keys(val).map(k => ({ id: k, rtdbKey: k, ...val[k] })).reverse();
+                    } else {
+                        adminRtdbList = [];
+                    }
+                    loadAdminFeedbacks();
+                });
+            } catch(e) { console.warn("Admin RTDB listen error", e); }
+        }
+    }
+    document.addEventListener('rtdbReady', initAdminRtdbListener);
+    if (window._rtdb) initAdminRtdbListener();
+
     function loadAdminFeedbacks() {
         const listEl = document.getElementById('admin-feedback-list');
         const countEl = document.getElementById('admin-fb-count');
         if (!listEl) return;
 
-        let feedbacks = [];
-        try { feedbacks = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]'); } catch(e){}
+        let localList = [];
+        try { localList = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]'); } catch(e){}
 
-        countEl.textContent = `${feedbacks.length} Total`;
+        const combined = [...adminRtdbList];
+        localList.forEach(loc => {
+            if (!combined.some(c => c.rtdbKey && c.rtdbKey === loc.rtdbKey)) {
+                combined.push(loc);
+            }
+        });
 
-        if (feedbacks.length === 0) {
+        countEl.textContent = `${combined.length} Total`;
+
+        if (combined.length === 0) {
             listEl.innerHTML = '<div style="color:var(--subtext); font-size:12px; text-align:center; padding:16px;">📭 Abhi tak koi feedback submit nahi hua.</div>';
             return;
         }
 
-        listEl.innerHTML = feedbacks.map(fb => `
+        listEl.innerHTML = combined.map(fb => `
             <div style="background:#0a1226; border:1px solid #1a2744; border-radius:6px; padding:10px; margin-bottom:8px; font-size:12px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                     <strong style="color:#60a5fa;">${escapeHTML(fb.name || 'Anonymous')}</strong>
-                    <span style="color:#64748b; font-size:11px;">${escapeHTML(fb.date || '')}</span>
+                    <span style="color:#64748b; font-size:11px;">
+                        ${fb.rtdbKey ? `<span style="color:#10b981; background:#064e3b; padding:1px 5px; border-radius:4px; margin-right:4px;">🔥 Live RTDB</span>` : ''}
+                        ${escapeHTML(fb.date || '')}
+                    </span>
                 </div>
                 <div style="color:#fbbf24; margin-bottom:4px; font-size:11px;">
                     ${fb.rating ? '⭐'.repeat(fb.rating) : 'No Rating'} • <span style="color:#94a3b8;">${escapeHTML(fb.categoryLabel || fb.category || 'Feedback')}</span> • <span style="color:#64748b;">${escapeHTML(fb.page || 'General')}</span>
