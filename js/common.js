@@ -724,10 +724,6 @@ function showApiErrorBanner(errorMsg, containerOrId, retryFn) {
                 <span class="dock-text">🔑 My API Key</span>
                 <span class="dock-icon">🔑</span>
             </button>
-            <a href="admin.html" class="dock-item dock-admin" title="Admin Security Control Panel">
-                <span class="dock-text">⚙️ Admin</span>
-                <span class="dock-icon">⚙️</span>
-            </a>
             <div class="dock-themes" title="Theme badlein">
                 <button type="button" class="dock-theme-btn" onclick="changeAppTheme('default')" title="Default Dark">🌙</button>
                 <button type="button" class="dock-theme-btn" onclick="changeAppTheme('cyberpunk')" style="background:#a855f7;" title="Cyberpunk">🟣</button>

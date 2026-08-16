@@ -289,7 +289,7 @@
     // ═══════════════════════════════════════════════
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
     import { getAnalytics }  from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
-    import { getDatabase, ref, push, onValue, serverTimestamp }
+    import { getDatabase, ref, push, onValue, remove, serverTimestamp }
              from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -379,7 +379,7 @@
         }
 
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '⏳ Realtime Database mein save ho raha hai...';
+        submitBtn.innerHTML = '⏳ Saving feedback...';
         statusBanner.className = '';
         statusBanner.innerHTML = '';
 
@@ -452,14 +452,13 @@
         if (rtdbSaved) {
             statusBanner.className = 'status-alert success';
             statusBanner.innerHTML = `
-                ✅ <strong>Shukriya ${escapeHTML(name)}!</strong> Aapka feedback Firebase Realtime Database mein TURANT save ho gaya!<br>
-                <span style="font-size:11px; opacity:0.8;">🔥 Live Database Key: <code>${rtdbKey}</code></span>
+                ✅ <strong>Thank you!</strong> Aapka feedback save ho gaya hai.
             `;
         } else {
             statusBanner.className = 'status-alert warning';
             statusBanner.innerHTML = `
                 ⚠️ Realtime Database error: <code>${escapeHTML(rtdbError || 'Connection failed')}</code><br>
-                <span style="font-size:11px; opacity:0.8;">Local backup save ho gaya hai. Agar Permission Denied hai to Firebase Console -> Realtime Database -> Rules tab mein <code>".read": true, ".write": true</code> set karein.</span>
+                <span style="font-size:11px; opacity:0.8;">Local backup save ho gaya hai.</span>
             `;
         }
 
@@ -503,9 +502,7 @@
 
     function renderHistory() {
         const localList = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
-        // combine RTDB list and local list
         const combined = [...rtdbFeedbacks];
-        // add any local items not present in rtdbFeedbacks
         localList.forEach(loc => {
             if (!combined.some(c => c.rtdbKey && c.rtdbKey === loc.rtdbKey)) {
                 combined.push(loc);
@@ -514,10 +511,10 @@
 
         const container = document.getElementById('fb-history');
         const countEl   = document.getElementById('fb-count');
-        countEl.textContent = combined.length > 0 ? `(${combined.length} live entries)` : '';
+        countEl.textContent = combined.length > 0 ? `(${combined.length} entries)` : '';
 
         if (combined.length === 0) {
-            container.innerHTML = '<div class="empty-state">📭 Abhi tak koi feedback submit nahi hua.<br>Submit karo — Realtime Database mein turant show hoga!</div>';
+            container.innerHTML = '<div class="empty-state">📭 Abhi tak koi feedback submit nahi hua.</div>';
             return;
         }
 
@@ -526,10 +523,6 @@
                 <button type="button" class="hi-delete" onclick="window.deleteFeedback('${fb.id || fb.rtdbKey}')" title="Delete entry">✕</button>
                 <span class="hi-cat ${fb.category || 'other'}">${escapeHTML(fb.categoryLabel || getCatLabel(fb.category))}</span>
                 <span class="hi-date">${escapeHTML(fb.date || '')}</span>
-                ${fb.rtdbKey
-                    ? `<span style="float:right;font-size:9px;color:#10b981;background:#064e3b;padding:1px 6px;border-radius:8px;">🔥 Live RTDB</span>`
-                    : `<span style="float:right;font-size:9px;color:#f59e0b;background:#451a03;padding:1px 6px;border-radius:8px;">📴 Local</span>`
-                }
                 <div class="hi-msg">${escapeHTML(fb.message || '')}</div>
                 ${fb.rating ? `<div class="hi-stars">${'⭐'.repeat(fb.rating)}</div>` : ''}
                 <div style="font-size:10px;color:#64748b;margin-top:6px;">
@@ -541,12 +534,18 @@
         `).join('');
     }
 
-    window.deleteFeedback = function(id) {
+    window.deleteFeedback = async function(id) {
         if (!confirm("Kya aap ye feedback entry delete karna chahte hain?")) return;
+        if (rtdb && id) {
+            try {
+                await remove(ref(rtdb, 'feedbacks/' + id));
+                console.log("Deleted from RTDB:", id);
+            } catch(e) { console.warn("RTDB delete error", e); }
+        }
         let arr = JSON.parse(localStorage.getItem('APP_FEEDBACKS') || '[]');
-        arr = arr.filter(fb => fb.id !== id && fb.rtdbKey !== id);
+        arr = arr.filter(fb => String(fb.id) !== String(id) && fb.rtdbKey !== id);
         localStorage.setItem('APP_FEEDBACKS', JSON.stringify(arr));
-        rtdbFeedbacks = rtdbFeedbacks.filter(fb => fb.id !== id && fb.rtdbKey !== id);
+        rtdbFeedbacks = rtdbFeedbacks.filter(fb => String(fb.id) !== String(id) && fb.rtdbKey !== id);
         renderHistory();
     };
 
