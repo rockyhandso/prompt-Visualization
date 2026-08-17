@@ -242,6 +242,7 @@ function copyrightSafeRewrite() {
     if (changed) {
         el.value = text;
         if (typeof updatePrompt === 'function') updatePrompt();
+        if (typeof triggerAutoSaveConcept === 'function') triggerAutoSaveConcept(300);
         alert('✅ Copyright names replaced with safe alternatives!\nPlease review and edit as needed.');
     } else {
         alert('✅ No copyrighted character names detected in your prompt!');
@@ -298,6 +299,7 @@ Return ONLY the final English prompt string, no markdown, no quotes, no intro or
             inputEl.value = text.trim().replace(/^["']|["']$/g, '');
             if (typeof updatePrompt === 'function') updatePrompt();
             if (typeof autoDetectCharactersFromConcept === 'function') autoDetectCharactersFromConcept();
+            if (typeof triggerAutoSaveConcept === 'function') triggerAutoSaveConcept(300);
             alert("✅ Hinglish/Hindi idea English AI Prompt me convert ho gaya!");
         } else {
             alert("Translation fail ho gaya. Kripya dobara try karein.");

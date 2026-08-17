@@ -470,7 +470,7 @@
                     <button class="api-btn" style="background: #8b5cf6; color: white; padding: 3px 8px; font-size: 10px;" onclick="polishBasePrompt()">🪄 AI Fix Grammar</button>
                 </div>
             </div>
-            <textarea id="subject-input" class="input-box" rows="4" placeholder="Hinglish ya Hindi me bhi likh sakte hain... e.g. 'sports car mumbai ki baarish me drift kar rahi hai' ya 'a sports car drifting on wet street'" oninput="debouncedUpdatePrompt()" style="resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5;">a sports car drifting on wet street</textarea>
+            <textarea id="subject-input" class="input-box" rows="4" placeholder="Hinglish ya Hindi me bhi likh sakte hain... e.g. 'sports car mumbai ki baarish me drift kar rahi hai' ya 'a sports car drifting on wet street'" oninput="debouncedUpdatePrompt(); triggerAutoSaveConcept();" style="resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5;">a sports car drifting on wet street</textarea>
 
             <!-- GEMINI AI REALTIME VIDEO MOTION EXPANDER -->
             <div class="gemini-box">
@@ -801,11 +801,74 @@ Return ONLY the final prompt in 2-3 sentences. No intro text, no labels.`;
         if (text) {
             document.getElementById('subject-input').value = text;
             updatePrompt();
+            triggerAutoSaveConcept(300);
             alert('\u2705 Video motion prompt base concept me set ho gaya!');
         }
     }
 
     // changeAppTheme, initSavedTheme — provided by js/common.js
+
+    // ── Firebase Auto-Save Helpers ──────────────────────────────
+    let lastSavedConcept = "";
+    let autoSaveConceptTimer = null;
+
+    function triggerAutoSaveConcept(delay = 2000) {
+        clearTimeout(autoSaveConceptTimer);
+        autoSaveConceptTimer = setTimeout(() => {
+            autoSaveConceptToFirebase();
+        }, delay);
+    }
+
+    function autoSaveConceptToFirebase() {
+        const textEl = document.getElementById('subject-input');
+        if (!textEl) return;
+        const text = textEl.value.trim();
+        if (!text || text.length < 3 || text === lastSavedConcept || text.toLowerCase() === 'a sports car drifting on wet street') return;
+
+        function doSave() {
+            try {
+                const db   = window._studioDB;
+                const ref  = window._studioRef;
+                const push = window._studioPush;
+                if (!db) return;
+                const engine = document.getElementById('engine-select')?.value || 'sora';
+                lastSavedConcept = text;
+                push(ref(db, 'concepts'), {
+                    type: 'concept',
+                    text: text,
+                    page: 'Video Studio',
+                    engine: engine,
+                    ts: Date.now()
+                }).catch(() => {});
+            } catch(e) {}
+        }
+
+        if (window._studioDB) { doSave(); }
+        else { document.addEventListener('studioRtdbReady', doSave, { once: true }); }
+    }
+
+    function saveBrainstormToFirebase(scenarios) {
+        function doSave() {
+            try {
+                const db   = window._studioDB;
+                const ref  = window._studioRef;
+                const push = window._studioPush;
+                if (!db) return;
+                const engine = document.getElementById('engine-select')?.value || 'sora';
+                scenarios.forEach(scen => {
+                    push(ref(db, 'concepts'), {
+                        type: 'brainstorm',
+                        text: scen,
+                        page: 'Video Studio',
+                        engine: engine,
+                        ts: Date.now()
+                    }).catch(() => {});
+                });
+            } catch(e) {}
+        }
+        if (window._studioDB) { doSave(); }
+        else { document.addEventListener('studioRtdbReady', doSave, { once: true }); }
+    }
 
     // fetchBestAvailableModel — provided by js/common.js (with sessionStorage caching)
 
@@ -925,6 +988,9 @@ Return ONLY a valid JSON array of 3 strings. Example format:
                 throw new Error("Expected an array of scenarios");
             }
 
+            // Auto-save brainstorm to Firebase
+            saveBrainstormToFirebase(scenarios);
+
             scenarios.forEach((scen, idx) => {
                 const card = document.createElement('div');
                 card.className = 'suggestion-card';
@@ -941,6 +1007,7 @@ Return ONLY a valid JSON array of 3 strings. Example format:
                 card.onclick = function() {
                     document.getElementById('subject-input').value = scen;
                     updatePrompt();
+                    triggerAutoSaveConcept(300);
                 };
                 container.appendChild(card);
             });
@@ -1291,6 +1358,7 @@ Return ONLY a valid JSON array of strings containing max 4 character description
         }
 
         updatePrompt();
+        triggerAutoSaveConcept(300);
         alert("✅ Character Dialogue Script structured format mein Base Video Concept box mein add ho gaya!");
     }
 

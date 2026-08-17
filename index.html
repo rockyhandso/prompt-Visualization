@@ -422,10 +422,9 @@
                     <button class="api-btn" style="background: #10b981; color: white; padding: 3px 8px; font-size: 10px;" onclick="convertHinglishToEnglishPrompt()" title="Convert Hinglish/Hindi text into rich English AI Prompt">🇮🇳 Hinglish ➔ AI Prompt</button>
                     <button class="api-btn" style="background: #f59e0b; color: white; padding: 3px 8px; font-size: 10px;" onclick="copyrightSafeRewrite()" title="Auto-remove copyrighted character names">🛡️ Copyright Fix</button>
                     <button class="api-btn" style="background: #8b5cf6; color: white; padding: 3px 8px; font-size: 10px;" onclick="polishBasePrompt()">🪄 AI Fix Grammar</button>
-                    <button class="api-btn" id="save-concept-btn" style="background: #3b82f6; color: white; padding: 3px 8px; font-size: 10px;" onclick="saveConceptToFirebase()" title="Save this concept to Firebase">💾 Save</button>
                 </div>
             </div>
-            <textarea id="subject-input" class="input-box" rows="4" placeholder="Hinglish ya Hindi me bhi likh sakte hain... e.g. 'mumbai ki sadak par ek bada hara yoddha slow motion me chal raha hai' ya 'a cat in car'" oninput="debouncedUpdatePrompt()" style="resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5;">a cat in car</textarea>
+            <textarea id="subject-input" class="input-box" rows="4" placeholder="Hinglish ya Hindi me bhi likh sakte hain... e.g. 'mumbai ki sadak par ek bada hara yoddha slow motion me chal raha hai' ya 'a cat in car'" oninput="debouncedUpdatePrompt(); triggerAutoSaveConcept();" style="resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5;">a cat in car</textarea>
 
             <!-- GEMINI AI REALTIME PROMPT EXPANDER -->
             <div class="gemini-box">
@@ -520,39 +519,40 @@
     // DEBOUNCED PROMPT UPDATER FOR PERFORMANCE
     const debouncedUpdatePrompt = debounce(updatePrompt, 150);
 
-    // ── Firebase Save Helpers ──────────────────────────────
-    function saveConceptToFirebase() {
-        const text = document.getElementById('subject-input').value.trim();
-        if (!text) { alert('Pehle kuch concept likhein!'); return; }
+    // ── Firebase Auto-Save Helpers ──────────────────────────────
+    let lastSavedConcept = "";
+    let autoSaveConceptTimer = null;
 
-        const btn = document.getElementById('save-concept-btn');
-        btn.disabled = true;
-        btn.textContent = '⏳ Saving...';
+    function triggerAutoSaveConcept(delay = 2000) {
+        clearTimeout(autoSaveConceptTimer);
+        autoSaveConceptTimer = setTimeout(() => {
+            autoSaveConceptToFirebase();
+        }, delay);
+    }
+
+    function autoSaveConceptToFirebase() {
+        const textEl = document.getElementById('subject-input');
+        if (!textEl) return;
+        const text = textEl.value.trim();
+        // Don't save empty strings, default placeholder, or exact duplicates
+        if (!text || text.length < 3 || text === lastSavedConcept || text.toLowerCase() === 'a cat in car') return;
 
         function doSave() {
             try {
-                const db  = window._studioDB;
-                const ref = window._studioRef;
+                const db   = window._studioDB;
+                const ref  = window._studioRef;
                 const push = window._studioPush;
-                if (!db) { alert('Firebase abhi connect ho raha hai, thoda wait karein.'); btn.disabled=false; btn.textContent='💾 Save'; return; }
-                const engine = document.getElementById('engine-select').value;
+                if (!db) return;
+                const engine = document.getElementById('engine-select')?.value || 'gemini';
+                lastSavedConcept = text;
                 push(ref(db, 'concepts'), {
                     type: 'concept',
                     text: text,
                     page: 'Image Studio',
                     engine: engine,
                     ts: Date.now()
-                }).then(() => {
-                    btn.textContent = '✅ Saved!';
-                    setTimeout(() => { btn.disabled=false; btn.textContent='💾 Save'; }, 2000);
-                }).catch(e => {
-                    alert('Save failed: ' + e.message);
-                    btn.disabled=false; btn.textContent='💾 Save';
-                });
-            } catch(e) {
-                alert('Save error: ' + e.message);
-                btn.disabled=false; btn.textContent='💾 Save';
-            }
+                }).catch(() => {});
+            } catch(e) {}
         }
 
         if (window._studioDB) { doSave(); }
@@ -566,7 +566,7 @@
                 const ref  = window._studioRef;
                 const push = window._studioPush;
                 if (!db) return;
-                const engine = document.getElementById('engine-select').value;
+                const engine = document.getElementById('engine-select')?.value || 'gemini';
                 scenarios.forEach(scen => {
                     push(ref(db, 'concepts'), {
                         type: 'brainstorm',
@@ -680,6 +680,7 @@ Return ONLY a valid JSON array of 3 strings. Example:
                 card.onclick = function() {
                     document.getElementById('subject-input').value = scen;
                     updatePrompt();
+                    triggerAutoSaveConcept(300);
                 };
                 container.appendChild(card);
             });
@@ -879,6 +880,7 @@ Describe the main subject, composition, artistic style, lighting, atmosphere, an
         if (text) {
             document.getElementById('subject-input').value = text;
             updatePrompt();
+            triggerAutoSaveConcept(300);
             alert("Edited image description base concept me transfer ho gayi hai!");
         } else {
             alert("Pehle prompt text enter karein!");
@@ -928,6 +930,7 @@ Describe the main subject, composition, artistic style, lighting, atmosphere, an
         if (corrected) {
             inputEl.value = corrected;
             updatePrompt();
+            triggerAutoSaveConcept(300);
             alert("✅ AI ne Base Concept ki grammar fix kar di!");
         } else {
             alert("Grammar check fail ho gaya. Please try again.");
