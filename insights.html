@@ -326,7 +326,10 @@
             <p>Live user activity, saved concepts &amp; brainstorm logs</p>
         </div>
     </div>
-    <a href="admin.html" class="back-btn">← Admin Panel</a>
+    <div style="display:flex; gap:8px;">
+        <a href="users.html" class="back-btn" style="background:rgba(139,92,246,0.15); border-color:rgba(139,92,246,0.35); color:#a78bfa;">👥 Users</a>
+        <a href="admin.html" class="back-btn">← Admin Panel</a>
+    </div>
 </div>
 
 <!-- MAIN -->
@@ -479,10 +482,18 @@
             const dotClass = isOnline ? 'online-dot' : isIdle ? 'idle-dot' : '';
             const statusColor = isOnline ? '' : isIdle ? ' idle' : '';
 
+            const avatarContent = u.photoURL
+                ? `<img src="${escapeHTML(u.photoURL)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="${escapeHTML(initial)}">`
+                : escapeHTML(initial);
+
+            const authBadge = u.authenticated
+                ? `<span style="font-size:10px; color:#60a5fa; margin-left:4px;" title="Authenticated User">✓</span>`
+                : '';
+
             html += `<div class="user-card">
-                <div class="user-avatar">${escapeHTML(initial)}<span class="${dotClass}"></span></div>
+                <div class="user-avatar">${avatarContent}<span class="${dotClass}"></span></div>
                 <div class="user-info">
-                    <div class="user-name">${escapeHTML(u.label || uid)}</div>
+                    <div class="user-name">${escapeHTML(u.label || uid)}${authBadge}</div>
                     <div class="user-status${statusColor}">${statusLabel}</div>
                     <div class="user-time">${escapeHTML(u.page||'Unknown page')} · ${relTime(u.lastSeen)}</div>
                 </div>

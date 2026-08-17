@@ -12,12 +12,16 @@
       gtag('js', new Date());
       gtag('config', 'G-MV1SEZRYY6');
     </script>
-    <!-- Firebase + RTDB -->
+    <!-- Firebase Auth + RTDB -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
       import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
       import { getDatabase, ref, set, push, onDisconnect }
                from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+      import { getAuth, GoogleAuthProvider,
+               signInWithPopup, signInWithEmailAndPassword,
+               createUserWithEmailAndPassword }
+               from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
@@ -31,35 +35,48 @@
       };
       const app = initializeApp(firebaseConfig);
       getAnalytics(app);
-      const db = getDatabase(app, "https://prompt-visualization-default-rtdb.firebaseio.com");
+      const db   = getDatabase(app, "https://prompt-visualization-default-rtdb.firebaseio.com");
+      const auth = getAuth(app);
+      const googleProvider = new GoogleAuthProvider();
 
       // ── Presence Tracking ──────────────────────────────
-      let uid = sessionStorage.getItem('_studio_uid');
-      if (!uid) {
-        uid = 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        sessionStorage.setItem('_studio_uid', uid);
+      let sessionUid = sessionStorage.getItem('_studio_uid');
+      if (!sessionUid) {
+        sessionUid = 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        sessionStorage.setItem('_studio_uid', sessionUid);
       }
-      const presenceRef = ref(db, `presence/${uid}`);
+      let presenceRef = ref(db, `presence/${sessionUid}`);
 
-      async function pingPresence() {
-        try {
-          await set(presenceRef, {
-            label: 'Visitor ' + uid.slice(-4).toUpperCase(),
-            page: 'Video Studio',
-            lastSeen: Date.now()
-          });
-        } catch(e) {}
+      async function pingPresence(data) {
+        try { await set(presenceRef, data); } catch(e) {}
       }
-      pingPresence();
-      setInterval(pingPresence, 30000);
+      pingPresence({ label: 'Visitor ' + sessionUid.slice(-4).toUpperCase(), page: 'Video Studio', lastSeen: Date.now() });
+      const _presencePingTimer = setInterval(() => {
+        const u = auth.currentUser;
+        pingPresence(u ? {
+          label: u.displayName || u.email?.split('@')[0] || 'User',
+          email: u.email || '', photoURL: u.photoURL || '',
+          uid: u.uid, page: 'Video Studio', lastSeen: Date.now(), authenticated: true
+        } : { label: 'Visitor ' + sessionUid.slice(-4).toUpperCase(), page: 'Video Studio', lastSeen: Date.now() });
+      }, 30000);
       onDisconnect(presenceRef).remove();
 
       // ── Expose RTDB helpers ──────────────────────────
       window._studioDB   = db;
       window._studioRef  = ref;
       window._studioPush = push;
+      window._studioPresenceRef = presenceRef;
+      window._studioSetPresence = (data) => set(presenceRef, { ...data, lastSeen: Date.now() });
+      window._studioSetUser = (uid, data) => set(ref(db, `users/${uid}`), data);
+
+      // Boot auth module
+      window._studioAuthReady(auth, googleProvider, {
+        signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword
+      });
+
       document.dispatchEvent(new Event('studioRtdbReady'));
     </script>
+    <script src="js/auth.js"></script>
     <script src="js/common.js"></script>
     <script src="js/tour.js"></script>
 
@@ -628,6 +645,15 @@
     }
 
     async function uploadAndAnalyzeVideo() {
+        // ── Sign-In Gate ──
+        if (typeof requireSignIn === 'function') {
+            requireSignIn(
+                '🎬 Video AI Analysis use karne ke liye sign in karein. Extracted prompts aapke account mein save honge!',
+                () => uploadAndAnalyzeVideo()
+            );
+            if (!window._firebaseAuth?.currentUser) return;
+        }
+
         const apiKey = getApiKey();
         if (!apiKey) { alert('Pehle Admin Panel se API Key set karein!'); return; }
         if (!selectedVideoFile) { alert('Kripya pehle ek video clip select karein!'); return; }
@@ -874,6 +900,14 @@ Return ONLY the final prompt in 2-3 sentences. No intro text, no labels.`;
 
     // GEMINI AI VIDEO MOTION BRAINSTORMING ENGINE
     async function generateAiIdeas() {
+        // ── Sign-In Gate ──
+        if (typeof requireSignIn === 'function') {
+            requireSignIn(
+                '🤖 Video Brainstorm Director use karne ke liye sign in karein. Apne creative video scenarios save honge!',
+                () => generateAiIdeas()
+            );
+            if (!window._firebaseAuth?.currentUser) return;
+        }
 
         const apiKey = getApiKey();
         if (!apiKey) {

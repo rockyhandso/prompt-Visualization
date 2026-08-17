@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registered Users — AI Prompt Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="js/common.js"></script>
+    <style>
+        :root {
+            --bg: #060b18;
+            --card: #0f1929;
+            --card2: #111c30;
+            --border: #1e3a5f;
+            --accent: #3b82f6;
+            --accent2: #8b5cf6;
+            --green: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text: #f1f5f9;
+            --subtext: #64748b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── HEADER ─────────────────────────────────── */
+        .header {
+            background: linear-gradient(135deg, #0a1628 0%, #0f1f3d 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .header-icon {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+        }
+        .header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.3px; }
+        .header p { font-size: 0.72rem; color: var(--subtext); margin-top: 1px; }
+        .header-actions { display: flex; gap: 8px; }
+        .nav-btn {
+            background: rgba(59,130,246,0.12);
+            border: 1px solid rgba(59,130,246,0.3);
+            color: var(--accent);
+            padding: 7px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .nav-btn:hover { background: rgba(59,130,246,0.22); }
+
+        /* ── MAIN ───────────────────────────────────── */
+        .main { padding: 28px; max-width: 1280px; margin: 0 auto; }
+
+        /* ── STAT CARDS ─────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        }
+        .stat-card.purple::before { background: linear-gradient(90deg,#8b5cf6,#a78bfa); }
+        .stat-card.blue::before { background: linear-gradient(90deg,#3b82f6,#60a5fa); }
+        .stat-card.green::before { background: linear-gradient(90deg,#10b981,#34d399); }
+        .stat-card.orange::before { background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+
+        .stat-label { font-size: 11px; color: var(--subtext); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; }
+        .stat-value { font-size: 2rem; font-weight: 700; letter-spacing: -1px; }
+        .stat-card.purple .stat-value { color: #a78bfa; }
+        .stat-card.blue .stat-value { color: #60a5fa; }
+        .stat-card.green .stat-value { color: #34d399; }
+        .stat-card.orange .stat-value { color: #fbbf24; }
+        .stat-sub { font-size: 11px; color: var(--subtext); margin-top: 4px; }
+
+        /* ── SECTION ─────────────────────────────────── */
+        .section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 24px; overflow: hidden; }
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            flex-wrap: wrap; gap: 10px;
+        }
+        .section-title-row { display: flex; align-items: center; gap: 10px; }
+        .section-icon { font-size: 20px; }
+        .section-title { font-size: 15px; font-weight: 600; }
+        .section-badge {
+            background: rgba(139,92,246,0.15);
+            border: 1px solid rgba(139,92,246,0.3);
+            color: #a78bfa;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 9px;
+            border-radius: 20px;
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 16px 22px 0;
+        }
+        .filter-input {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 8px 14px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            flex: 1;
+            min-width: 200px;
+        }
+        .filter-input:focus { border-color: var(--accent); }
+        .filter-select {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 8px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .section-content { padding: 16px 22px; }
+
+        /* ── USERS TABLE ──────────────────────────────── */
+        .users-table-wrap { overflow-x: auto; }
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .users-table th {
+            text-align: left;
+            padding: 10px 14px;
+            color: var(--subtext);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+        .users-table td {
+            padding: 14px;
+            border-bottom: 1px solid rgba(30,58,95,0.5);
+            vertical-align: middle;
+        }
+        .users-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-avatar-img {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid var(--border);
+        }
+        .user-avatar-initial {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700; color: white;
+            flex-shrink: 0;
+        }
+        .user-name { font-weight: 600; color: var(--text); }
+        .user-uid { font-size: 11px; color: var(--subtext); font-family: monospace; }
+
+        .provider-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 11px; font-weight: 600;
+            padding: 3px 8px; border-radius: 6px;
+            white-space: nowrap;
+        }
+        .provider-google { background: rgba(66,133,244,0.15); color: #60a5fa; border: 1px solid rgba(66,133,244,0.3); }
+        .provider-password { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+
+        .time-cell { font-size: 12px; color: var(--subtext); white-space: nowrap; }
+
+        .delete-btn {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: #f87171;
+            padding: 5px 10px;
+            border-radius: 7px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .delete-btn:hover { background: rgba(239,68,68,0.22); transform: scale(1.05); }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--subtext);
+        }
+        .empty-state .empty-icon { font-size: 44px; margin-bottom: 12px; }
+        .empty-state p { font-size: 14px; }
+
+        /* ── TOAST ───────────────────────────────────── */
+        #toast {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            background: #10b981;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+            transform: translateY(60px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            z-index: 999;
+        }
+        #toast.show { transform: translateY(0); opacity: 1; }
+        #toast.error { background: #ef4444; }
+
+        .spinner {
+            width: 20px; height: 20px;
+            border: 2px solid rgba(59,130,246,0.25);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .main { padding: 16px; }
+            .header { padding: 14px 16px; }
+            .header h1 { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-left">
+        <div class="header-icon">👥</div>
+        <div>
+            <h1>Registered Users Manager</h1>
+            <p>Real-time authenticated users synced with Firebase Auth &amp; RTDB</p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <a href="insights.html" class="nav-btn">📊 Insights</a>
+        <a href="admin.html" class="nav-btn">← Admin Panel</a>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card purple">
+            <div class="stat-label">👥 Total Registered Users</div>
+            <div class="stat-value" id="stat-total-users">–</div>
+            <div class="stat-sub">Accounts created</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-label">🌐 Google Sign-Ins</div>
+            <div class="stat-value" id="stat-google-users">–</div>
+            <div class="stat-sub">Authenticated via Google</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-label">✉️ Email Sign-Ins</div>
+            <div class="stat-value" id="stat-email-users">–</div>
+            <div class="stat-sub">Registered via Email/Pass</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-label">⚡ Active in Last 24h</div>
+            <div class="stat-value" id="stat-active-24h">–</div>
+            <div class="stat-sub">Logged in recently</div>
+        </div>
+    </div>
+
+    <!-- USERS DIRECTORY -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title-row">
+                <span class="section-icon">📋</span>
+                <span class="section-title">User Accounts Directory</span>
+                <span class="section-badge" id="users-count-badge">0 users</span>
+            </div>
+        </div>
+
+        <div class="filter-row">
+            <input type="text" id="search-users" class="filter-input" placeholder="🔍 Search by name or email…" oninput="renderUsersTable()">
+            <select id="filter-provider" class="filter-select" onchange="renderUsersTable()">
+                <option value="">All Sign-In Methods</option>
+                <option value="google">🌐 Google</option>
+                <option value="password">✉️ Email &amp; Password</option>
+            </select>
+        </div>
+
+        <div class="section-content">
+            <div class="users-table-wrap">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Provider</th>
+                            <th>Registered</th>
+                            <th>Last Active</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody">
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding:30px; color:var(--subtext);">
+                                <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
+                                    <div class="spinner"></div> Loading registered users…
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+    import { getDatabase, ref, onValue, remove }
+             from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
+        authDomain: "prompt-visualization.firebaseapp.com",
+        databaseURL: "https://prompt-visualization-default-rtdb.firebaseio.com",
+        projectId: "prompt-visualization",
+        storageBucket: "prompt-visualization.firebasestorage.app",
+        messagingSenderId: "93895633100",
+        appId: "1:93895633100:web:3aba969e689d23b7313a69",
+        measurementId: "G-6BQZE1T6JG"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app, "https://prompt-visualization-default-rtdb.firebaseio.com");
+
+    let allUsers = {};
+
+    function escapeHTML(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function showToast(msg, isError=false) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'show' + (isError ? ' error' : '');
+        clearTimeout(t._tid);
+        t._tid = setTimeout(() => t.className = '', 3000);
+    }
+
+    function relTime(ts) {
+        if (!ts) return 'Never';
+        const d = Date.now() - ts;
+        if (d < 60000) return 'Just now';
+        if (d < 3600000) return `${Math.floor(d/60000)}m ago`;
+        if (d < 86400000) return `${Math.floor(d/3600000)}h ago`;
+        return new Date(ts).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+    }
+
+    onValue(ref(db, 'users'), snap => {
+        allUsers = snap.val() || {};
+        renderUsersTable();
+        updateStats();
+    });
+
+    window.renderUsersTable = function() {
+        const tbody = document.getElementById('users-tbody');
+        const search = (document.getElementById('search-users').value || '').toLowerCase();
+        const provFilter = document.getElementById('filter-provider').value;
+
+        const entries = Object.entries(allUsers).filter(([uid, u]) => {
+            const name = (u.displayName || '').toLowerCase();
+            const email = (u.email || '').toLowerCase();
+            const provider = (u.provider || '').toLowerCase();
+
+            if (search && !name.includes(search) && !email.includes(search) && !uid.toLowerCase().includes(search)) return false;
+            if (provFilter && !provider.includes(provFilter)) return false;
+            return true;
+        });
+
+        // Sort by lastLogin desc
+        entries.sort((a,b) => (b[1].lastLogin || 0) - (a[1].lastLogin || 0));
+
+        document.getElementById('users-count-badge').textContent = entries.length + ' users';
+
+        if (entries.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👥</div><p>Koi user account nahi mila</p></div></td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = entries.map(([uid, u]) => {
+            const name = u.displayName || u.email?.split('@')[0] || 'User';
+            const initial = name.charAt(0).toUpperCase();
+            const photoURL = u.photoURL;
+            const isGoogle = (u.provider || '').includes('google');
+            const provBadge = isGoogle
+                ? `<span class="provider-badge provider-google">🌐 Google</span>`
+                : `<span class="provider-badge provider-password">✉️ Email</span>`;
+
+            const avatarHtml = photoURL
+                ? `<img class="user-avatar-img" src="${escapeHTML(photoURL)}" alt="${escapeHTML(initial)}">`
+                : `<div class="user-avatar-initial">${escapeHTML(initial)}</div>`;
+
+            return `<tr>
+                <td>
+                    <div class="user-cell">
+                        ${avatarHtml}
+                        <div>
+                            <div class="user-name">${escapeHTML(name)}</div>
+                            <div class="user-uid">${escapeHTML(uid.substring(0, 12))}...</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="color:var(--text); font-weight:500;">${escapeHTML(u.email || '—')}</td>
+                <td>${provBadge}</td>
+                <td class="time-cell">${relTime(u.createdAt)}</td>
+                <td class="time-cell" style="color:#34d399; font-weight:500;">${relTime(u.lastLogin)}</td>
+                <td>
+                    <button class="delete-btn" onclick="deleteUserRecord('${escapeHTML(uid)}')">🗑️ Remove</button>
+                </td>
+            </tr>`;
+        }).join('');
+    };
+
+    window.deleteUserRecord = async function(uid) {
+        if (!confirm('Is user ke record ko database se remove karna chahte hain?')) return;
+        try {
+            await remove(ref(db, `users/${uid}`));
+            showToast('✅ User record removed!');
+        } catch(e) {
+            showToast('❌ Remove failed: ' + e.message, true);
+        }
+    };
+
+    function updateStats() {
+        const usersList = Object.values(allUsers);
+        const total = usersList.length;
+        document.getElementById('stat-total-users').textContent = total;
+
+        const googleCount = usersList.filter(u => (u.provider || '').includes('google')).length;
+        const emailCount = usersList.filter(u => !(u.provider || '').includes('google')).length;
+        document.getElementById('stat-google-users').textContent = googleCount;
+        document.getElementById('stat-email-users').textContent = emailCount;
+
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        const active24h = usersList.filter(u => (u.lastLogin || 0) > oneDayAgo).length;
+        document.getElementById('stat-active-24h').textContent = active24h;
+    }
+</script>
+
+</body>
+</html>
