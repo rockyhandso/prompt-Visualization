@@ -647,15 +647,18 @@
     async function uploadAndAnalyzeVideo() {
         // ── Sign-In Gate ──
         if (typeof requireSignIn === 'function') {
-            requireSignIn(
-                '🎬 Video AI Analysis use karne ke liye sign in karein. Extracted prompts aapke account mein save honge!',
-                () => uploadAndAnalyzeVideo()
-            );
-            if (!window._firebaseAuth?.currentUser) return;
+            const user = window._firebaseAuth?.currentUser;
+            if (!user) {
+                requireSignIn(
+                    '🎬 Video AI Analysis use karne ke liye sign in karein. Extracted prompts aapke account mein save honge!',
+                    () => uploadAndAnalyzeVideo()
+                );
+                return;
+            }
         }
 
         const apiKey = getApiKey();
-        if (!apiKey) { alert('Pehle Admin Panel se API Key set karein!'); return; }
+        if (!apiKey) { alert('Gemini API Key nahi mili. Admin panel se set karein.'); return; }
         if (!selectedVideoFile) { alert('Kripya pehle ek video clip select karein!'); return; }
 
         const progressWrap = document.getElementById('video-progress-wrap');
@@ -902,17 +905,19 @@ Return ONLY the final prompt in 2-3 sentences. No intro text, no labels.`;
     async function generateAiIdeas() {
         // ── Sign-In Gate ──
         if (typeof requireSignIn === 'function') {
-            requireSignIn(
-                '🤖 Video Brainstorm Director use karne ke liye sign in karein. Apne creative video scenarios save honge!',
-                () => generateAiIdeas()
-            );
-            if (!window._firebaseAuth?.currentUser) return;
+            const user = window._firebaseAuth?.currentUser;
+            if (!user) {
+                requireSignIn(
+                    '🤖 Video Brainstorm Director use karne ke liye sign in karein. Apne creative video scenarios save honge!',
+                    () => generateAiIdeas()
+                );
+                return;
+            }
         }
 
         const apiKey = getApiKey();
         if (!apiKey) {
-            alert("Pehle '⚙️ Key Settings' par click karke apni Gemini API Key enter karein!");
-            setUserCustomApiKey();
+            alert("Gemini API Key nahi mili. Admin panel se set karein.");
             return;
         }
 

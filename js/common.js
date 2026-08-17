@@ -105,12 +105,13 @@ async function fetchBestAvailableModel(apiKey) {
 
     const versions = ['v1beta', 'v1'];
     const preferredModels = [
-        "gemini-flash-latest",
-        "gemini-3.5-flash",
         "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-3.7-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-3-flash-preview",
         "gemini-2.0-flash",
-        "gemini-pro-latest",
-        "gemini-3-flash-preview"
+        "gemini-pro-latest"
     ];
 
     for (const ver of versions) {
@@ -163,7 +164,7 @@ async function fetchBestAvailableModel(apiKey) {
         }
     }
 
-    const defaultFallback = { modelPath: 'models/gemini-flash-latest', apiVersion: 'v1beta' };
+    const defaultFallback = { modelPath: 'models/gemini-3.6-flash', apiVersion: 'v1beta' };
     sessionStorage.setItem('GEMINI_MODEL_CACHE', JSON.stringify({
         timestamp: Date.now(),
         modelInfo: defaultFallback

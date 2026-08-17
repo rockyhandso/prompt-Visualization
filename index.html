@@ -601,17 +601,19 @@
     async function generateAiIdeas() {
         // ── Sign-In Gate ──
         if (typeof requireSignIn === 'function') {
-            requireSignIn(
-                '🤖 Brainstorm feature use karne ke liye sign in karein. Apne creative scenarios save bhi honge!',
-                () => generateAiIdeas()
-            );
-            if (!window._studioAuthReady || !window._firebaseAuth?.currentUser) return;
+            const user = window._firebaseAuth?.currentUser;
+            if (!user) {
+                requireSignIn(
+                    '🤖 Brainstorm feature use karne ke liye sign in karein. Apne creative scenarios save bhi honge!',
+                    () => generateAiIdeas()
+                );
+                return;
+            }
         }
 
         const apiKey = getApiKey();
         if (!apiKey) {
-            alert("Pehle '⚙️ Key Settings' par click karke apni Gemini API Key enter karein!");
-            setUserCustomApiKey();
+            alert("Gemini API Key nahi mili. Admin panel se set karein.");
             return;
         }
 
@@ -824,17 +826,19 @@ Return ONLY a valid JSON array of 3 strings. Example:
     async function analyzeImageWithGemini() {
         // ── Sign-In Gate ──
         if (typeof requireSignIn === 'function') {
-            requireSignIn(
-                '🖼️ Vision AI use karne ke liye sign in karein. Image se extracted prompts aapke account mein save honge!',
-                () => analyzeImageWithGemini()
-            );
-            if (!window._firebaseAuth?.currentUser) return;
+            const user = window._firebaseAuth?.currentUser;
+            if (!user) {
+                requireSignIn(
+                    '🖼️ Vision AI use karne ke liye sign in karein. Image se extracted prompts aapke account mein save honge!',
+                    () => analyzeImageWithGemini()
+                );
+                return;
+            }
         }
 
         const apiKey = getApiKey();
         if (!apiKey) {
-            alert("Pehle '⚙️ Key Settings' par click karke apni Gemini API Key enter karein!");
-            setUserCustomApiKey();
+            alert("Gemini API Key nahi mili. Admin panel se set karein.");
             return;
         }
 
