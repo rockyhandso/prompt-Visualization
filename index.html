@@ -12,13 +12,17 @@
       gtag('js', new Date());
       gtag('config', 'G-MV1SEZRYY6');
     </script>
-    <!-- Firebase -->
+    <!-- Firebase + RTDB -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
       import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
+      import { getDatabase, ref, set, push, onDisconnect, serverTimestamp }
+               from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+
       const firebaseConfig = {
         apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
         authDomain: "prompt-visualization.firebaseapp.com",
+        databaseURL: "https://prompt-visualization-default-rtdb.firebaseio.com",
         projectId: "prompt-visualization",
         storageBucket: "prompt-visualization.firebasestorage.app",
         messagingSenderId: "93895633100",
@@ -26,7 +30,39 @@
         measurementId: "G-6BQZE1T6JG"
       };
       const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
+      getAnalytics(app);
+      const db = getDatabase(app, "https://prompt-visualization-default-rtdb.firebaseio.com");
+
+      // ── Presence Tracking ─────────────────────────────
+      // Generate or retrieve a stable session ID for this visitor
+      let uid = sessionStorage.getItem('_studio_uid');
+      if (!uid) {
+        uid = 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        sessionStorage.setItem('_studio_uid', uid);
+      }
+      const presenceRef = ref(db, `presence/${uid}`);
+
+      async function pingPresence() {
+        try {
+          await set(presenceRef, {
+            label: 'Visitor ' + uid.slice(-4).toUpperCase(),
+            page: 'Image Studio',
+            lastSeen: Date.now()
+          });
+        } catch(e) {}
+      }
+      pingPresence();
+      setInterval(pingPresence, 30000);   // ping every 30 seconds
+
+      // Remove presence on disconnect
+      onDisconnect(presenceRef).remove();
+
+      // ── Expose RTDB helpers to non-module scripts ─────
+      window._studioDB  = db;
+      window._studioRef = ref;
+      window._studioPush = push;
+      window._studioServerTs = () => Date.now(); // simplified ts for non-module use
+      document.dispatchEvent(new Event('studioRtdbReady'));
     </script>
     <script src="js/common.js"></script>
     <script src="js/tour.js"></script>
@@ -386,6 +422,7 @@
                     <button class="api-btn" style="background: #10b981; color: white; padding: 3px 8px; font-size: 10px;" onclick="convertHinglishToEnglishPrompt()" title="Convert Hinglish/Hindi text into rich English AI Prompt">🇮🇳 Hinglish ➔ AI Prompt</button>
                     <button class="api-btn" style="background: #f59e0b; color: white; padding: 3px 8px; font-size: 10px;" onclick="copyrightSafeRewrite()" title="Auto-remove copyrighted character names">🛡️ Copyright Fix</button>
                     <button class="api-btn" style="background: #8b5cf6; color: white; padding: 3px 8px; font-size: 10px;" onclick="polishBasePrompt()">🪄 AI Fix Grammar</button>
+                    <button class="api-btn" id="save-concept-btn" style="background: #3b82f6; color: white; padding: 3px 8px; font-size: 10px;" onclick="saveConceptToFirebase()" title="Save this concept to Firebase">💾 Save</button>
                 </div>
             </div>
             <textarea id="subject-input" class="input-box" rows="4" placeholder="Hinglish ya Hindi me bhi likh sakte hain... e.g. 'mumbai ki sadak par ek bada hara yoddha slow motion me chal raha hai' ya 'a cat in car'" oninput="debouncedUpdatePrompt()" style="resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5;">a cat in car</textarea>
@@ -483,6 +520,68 @@
     // DEBOUNCED PROMPT UPDATER FOR PERFORMANCE
     const debouncedUpdatePrompt = debounce(updatePrompt, 150);
 
+    // ── Firebase Save Helpers ──────────────────────────────
+    function saveConceptToFirebase() {
+        const text = document.getElementById('subject-input').value.trim();
+        if (!text) { alert('Pehle kuch concept likhein!'); return; }
+
+        const btn = document.getElementById('save-concept-btn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Saving...';
+
+        function doSave() {
+            try {
+                const db  = window._studioDB;
+                const ref = window._studioRef;
+                const push = window._studioPush;
+                if (!db) { alert('Firebase abhi connect ho raha hai, thoda wait karein.'); btn.disabled=false; btn.textContent='💾 Save'; return; }
+                const engine = document.getElementById('engine-select').value;
+                push(ref(db, 'concepts'), {
+                    type: 'concept',
+                    text: text,
+                    page: 'Image Studio',
+                    engine: engine,
+                    ts: Date.now()
+                }).then(() => {
+                    btn.textContent = '✅ Saved!';
+                    setTimeout(() => { btn.disabled=false; btn.textContent='💾 Save'; }, 2000);
+                }).catch(e => {
+                    alert('Save failed: ' + e.message);
+                    btn.disabled=false; btn.textContent='💾 Save';
+                });
+            } catch(e) {
+                alert('Save error: ' + e.message);
+                btn.disabled=false; btn.textContent='💾 Save';
+            }
+        }
+
+        if (window._studioDB) { doSave(); }
+        else { document.addEventListener('studioRtdbReady', doSave, { once: true }); }
+    }
+
+    function saveBrainstormToFirebase(scenarios) {
+        function doSave() {
+            try {
+                const db   = window._studioDB;
+                const ref  = window._studioRef;
+                const push = window._studioPush;
+                if (!db) return;
+                const engine = document.getElementById('engine-select').value;
+                scenarios.forEach(scen => {
+                    push(ref(db, 'concepts'), {
+                        type: 'brainstorm',
+                        text: scen,
+                        page: 'Image Studio',
+                        engine: engine,
+                        ts: Date.now()
+                    }).catch(() => {});
+                });
+            } catch(e) {}
+        }
+        if (window._studioDB) { doSave(); }
+        else { document.addEventListener('studioRtdbReady', doSave, { once: true }); }
+    }
+
     // fetchBestAvailableModel — provided by js/common.js (with sessionStorage caching)
 
     // GEMINI AI PROMPT BRAINSTORMING ENGINE (WITH DYNAMIC MODEL DISCOVERY)
@@ -561,6 +660,9 @@ Return ONLY a valid JSON array of 3 strings. Example:
             if (!Array.isArray(scenarios)) {
                 throw new Error("Expected an array of scenarios");
             }
+
+            // Auto-save all brainstorm scenarios to Firebase
+            saveBrainstormToFirebase(scenarios);
 
             scenarios.forEach((scen, idx) => {
                 const card = document.createElement('div');

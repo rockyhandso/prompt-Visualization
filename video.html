@@ -12,13 +12,17 @@
       gtag('js', new Date());
       gtag('config', 'G-MV1SEZRYY6');
     </script>
-    <!-- Firebase -->
+    <!-- Firebase + RTDB -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
       import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
+      import { getDatabase, ref, set, push, onDisconnect }
+               from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+
       const firebaseConfig = {
         apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
         authDomain: "prompt-visualization.firebaseapp.com",
+        databaseURL: "https://prompt-visualization-default-rtdb.firebaseio.com",
         projectId: "prompt-visualization",
         storageBucket: "prompt-visualization.firebasestorage.app",
         messagingSenderId: "93895633100",
@@ -26,7 +30,35 @@
         measurementId: "G-6BQZE1T6JG"
       };
       const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
+      getAnalytics(app);
+      const db = getDatabase(app, "https://prompt-visualization-default-rtdb.firebaseio.com");
+
+      // ── Presence Tracking ──────────────────────────────
+      let uid = sessionStorage.getItem('_studio_uid');
+      if (!uid) {
+        uid = 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        sessionStorage.setItem('_studio_uid', uid);
+      }
+      const presenceRef = ref(db, `presence/${uid}`);
+
+      async function pingPresence() {
+        try {
+          await set(presenceRef, {
+            label: 'Visitor ' + uid.slice(-4).toUpperCase(),
+            page: 'Video Studio',
+            lastSeen: Date.now()
+          });
+        } catch(e) {}
+      }
+      pingPresence();
+      setInterval(pingPresence, 30000);
+      onDisconnect(presenceRef).remove();
+
+      // ── Expose RTDB helpers ──────────────────────────
+      window._studioDB   = db;
+      window._studioRef  = ref;
+      window._studioPush = push;
+      document.dispatchEvent(new Event('studioRtdbReady'));
     </script>
     <script src="js/common.js"></script>
     <script src="js/tour.js"></script>

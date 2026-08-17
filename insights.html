@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insights — AI Prompt Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="js/common.js"></script>
+    <style>
+        :root {
+            --bg: #060b18;
+            --card: #0f1929;
+            --card2: #111c30;
+            --border: #1e3a5f;
+            --accent: #3b82f6;
+            --accent2: #8b5cf6;
+            --green: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text: #f1f5f9;
+            --subtext: #64748b;
+            --online: #22c55e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── HEADER ─────────────────────────────────── */
+        .header {
+            background: linear-gradient(135deg, #0a1628 0%, #0f1f3d 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .header-icon {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+        }
+        .header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.3px; }
+        .header p { font-size: 0.72rem; color: var(--subtext); margin-top: 1px; }
+        .back-btn {
+            background: rgba(59,130,246,0.12);
+            border: 1px solid rgba(59,130,246,0.3);
+            color: var(--accent);
+            padding: 7px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .back-btn:hover { background: rgba(59,130,246,0.22); }
+
+        /* ── MAIN ───────────────────────────────────── */
+        .main { padding: 28px; max-width: 1280px; margin: 0 auto; }
+
+        /* ── STAT CARDS ─────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        }
+        .stat-card.blue::before { background: linear-gradient(90deg,#3b82f6,#60a5fa); }
+        .stat-card.green::before { background: linear-gradient(90deg,#10b981,#34d399); }
+        .stat-card.purple::before { background: linear-gradient(90deg,#8b5cf6,#a78bfa); }
+        .stat-card.orange::before { background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+        .stat-label { font-size: 11px; color: var(--subtext); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; }
+        .stat-value { font-size: 2rem; font-weight: 700; letter-spacing: -1px; }
+        .stat-card.blue .stat-value { color: #60a5fa; }
+        .stat-card.green .stat-value { color: #34d399; }
+        .stat-card.purple .stat-value { color: #a78bfa; }
+        .stat-card.orange .stat-value { color: #fbbf24; }
+        .stat-sub { font-size: 11px; color: var(--subtext); margin-top: 4px; }
+
+        /* ── SECTION ─────────────────────────────────── */
+        .section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 24px; overflow: hidden; }
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+        }
+        .section-title-row { display: flex; align-items: center; gap: 10px; }
+        .section-icon { font-size: 20px; }
+        .section-title { font-size: 15px; font-weight: 600; }
+        .section-badge {
+            background: rgba(59,130,246,0.15);
+            border: 1px solid rgba(59,130,246,0.3);
+            color: #60a5fa;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 9px;
+            border-radius: 20px;
+        }
+        .section-badge.green { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); color: #34d399; }
+        .section-content { padding: 16px 22px; }
+
+        /* ── ONLINE USERS ────────────────────────────── */
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .user-card {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: border-color 0.2s;
+        }
+        .user-card:hover { border-color: var(--accent); }
+        .user-avatar {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .online-dot {
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 11px; height: 11px;
+            background: var(--online);
+            border-radius: 50%;
+            border: 2px solid var(--card2);
+            animation: pulse-green 2s infinite;
+        }
+        .idle-dot {
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 11px; height: 11px;
+            background: var(--warning);
+            border-radius: 50%;
+            border: 2px solid var(--card2);
+        }
+        @keyframes pulse-green {
+            0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+            50% { box-shadow: 0 0 0 4px rgba(34,197,94,0); }
+        }
+        .user-info { min-width: 0; }
+        .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-status { font-size: 11px; color: var(--online); margin-top: 2px; }
+        .user-status.idle { color: var(--warning); }
+        .user-time { font-size: 10px; color: var(--subtext); margin-top: 2px; }
+
+        .empty-state {
+            text-align: center;
+            padding: 36px 20px;
+            color: var(--subtext);
+        }
+        .empty-state .empty-icon { font-size: 40px; margin-bottom: 10px; }
+        .empty-state p { font-size: 13px; }
+
+        /* ── CONCEPTS TABLE ───────────────────────────── */
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .filter-input {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 7px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            flex: 1;
+            min-width: 160px;
+        }
+        .filter-input:focus { border-color: var(--accent); }
+        .filter-select {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 7px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .log-list { display: flex; flex-direction: column; gap: 10px; }
+        .log-entry {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: border-color 0.2s, transform 0.15s;
+        }
+        .log-entry:hover { border-color: rgba(59,130,246,0.4); transform: translateY(-1px); }
+        .log-type-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .badge-concept { background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-brainstorm { background: rgba(139,92,246,0.2); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+        .log-body { flex: 1; min-width: 0; }
+        .log-text { font-size: 13px; color: var(--text); line-height: 1.5; word-break: break-word; }
+        .log-meta { font-size: 11px; color: var(--subtext); margin-top: 5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .log-page { background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; font-size: 10px; }
+        .delete-btn {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: #f87171;
+            padding: 5px 10px;
+            border-radius: 7px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .delete-btn:hover { background: rgba(239,68,68,0.22); transform: scale(1.05); }
+
+        /* ── CLEAR ALL ────────────────────────────────── */
+        .clear-all-btn {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #f87171;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .clear-all-btn:hover { background: rgba(239,68,68,0.22); }
+
+        /* ── TOAST ───────────────────────────────────── */
+        #toast {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            background: #10b981;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+            transform: translateY(60px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            z-index: 999;
+        }
+        #toast.show { transform: translateY(0); opacity: 1; }
+        #toast.error { background: #ef4444; }
+
+        /* ── LOADING ─────────────────────────────────── */
+        .loading-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 20px; color: var(--subtext); font-size: 13px;
+        }
+        .spinner {
+            width: 18px; height: 18px;
+            border: 2px solid rgba(59,130,246,0.25);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── RESPONSIVE ──────────────────────────────── */
+        @media (max-width: 640px) {
+            .main { padding: 16px; }
+            .header { padding: 14px 16px; }
+            .header h1 { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-left">
+        <div class="header-icon">📊</div>
+        <div>
+            <h1>Studio Insights</h1>
+            <p>Live user activity, saved concepts &amp; brainstorm logs</p>
+        </div>
+    </div>
+    <a href="admin.html" class="back-btn">← Admin Panel</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card green">
+            <div class="stat-label">🟢 Users Online Now</div>
+            <div class="stat-value" id="stat-online">–</div>
+            <div class="stat-sub">Active in last 5 minutes</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-label">📝 Saved Concepts</div>
+            <div class="stat-value" id="stat-concepts">–</div>
+            <div class="stat-sub">Base Concept entries</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-label">🤖 Brainstorm Sessions</div>
+            <div class="stat-value" id="stat-brainstorms">–</div>
+            <div class="stat-sub">AI-generated scenarios</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-label">👁️ Total Visitors</div>
+            <div class="stat-value" id="stat-visitors">–</div>
+            <div class="stat-sub">All time presence pings</div>
+        </div>
+    </div>
+
+    <!-- ONLINE USERS -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title-row">
+                <span class="section-icon">🟢</span>
+                <span class="section-title">Live Users</span>
+                <span class="section-badge green" id="online-count-badge">0 online</span>
+            </div>
+            <span style="font-size:11px;color:var(--subtext);">Updates every 30 seconds</span>
+        </div>
+        <div class="section-content">
+            <div id="users-grid" class="users-grid">
+                <div class="loading-row"><div class="spinner"></div> Loading user presence…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SAVED CONCEPTS & BRAINSTORMS -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title-row">
+                <span class="section-icon">💡</span>
+                <span class="section-title">Concept &amp; Brainstorm Log</span>
+                <span class="section-badge" id="concepts-count-badge">0 entries</span>
+            </div>
+            <button class="clear-all-btn" onclick="clearAllConcepts()">🗑️ Clear All</button>
+        </div>
+        <div class="section-content">
+            <div class="filter-row">
+                <input type="text" id="search-concepts" class="filter-input" placeholder="🔍 Search concepts…" oninput="renderConcepts()">
+                <select id="filter-type" class="filter-select" onchange="renderConcepts()">
+                    <option value="">All Types</option>
+                    <option value="concept">💡 Base Concept</option>
+                    <option value="brainstorm">🤖 Brainstorm</option>
+                </select>
+                <select id="filter-page" class="filter-select" onchange="renderConcepts()">
+                    <option value="">All Pages</option>
+                    <option value="Image Studio">Image Studio</option>
+                    <option value="Video Studio">Video Studio</option>
+                </select>
+            </div>
+            <div id="concepts-list" class="log-list">
+                <div class="loading-row"><div class="spinner"></div> Loading entries…</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+    import { getDatabase, ref, onValue, remove, set, serverTimestamp, onDisconnect }
+             from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
+        authDomain: "prompt-visualization.firebaseapp.com",
+        databaseURL: "https://prompt-visualization-default-rtdb.firebaseio.com",
+        projectId: "prompt-visualization",
+        storageBucket: "prompt-visualization.firebasestorage.app",
+        messagingSenderId: "93895633100",
+        appId: "1:93895633100:web:3aba969e689d23b7313a69",
+        measurementId: "G-6BQZE1T6JG"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app, "https://prompt-visualization-default-rtdb.firebaseio.com");
+
+    // ─── Helpers ────────────────────────────────────
+    function escapeHTML(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function showToast(msg, isError=false){
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'show' + (isError ? ' error' : '');
+        clearTimeout(t._tid);
+        t._tid = setTimeout(() => t.className = '', 3000);
+    }
+    function relTime(ts){
+        if(!ts) return '';
+        const d = Date.now() - ts;
+        if(d < 60000) return `${Math.round(d/1000)}s ago`;
+        if(d < 3600000) return `${Math.floor(d/60000)}m ago`;
+        if(d < 86400000) return `${Math.floor(d/3600000)}h ago`;
+        return new Date(ts).toLocaleDateString();
+    }
+
+    // ─── PRESENCE (Online Users) ──────────────────────
+    // On load: register this admin as a viewer (no full tracking here, just passive)
+    let allPresence = {};
+    const ONLINE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+
+    onValue(ref(db, 'presence'), snap => {
+        allPresence = snap.val() || {};
+        renderUsers();
+        updateStats();
+    });
+
+    function renderUsers() {
+        const grid = document.getElementById('users-grid');
+        const now = Date.now();
+        const entries = Object.entries(allPresence);
+
+        if (entries.length === 0) {
+            grid.innerHTML = `<div class="empty-state"><div class="empty-icon">👻</div><p>Koi user online nahi hai abhi</p></div>`;
+            return;
+        }
+
+        // Sort by lastSeen desc
+        entries.sort((a,b) => (b[1].lastSeen||0) - (a[1].lastSeen||0));
+
+        let html = '';
+        for (const [uid, u] of entries) {
+            const diff = now - (u.lastSeen || 0);
+            const isOnline = diff < ONLINE_THRESHOLD;
+            const isIdle   = diff < 15 * 60 * 1000 && !isOnline;
+            const initial  = (u.label || uid).charAt(0).toUpperCase();
+            const statusLabel = isOnline ? 'Online' : isIdle ? 'Idle' : 'Offline';
+            const dotClass = isOnline ? 'online-dot' : isIdle ? 'idle-dot' : '';
+            const statusColor = isOnline ? '' : isIdle ? ' idle' : '';
+
+            html += `<div class="user-card">
+                <div class="user-avatar">${escapeHTML(initial)}<span class="${dotClass}"></span></div>
+                <div class="user-info">
+                    <div class="user-name">${escapeHTML(u.label || uid)}</div>
+                    <div class="user-status${statusColor}">${statusLabel}</div>
+                    <div class="user-time">${escapeHTML(u.page||'Unknown page')} · ${relTime(u.lastSeen)}</div>
+                </div>
+            </div>`;
+        }
+        grid.innerHTML = html;
+    }
+
+    // ─── CONCEPTS & BRAINSTORMS ────────────────────────
+    let allEntries = {};
+
+    onValue(ref(db, 'concepts'), snap => {
+        allEntries = snap.val() || {};
+        renderConcepts();
+        updateStats();
+    });
+
+    window.renderConcepts = function() {
+        const list = document.getElementById('concepts-list');
+        const search = (document.getElementById('search-concepts').value || '').toLowerCase();
+        const typeF  = document.getElementById('filter-type').value;
+        const pageF  = document.getElementById('filter-page').value;
+
+        const entries = Object.entries(allEntries)
+            .filter(([,v]) => {
+                if(typeF && v.type !== typeF) return false;
+                if(pageF && v.page !== pageF) return false;
+                if(search && !(v.text||'').toLowerCase().includes(search)) return false;
+                return true;
+            })
+            .sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
+
+        document.getElementById('concepts-count-badge').textContent = entries.length + ' entries';
+
+        if (entries.length === 0) {
+            list.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>Koi entry nahi mili</p></div>`;
+            return;
+        }
+
+        list.innerHTML = entries.map(([key, v]) => {
+            const badge = v.type === 'brainstorm'
+                ? `<span class="log-type-badge badge-brainstorm">🤖 Brainstorm</span>`
+                : `<span class="log-type-badge badge-concept">💡 Concept</span>`;
+            return `<div class="log-entry" id="entry-${escapeHTML(key)}">
+                ${badge}
+                <div class="log-body">
+                    <div class="log-text">${escapeHTML(v.text || '')}</div>
+                    <div class="log-meta">
+                        <span>${relTime(v.ts)}</span>
+                        <span class="log-page">${escapeHTML(v.page||'Unknown')}</span>
+                        ${v.engine ? `<span class="log-page">${escapeHTML(v.engine)}</span>` : ''}
+                    </div>
+                </div>
+                <button class="delete-btn" onclick="deleteConcept('${escapeHTML(key)}')">🗑️ Delete</button>
+            </div>`;
+        }).join('');
+    };
+
+    window.deleteConcept = async function(key) {
+        if(!confirm('Is entry ko delete karna chahte hain?')) return;
+        try {
+            await remove(ref(db, `concepts/${key}`));
+            showToast('✅ Entry deleted!');
+        } catch(e) {
+            showToast('❌ Delete failed: ' + e.message, true);
+        }
+    };
+
+    window.clearAllConcepts = async function() {
+        if(!confirm('Saari concept/brainstorm entries delete karna chahte hain?')) return;
+        try {
+            await remove(ref(db, 'concepts'));
+            showToast('✅ All entries cleared!');
+        } catch(e) {
+            showToast('❌ Failed: ' + e.message, true);
+        }
+    };
+
+    // ─── STATS ────────────────────────────────────────
+    let totalVisitors = 0;
+    onValue(ref(db, 'presence'), snap => {
+        const data = snap.val() || {};
+        totalVisitors = Object.keys(data).length;
+        document.getElementById('stat-visitors').textContent = totalVisitors;
+    });
+
+    function updateStats() {
+        const now = Date.now();
+        const onlineUsers = Object.values(allPresence).filter(u => (now - (u.lastSeen||0)) < ONLINE_THRESHOLD);
+        document.getElementById('stat-online').textContent = onlineUsers.length;
+        document.getElementById('online-count-badge').textContent = onlineUsers.length + ' online';
+
+        const conceptCount = Object.values(allEntries).filter(e => e.type === 'concept').length;
+        const brainstormCount = Object.values(allEntries).filter(e => e.type === 'brainstorm').length;
+        document.getElementById('stat-concepts').textContent = conceptCount;
+        document.getElementById('stat-brainstorms').textContent = brainstormCount;
+    }
+</script>
+
+</body>
+</html>
