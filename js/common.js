@@ -190,6 +190,8 @@ const COPYRIGHT_MAP = [
     { r: /\b(loki)\b/gi,                          s: 'trickster god of mischief' },
     { r: /\b(groot)\b/gi,                         s: 'giant sentient tree creature' },
     { r: /\b(rocket raccoon)\b/gi,                s: 'genetically modified raccoon warrior' },
+    { r: /\b(doctor doom|dr\.? doom|victor von doom)\b/gi, s: 'masked green-cloaked metal-faced monarch villain' },
+    { r: /\b(avengers?|the avengers?)\b/gi,       s: 'legendary superhero alliance team' },
     // DC
     { r: /\b(superman|clark kent|kal.?el)\b/gi,  s: 'caped solar-powered alien hero' },
     { r: /\b(batman|bruce wayne)\b/gi,            s: 'dark caped vigilante hero' },
