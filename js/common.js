@@ -747,3 +747,356 @@ function showApiErrorBanner(errorMsg, containerOrId, retryFn) {
     }
 })();
 
+// ── 5. AI PROMPT AUDITOR & PLATFORM OPTIMIZER ENGINE ─────────────────
+let _optimizerCurrentResult = null;
+
+(function injectOptimizerStyles() {
+    if (document.getElementById('_optimizer_styles')) return;
+    const s = document.createElement('style');
+    s.id = '_optimizer_styles';
+    s.textContent = `
+    #optimizer-modal-overlay {
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(6, 11, 24, 0.85); backdrop-filter: blur(12px);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+    #optimizer-modal-overlay.open { opacity: 1; visibility: visible; }
+    #optimizer-modal-box {
+        background: #0f1929; border: 1px solid #1e3a5f; border-radius: 20px;
+        padding: 28px; width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto;
+        margin: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); font-family: 'Inter', sans-serif;
+        color: #f1f5f9; position: relative; box-sizing: border-box;
+    }
+    .opt-title {
+        font-size: 1.2rem; font-weight: 700;
+        background: linear-gradient(135deg, #38bdf8, #8b5cf6);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
+    }
+    .opt-subtitle { font-size: 0.78rem; color: #64748b; margin-bottom: 18px; line-height: 1.4; }
+    .opt-platform-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .opt-plat-btn {
+        background: #060b18; border: 1px solid #1e3a5f; color: #94a3b8;
+        padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
+        cursor: pointer; transition: all 0.2s; font-family: inherit;
+    }
+    .opt-plat-btn:hover { border-color: #38bdf8; color: #f1f5f9; }
+    .opt-plat-btn.active {
+        background: linear-gradient(135deg, #0284c7, #6366f1);
+        border-color: #38bdf8; color: #ffffff; box-shadow: 0 2px 10px rgba(2,132,199,0.4);
+    }
+    .opt-run-btn {
+        width: 100%; padding: 12px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white; border: none; border-radius: 10px;
+        font-size: 13px; font-weight: 700; font-family: inherit;
+        cursor: pointer; transition: opacity 0.2s; margin-bottom: 18px;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .opt-run-btn:hover { opacity: 0.9; }
+    .opt-score-card {
+        background: #060b18; border: 1px solid #1e3a5f; border-radius: 12px;
+        padding: 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .opt-score-num { font-size: 1.8rem; font-weight: 800; }
+    .opt-score-num.high { color: #34d399; }
+    .opt-score-num.medium { color: #fbbf24; }
+    .opt-score-num.low { color: #f87171; }
+    .opt-issue-card {
+        background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
+        border-radius: 10px; padding: 10px 14px; margin-bottom: 8px;
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .opt-issue-card.quality {
+        background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.25);
+    }
+    .opt-replace-btn {
+        background: #3b82f6; border: none; color: white;
+        padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+        cursor: pointer; transition: 0.15s; font-family: inherit; flex-shrink: 0;
+    }
+    .opt-replace-btn:hover { background: #2563eb; }
+    .opt-result-box {
+        background: #060b18; border: 1px solid #1e3a5f; border-radius: 10px;
+        padding: 12px; font-family: monospace; font-size: 12px; color: #38bdf8;
+        line-height: 1.5; margin-bottom: 14px; white-space: pre-wrap; word-break: break-word;
+    }
+    .opt-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .opt-action-btn {
+        padding: 10px; border: none; border-radius: 8px; font-size: 12px; font-weight: 700;
+        cursor: pointer; font-family: inherit; transition: opacity 0.2s; text-align: center;
+    }
+    .opt-action-btn.apply { background: linear-gradient(135deg, #10b981, #3b82f6); color: white; }
+    .opt-action-btn.copy { background: #1e293b; color: #f1f5f9; border: 1px solid #334155; }
+    .opt-action-btn:hover { opacity: 0.88; }
+    `;
+    document.head.appendChild(s);
+})();
+
+function _ensureOptimizerModalHTML() {
+    if (document.getElementById('optimizer-modal-overlay')) return;
+    const overlay = document.createElement('div');
+    overlay.id = 'optimizer-modal-overlay';
+    overlay.innerHTML = `
+    <div id="optimizer-modal-box">
+        <button onclick="closePromptOptimizerModal()" style="position:absolute;top:16px;right:18px;background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;">✕</button>
+        <div class="opt-title">🚀 AI Audit &amp; Platform Optimizer</div>
+        <div class="opt-subtitle">
+            Prompt ko copyright safety &amp; platform compliance ke liye analyze karein. Risky words identify honge aur target AI generator ke liye ideal format banega.
+        </div>
+
+        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">1. Target AI Platform Select Karein:</div>
+        <div class="opt-platform-selector">
+            <button class="opt-plat-btn active" data-plat="midjourney" onclick="_selectOptPlatform(this)">🎨 Midjourney (v6 / Niji)</button>
+            <button class="opt-plat-btn" data-plat="imagen3" onclick="_selectOptPlatform(this)">🖼️ Imagen 3 / DALL-E 3</button>
+            <button class="opt-plat-btn" data-plat="sora_veo" onclick="_selectOptPlatform(this)">🎬 Sora / Runway / Veo</button>
+            <button class="opt-plat-btn" data-plat="flux_sd" onclick="_selectOptPlatform(this)">⚡ Flux / Stable Diffusion</button>
+            <button class="opt-plat-btn" data-plat="generic" onclick="_selectOptPlatform(this)">🌐 Universal / All AI</button>
+        </div>
+
+        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">2. Prompt Text To Audit:</div>
+        <textarea id="opt-input-text" class="input-box" rows="3" style="width:100%; font-family:inherit; font-size:12px; margin-bottom:14px; box-sizing:border-box;" placeholder="Audit karne ke liye prompt enter karein..."></textarea>
+
+        <button class="opt-run-btn" id="opt-run-btn" onclick="runPromptOptimizer()">
+            <span>🔍 Run AI Audit &amp; Optimize Prompt</span>
+        </button>
+
+        <div id="opt-results-container" style="display:none;"></div>
+    </div>`;
+    document.body.appendChild(overlay);
+}
+
+let _selectedOptPlatform = 'midjourney';
+function _selectOptPlatform(btn) {
+    document.querySelectorAll('.opt-plat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _selectedOptPlatform = btn.getAttribute('data-plat');
+}
+
+function openPromptOptimizerModal() {
+    _ensureOptimizerModalHTML();
+    const currentSubject = document.getElementById('subject-input')?.value.trim() || '';
+    const textEl = document.getElementById('opt-input-text');
+    if (textEl) textEl.value = currentSubject || 'a superhero fighting doctor doom in new york city';
+    const overlay = document.getElementById('optimizer-modal-overlay');
+    if (overlay) overlay.classList.add('open');
+}
+
+function closePromptOptimizerModal() {
+    const overlay = document.getElementById('optimizer-modal-overlay');
+    if (overlay) overlay.classList.remove('open');
+}
+
+async function runPromptOptimizer() {
+    // ── Sign-In Gate Check ──
+    if (typeof requireSignIn === 'function') {
+        const user = window._firebaseAuth?.currentUser;
+        if (!user) {
+            requireSignIn(
+                '🚀 AI Prompt Optimizer use karne ke liye please sign in karein.',
+                () => runPromptOptimizer()
+            );
+            return;
+        }
+    }
+
+    const textInput = document.getElementById('opt-input-text')?.value.trim();
+    if (!textInput) {
+        alert("Pehle check karne ke liye prompt text enter karein!");
+        return;
+    }
+
+    const apiKey = getApiKey();
+    if (!apiKey) {
+        alert("Gemini API Key nahi mili. Admin panel se set karein.");
+        return;
+    }
+
+    const runBtn = document.getElementById('opt-run-btn');
+    const container = document.getElementById('opt-results-container');
+    if (runBtn) { runBtn.disabled = true; runBtn.innerHTML = `<span>⚡ Analyzing prompt compliance &amp; copyright risks...</span>`; }
+    if (container) { container.style.display = 'none'; }
+
+    try {
+        const modelInfo = await fetchBestAvailableModel(apiKey);
+        const apiUrl = `https://generativelanguage.googleapis.com/${modelInfo.apiVersion}/${modelInfo.modelPath}:generateContent?key=${apiKey}`;
+
+        const platNames = {
+            'midjourney': 'Midjourney (v6 / Niji 6)',
+            'imagen3': 'Google Imagen 3 & DALL-E 3',
+            'sora_veo': 'OpenAI Sora, Google Veo, and Runway Gen-3 Video Motion',
+            'flux_sd': 'Flux.1 & Stable Diffusion XL',
+            'generic': 'Universal AI Image & Video Generators'
+        };
+
+        const targetName = platNames[_selectedOptPlatform] || 'AI Image Generators';
+
+        const systemPrompt = `You are a world-class AI Prompt Auditor & Copyright Safety Specialist.
+The user wants to audit and optimize a prompt for target generator: "${targetName}".
+Prompt text: "${textInput}".
+
+Tasks:
+1. Scan for copyrighted characters, studio names, trademarked logos, or celebrity names that trigger safety filters/bans on ${targetName}.
+2. Scan for forbidden/weak buzzwords (e.g. "photorealistic", "4K", "8K" if discouraged on ${targetName}).
+3. Re-write the prompt into a high-converting, fully compliant, copyright-safe, descriptive prompt tailored for ${targetName}.
+4. Provide a quality & safety score out of 100.
+
+Return ONLY a valid JSON object matching this exact schema:
+{
+  "score": 88,
+  "copyrightIssues": [
+    { "word": "Doctor Doom", "replacement": "masked green-cloaked metal-faced monarch villain", "reason": "Copyrighted Marvel character" }
+  ],
+  "qualitySuggestions": [
+    { "original": "photorealistic", "replacement": "shot on 35mm camera, soft skin detail", "reason": "Midjourney v6 prefers camera parameters over generic quality buzzwords" }
+  ],
+  "platformAdvice": "Specific formatting advice for ${targetName}",
+  "optimizedPrompt": "fully rewritten copyright-safe descriptive prompt string"
+}`;
+
+        const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: systemPrompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            })
+        });
+
+        const data = await res.json();
+        if (runBtn) { runBtn.disabled = false; runBtn.innerHTML = `<span>🔍 Run AI Audit &amp; Optimize Prompt</span>`; }
+
+        if (data.error) {
+            if (typeof checkAndHandleQuotaError === 'function' && checkAndHandleQuotaError(data.error)) return;
+            alert("Gemini API Error: " + data.error.message);
+            return;
+        }
+
+        const candidate = data.candidates?.[0];
+        if (!candidate?.content?.parts?.[0]?.text) {
+            alert("Gemini se response nahi mil paya. Please try again.");
+            return;
+        }
+
+        let rawText = candidate.content.parts[0].text.trim();
+        rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        const auditData = JSON.parse(jsonMatch ? jsonMatch[0] : rawText);
+        _optimizerCurrentResult = auditData;
+
+        _renderOptimizerResults(auditData);
+
+    } catch (err) {
+        if (runBtn) { runBtn.disabled = false; runBtn.innerHTML = `<span>🔍 Run AI Audit &amp; Optimize Prompt</span>`; }
+        alert("Optimizer Error: " + err.message);
+    }
+}
+
+function _renderOptimizerResults(data) {
+    const container = document.getElementById('opt-results-container');
+    if (!container) return;
+
+    const score = data.score || 80;
+    const scoreClass = score >= 80 ? 'high' : score >= 50 ? 'medium' : 'low';
+    const scoreBadge = score >= 80 ? '🟢 Excellent & Safe' : score >= 50 ? '🟡 Moderate Risk / Can Improve' : '🔴 High Risk / Action Needed';
+
+    let issuesHtml = '';
+
+    const copyrightIssues = data.copyrightIssues || [];
+    const qualitySuggestions = data.qualitySuggestions || [];
+
+    if (copyrightIssues.length === 0 && qualitySuggestions.length === 0) {
+        issuesHtml = `<div style="padding:10px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); color:#4ade80; border-radius:8px; font-size:12px; margin-bottom:12px;">
+            ✅ Koi major copyright risk ya forbidden word nahi mila! Prompt clean lag raha hai.
+        </div>`;
+    } else {
+        copyrightIssues.forEach(iss => {
+            issuesHtml += `
+            <div class="opt-issue-card">
+                <div>
+                    <div style="font-size:12px; font-weight:700; color:#f87171;">🚫 ${escapeHTML(iss.word)} ➔ <span style="color:#4ade80;">${escapeHTML(iss.replacement)}</span></div>
+                    <div style="font-size:11px; color:#94a3b8; margin-top:2px;">⚠️ ${escapeHTML(iss.reason)}</div>
+                </div>
+                <button class="opt-replace-btn" onclick="_replaceSingleWordInConcept('${escapeHTML(iss.word).replace(/'/g,"\\'")}', '${escapeHTML(iss.replacement).replace(/'/g,"\\'")}')">Replace</button>
+            </div>`;
+        });
+
+        qualitySuggestions.forEach(q => {
+            issuesHtml += `
+            <div class="opt-issue-card quality">
+                <div>
+                    <div style="font-size:12px; font-weight:700; color:#fbbf24;">⚡ "${escapeHTML(q.original)}" ➔ <span style="color:#60a5fa;">"${escapeHTML(q.replacement)}"</span></div>
+                    <div style="font-size:11px; color:#94a3b8; margin-top:2px;">💡 ${escapeHTML(q.reason)}</div>
+                </div>
+                <button class="opt-replace-btn" style="background:#8b5cf6;" onclick="_replaceSingleWordInConcept('${escapeHTML(q.original).replace(/'/g,"\\'")}', '${escapeHTML(q.replacement).replace(/'/g,"\\'")}')">Replace</button>
+            </div>`;
+        });
+    }
+
+    container.innerHTML = `
+        <div class="opt-score-card">
+            <div>
+                <div style="font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase;">Audit &amp; Compliance Score</div>
+                <div style="font-size:12px; color:#cbd5e1; font-weight:500; margin-top:2px;">${scoreBadge}</div>
+            </div>
+            <div class="opt-score-num ${scoreClass}">${score}/100</div>
+        </div>
+
+        ${data.platformAdvice ? `
+        <div style="background:#060b18; border:1px solid #1e3a5f; border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#cbd5e1; line-height:1.4;">
+            <strong style="color:#38bdf8;">💡 Platform Recommendation:</strong> ${escapeHTML(data.platformAdvice)}
+        </div>` : ''}
+
+        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">Words to Optimize / Fix:</div>
+        ${issuesHtml}
+
+        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; margin-top:14px; margin-bottom:6px; letter-spacing:0.5px;">Target Platform Optimized Prompt:</div>
+        <div class="opt-result-box" id="opt-result-text">${escapeHTML(data.optimizedPrompt || '')}</div>
+
+        <div class="opt-actions">
+            <button class="opt-action-btn apply" onclick="applyOptimizedPrompt()">✨ Apply All Optimizations to Concept</button>
+            <button class="opt-action-btn copy" onclick="copyOptimizedPromptText()">📋 Copy Prompt</button>
+        </div>
+    `;
+
+    container.style.display = 'block';
+}
+
+function _replaceSingleWordInConcept(targetWord, replacementWord) {
+    const inputEl = document.getElementById('subject-input');
+    if (!inputEl) return;
+    const regex = new RegExp('\\b' + targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
+    if (regex.test(inputEl.value)) {
+        inputEl.value = inputEl.value.replace(regex, replacementWord);
+        if (typeof updatePrompt === 'function') updatePrompt();
+        if (typeof triggerAutoSaveConcept === 'function') triggerAutoSaveConcept(300);
+        alert(`✅ '${targetWord}' replaced with '${replacementWord}' in your Base Concept!`);
+    } else {
+        alert(`Word '${targetWord}' not found in current Base Concept text.`);
+    }
+}
+
+function applyOptimizedPrompt() {
+    if (!_optimizerCurrentResult || !_optimizerCurrentResult.optimizedPrompt) return;
+    const inputEl = document.getElementById('subject-input');
+    if (inputEl) {
+        inputEl.value = _optimizerCurrentResult.optimizedPrompt;
+        if (typeof updatePrompt === 'function') updatePrompt();
+        if (typeof triggerAutoSaveConcept === 'function') triggerAutoSaveConcept(300);
+        closePromptOptimizerModal();
+        alert("✅ Optimized prompt Base Concept mein apply ho gaya!");
+    }
+}
+
+function copyOptimizedPromptText() {
+    const text = document.getElementById('opt-result-text')?.textContent;
+    if (!text) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => alert("Optimized prompt copied!"));
+    } else {
+        alert("Optimized prompt text: " + text);
+    }
+}
+
