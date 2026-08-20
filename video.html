@@ -425,12 +425,18 @@
 
                 <div>
                     <div style="font-size:12px; font-weight:600; color:#cbd5e1; margin-bottom:4px;">3. Number of Scenes / Shots:</div>
-                    <select id="storyboard-count-select" class="input-box" style="width:100%; font-size:12px;">
+                    <select id="storyboard-count-select" class="input-box" style="width:100%; font-size:12px;" onchange="toggleCustomSceneCountInput(this)">
+                        <option value="2">2 Scenes (Quick Dual Shot)</option>
                         <option value="3">3 Scenes (15 sec Reel / Short)</option>
                         <option value="4" selected>4 Scenes (20 sec Scene Arc)</option>
                         <option value="5">5 Scenes (25-30 sec Short Film)</option>
                         <option value="6">6 Scenes (Full Story Arc)</option>
+                        <option value="7">7 Scenes (Extended Sequence)</option>
+                        <option value="8">8 Scenes (8-Shot Sequence)</option>
+                        <option value="10">10 Scenes (Full Short Film Arc)</option>
+                        <option value="custom">✏️ Custom Number of Scenes...</option>
                     </select>
+                    <input type="number" id="storyboard-custom-count" class="input-box" style="display:none; width:100%; font-size:12px; margin-top:6px; box-sizing:border-box;" min="1" max="15" placeholder="Enter custom scene count (e.g. 7 or 12)">
                 </div>
             </div>
 
@@ -1009,6 +1015,17 @@ Return ONLY the final prompt in 2-3 sentences. No intro text, no labels.`;
         }
     }
 
+    function toggleCustomSceneCountInput(select) {
+        const input = document.getElementById('storyboard-custom-count');
+        if (!input) return;
+        if (select.value === 'custom') {
+            input.style.display = 'block';
+            input.focus();
+        } else {
+            input.style.display = 'none';
+        }
+    }
+
     async function generateMultiSceneStoryboard() {
         // ── Sign-In Gate Check ──
         if (typeof requireSignIn === 'function') {
@@ -1029,7 +1046,14 @@ Return ONLY the final prompt in 2-3 sentences. No intro text, no labels.`;
         }
 
         const genre = document.getElementById('storyboard-genre-select')?.value || 'Cinematic Drama';
-        const sceneCount = parseInt(document.getElementById('storyboard-count-select')?.value || '4', 10);
+        const countSelectVal = document.getElementById('storyboard-count-select')?.value;
+        let sceneCount = 4;
+        if (countSelectVal === 'custom') {
+            const customVal = parseInt(document.getElementById('storyboard-custom-count')?.value || '5', 10);
+            sceneCount = Math.max(1, Math.min(15, customVal || 5));
+        } else {
+            sceneCount = parseInt(countSelectVal || '4', 10);
+        }
         const engine = document.getElementById('engine-select')?.value || 'runway';
         const activeRatio = document.querySelector('#ratio-tags .tag.active')?.getAttribute('data-ratio') || '16:9';
         const pacingTags = Array.from(document.querySelectorAll('#storyboard-pacing-tags .tag.active')).map(t => t.innerText).join(', ') || 'Dynamic Multi-Angle Pacing';
