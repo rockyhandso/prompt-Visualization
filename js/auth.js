@@ -383,33 +383,46 @@ function _friendlyError(e) {
     return e.message || 'Sign-in fail ho gaya. Dobara try karein.';
 }
 
-// ─── Dock Auth Button ────────────────────────────────────────────────────────
+// ─── Navbar & Dock Auth Buttons ──────────────────────────────────────────────
 function _renderDockAuthBtn(user) {
-    let btn = document.getElementById('dock-auth-btn');
+    // 1. Render Floating Dock Auth if dock exists
     const dock = document.getElementById('floating-right-dock');
-    if (!dock) return;
-
-    if (!btn) {
-        btn = document.createElement('div');
-        btn.id = 'dock-auth-btn';
-        btn.style.position = 'relative';
-        dock.insertBefore(btn, dock.firstChild);
+    if (dock) {
+        let dockBtn = document.getElementById('dock-auth-btn');
+        if (!dockBtn) {
+            dockBtn = document.createElement('div');
+            dockBtn.id = 'dock-auth-btn';
+            dockBtn.style.position = 'relative';
+            dock.insertBefore(dockBtn, dock.firstChild);
+        }
+        _populateAuthElement(dockBtn, user);
     }
 
+    // 2. Render Top Navbar Auth Button
+    const navBtn = document.getElementById('navbar-auth-btn');
+    if (navBtn) {
+        _populateAuthElement(navBtn, user);
+    }
+}
+
+function _populateAuthElement(btn, user) {
     if (user) {
         const name = user.displayName || user.email?.split('@')[0] || 'User';
         const initial = name.charAt(0).toUpperCase();
         const photoURL = user.photoURL;
         btn.innerHTML = `
-            ${photoURL
-                ? `<img class="auth-avatar" src="${photoURL}" alt="${initial}">`
-                : `<div class="auth-avatar-letter">${initial}</div>`}
-            <span>${name.split(' ')[0]}</span>
-            <div class="auth-dropdown">
-                <div style="padding:8px 12px 6px; font-size:11px; color:#475569; border-bottom:1px solid #1e3a5f; margin-bottom:4px;">
+            <div style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                ${photoURL
+                    ? `<img class="auth-avatar" src="${photoURL}" alt="${initial}" style="width:22px; height:22px; border-radius:50%; border:1px solid #6366f1;">`
+                    : `<div class="auth-avatar-letter" style="width:22px; height:22px; border-radius:50%; background:#6366f1; color:white; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold;">${initial}</div>`}
+                <span style="font-size:12px; font-weight:600; color:#f8fafc;">${name.split(' ')[0]}</span>
+                <span style="font-size:9px; color:#94a3b8;">▼</span>
+            </div>
+            <div class="auth-dropdown" style="top:calc(100% + 6px); right:0;">
+                <div style="padding:8px 12px 6px; font-size:11px; color:#94a3b8; border-bottom:1px solid #1e3a5f; margin-bottom:4px;">
                     ${user.email || ''}
                 </div>
-                <button class="auth-dropdown-item danger" onclick="signOutUser(); document.getElementById('dock-auth-btn').classList.remove('show-dropdown');">🚪 Sign Out</button>
+                <button class="auth-dropdown-item danger" onclick="signOutUser(); this.closest('.auth-dropdown')?.parentElement.classList.remove('show-dropdown');">🚪 Sign Out</button>
             </div>`;
         btn.onclick = (e) => {
             e.stopPropagation();
@@ -417,8 +430,8 @@ function _renderDockAuthBtn(user) {
         };
         document.addEventListener('click', () => btn.classList.remove('show-dropdown'), { once: true });
     } else {
-        btn.innerHTML = `<span>🔑 Sign In</span>`;
-        btn.onclick = () => { _ensureAuthModal(); document.getElementById('auth-overlay').classList.add('open'); };
+        btn.innerHTML = `<button type="button" class="nav-btn" style="background:linear-gradient(135deg, #6366f1, #8b5cf6); color:white; border:none; padding:5px 12px; border-radius:20px; font-size:11px; font-weight:700; cursor:pointer;" onclick="_ensureAuthModal(); document.getElementById('auth-overlay').classList.add('open');">🔑 Sign In</button>`;
+        btn.onclick = null;
     }
 }
 
