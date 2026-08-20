@@ -361,6 +361,19 @@
             text-align: center;
             margin-top: 8px;
         }
+
+        .vmode-btn {
+            background: #0f1929; border: 1px solid #1e3a5f; color: #94a3b8;
+            padding: 10px 18px; border-radius: 30px; font-size: 13px; font-weight: 700;
+            cursor: pointer; transition: all 0.25s ease; font-family: inherit;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+        }
+        .vmode-btn:hover { border-color: #ec4899; color: #f1f5f9; transform: translateY(-1px); }
+        .vmode-btn.active {
+            background: linear-gradient(135deg, #ec4899, #8b5cf6);
+            border-color: #f472b6; color: #ffffff;
+            box-shadow: 0 6px 20px rgba(236,72,153,0.4);
+        }
     </style>
 </head>
 <body>
@@ -376,7 +389,79 @@
         <p style="color: var(--subtext); margin-bottom: 8px;">Powered by Gemini AI Real-time Video Motion & Physics Expansion</p>
     </header>
 
-    <div class="studio-grid">
+    <!-- MODE SWITCHER BAR -->
+    <div style="display:flex; gap:10px; justify-content:center; margin-bottom:20px; flex-wrap:wrap;">
+        <button type="button" id="btn-mode-single" class="vmode-btn active" onclick="switchVideoStudioMode('single')">🎥 Single Shot / Clip Generator</button>
+        <button type="button" id="btn-mode-storyboard" class="vmode-btn" onclick="switchVideoStudioMode('storyboard')">🎬 Multi-Scene Storyboard Director</button>
+    </div>
+
+    <!-- MULTI-SCENE STORYBOARD DIRECTOR PANEL -->
+    <div id="storyboard-mode-panel" style="display:none; margin-bottom:24px;">
+        <div class="card" style="background: linear-gradient(135deg, #0b1329 0%, #150f2a 100%); border: 1px solid #c084fc;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:6px;">
+                <span class="section-title" style="margin:0; color:#f472b6; font-size:16px;">🎬 Multi-Scene Cinematic Storyboard Director</span>
+                <span class="section-badge" style="background:rgba(192,132,252,0.15); border:1px solid rgba(192,132,252,0.3); color:#c084fc; font-size:11px; padding:3px 10px; border-radius:12px; font-weight:600;">Story / Reels / Short Film Mode</span>
+            </div>
+
+            <!-- Story Concept Input -->
+            <div style="font-size:12px; font-weight:600; color:#cbd5e1; margin-bottom:4px;">1. Overall Video Story Concept / Script Idea:</div>
+            <textarea id="storyboard-concept-input" class="input-box" rows="3" style="width:100%; font-family:inherit; font-size:12px; margin-bottom:14px; box-sizing:border-box;" placeholder="Apni kahani ya video concept likhein... e.g. 'ek detective purani bhootiyaye haveli me enter karta hai aur wahan ajeeb bhootiyaye ghatnaye dekhta hai'"></textarea>
+
+            <!-- Genre & Count Selectors -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                <div>
+                    <div style="font-size:12px; font-weight:600; color:#cbd5e1; margin-bottom:4px;">2. Story Genre &amp; Atmosphere:</div>
+                    <select id="storyboard-genre-select" class="input-box" style="width:100%; font-size:12px;">
+                        <option value="Horror & Dark Thriller">👻 Horror &amp; Dark Thriller (Bhootiyaye / Eerie)</option>
+                        <option value="Cinematic Drama" selected>🎬 Cinematic Drama (Emotional / Deep)</option>
+                        <option value="High-Octane Action">💥 High-Octane Action (Fast Chase / Fights)</option>
+                        <option value="Sci-Fi & Cyberpunk">🌌 Sci-Fi &amp; Cyberpunk (Futuristic / Space)</option>
+                        <option value="Romance & Melodrama">💖 Romance &amp; Melodrama (Love / Sad)</option>
+                        <option value="Historical & Vintage Fantasy">📜 Historical &amp; Vintage Fantasy (Period Drama)</option>
+                        <option value="Comedy & Viral Reel">🤡 Comedy &amp; Viral Reel (Funny / Quirky)</option>
+                        <option value="Realism Documentary">🎙️ Realism &amp; Documentary (Nature / True Story)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <div style="font-size:12px; font-weight:600; color:#cbd5e1; margin-bottom:4px;">3. Number of Scenes / Shots:</div>
+                    <select id="storyboard-count-select" class="input-box" style="width:100%; font-size:12px;">
+                        <option value="3">3 Scenes (15 sec Reel / Short)</option>
+                        <option value="4" selected>4 Scenes (20 sec Scene Arc)</option>
+                        <option value="5">5 Scenes (25-30 sec Short Film)</option>
+                        <option value="6">6 Scenes (Full Story Arc)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Pacing Style -->
+            <div style="font-size:12px; font-weight:600; color:#cbd5e1; margin-bottom:6px;">4. Camera Movement &amp; Pacing Style:</div>
+            <div class="tag-group" id="storyboard-pacing-tags">
+                <span class="tag active" onclick="toggleTag(this)">Dynamic Multi-Angle Pacing</span>
+                <span class="tag" onclick="toggleTag(this)">Slow Cinematic Push-Ins</span>
+                <span class="tag" onclick="toggleTag(this)">Fast-Paced Tracking Shots</span>
+                <span class="tag" onclick="toggleTag(this)">Atmospheric Aerial Drone Shots</span>
+            </div>
+
+            <!-- Action Button -->
+            <button type="button" class="gemini-btn" id="storyboard-gen-btn" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); padding: 12px; font-size: 13px; font-weight: bold; width: 100%; margin-top: 10px;" onclick="generateMultiSceneStoryboard()">
+                🎬 Generate Multi-Scene Cinematic Storyboard Package
+            </button>
+            <div id="storyboard-loading" class="loading-spinner" style="margin-top: 10px; color: #f472b6;">⚡ Gemini is directing multi-scene video sequence &amp; writing prompts...</div>
+
+            <!-- Storyboard Results Output -->
+            <div id="storyboard-results-wrap" style="display:none; margin-top:18px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
+                    <span style="font-weight:bold; color:#f472b6; font-size:13px;">📋 Multi-Scene Storyboard Breakdown:</span>
+                    <button type="button" class="api-btn" style="background:#10b981; color:white; padding:4px 10px; font-size:11px; font-weight:bold;" onclick="copyFullMasterScript()">📋 Copy Master Script (All Scenes)</button>
+                </div>
+                <div id="storyboard-scenes-list" style="display:flex; flex-direction:column; gap:12px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SINGLE SHOT MODE CONTAINER -->
+    <div class="studio-grid" id="single-mode-panel">
         <!-- Left Panel: Engine & Motion Setup -->
         <div class="card">
             <div class="section-title">1. Target AI Video Engine</div>
@@ -901,6 +986,231 @@ Return ONLY the final prompt in 2-3 sentences. No intro text, no labels.`;
     }
 
     // fetchBestAvailableModel — provided by js/common.js (with sessionStorage caching)
+
+    // ── MULTI-SCENE CINEMATIC STORYBOARD DIRECTOR ENGINE ─────────────
+    let _currentStoryboardResult = null;
+
+    function switchVideoStudioMode(mode) {
+        const btnSingle = document.getElementById('btn-mode-single');
+        const btnStoryboard = document.getElementById('btn-mode-storyboard');
+        const panelSingle = document.getElementById('single-mode-panel');
+        const panelStoryboard = document.getElementById('storyboard-mode-panel');
+
+        if (mode === 'storyboard') {
+            if (btnSingle) btnSingle.classList.remove('active');
+            if (btnStoryboard) btnStoryboard.classList.add('active');
+            if (panelSingle) panelSingle.style.display = 'none';
+            if (panelStoryboard) panelStoryboard.style.display = 'block';
+        } else {
+            if (btnStoryboard) btnStoryboard.classList.remove('active');
+            if (btnSingle) btnSingle.classList.add('active');
+            if (panelStoryboard) panelStoryboard.style.display = 'none';
+            if (panelSingle) panelSingle.style.display = 'grid';
+        }
+    }
+
+    async function generateMultiSceneStoryboard() {
+        // ── Sign-In Gate Check ──
+        if (typeof requireSignIn === 'function') {
+            const user = window._firebaseAuth?.currentUser;
+            if (!user) {
+                requireSignIn(
+                    '🎬 Multi-Scene Storyboard Director use karne ke liye please sign in karein.',
+                    () => generateMultiSceneStoryboard()
+                );
+                return;
+            }
+        }
+
+        const conceptInput = document.getElementById('storyboard-concept-input')?.value.trim();
+        if (!conceptInput) {
+            alert("Kripya pehle apni video story ka ek idea ya concept likhein!");
+            return;
+        }
+
+        const genre = document.getElementById('storyboard-genre-select')?.value || 'Cinematic Drama';
+        const sceneCount = parseInt(document.getElementById('storyboard-count-select')?.value || '4', 10);
+        const engine = document.getElementById('engine-select')?.value || 'runway';
+        const activeRatio = document.querySelector('#ratio-tags .tag.active')?.getAttribute('data-ratio') || '16:9';
+        const pacingTags = Array.from(document.querySelectorAll('#storyboard-pacing-tags .tag.active')).map(t => t.innerText).join(', ') || 'Dynamic Multi-Angle Pacing';
+
+        const apiKey = getApiKey();
+        if (!apiKey) {
+            alert("Gemini API Key nahi mili. Admin panel se set karein.");
+            return;
+        }
+
+        const loading = document.getElementById('storyboard-loading');
+        const genBtn  = document.getElementById('storyboard-gen-btn');
+        const wrap    = document.getElementById('storyboard-results-wrap');
+
+        if (loading) { loading.style.display = 'block'; loading.innerText = `⚡ Gemini is directing ${sceneCount}-scene ${genre} storyboard sequence...`; }
+        if (genBtn) genBtn.disabled = true;
+        if (wrap) wrap.style.display = 'none';
+
+        try {
+            const modelInfo = await fetchBestAvailableModel(apiKey);
+            const apiUrl = `https://generativelanguage.googleapis.com/${modelInfo.apiVersion}/${modelInfo.modelPath}:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `You are a world-class Hollywood Film Director & AI Video Storyboard Architect.
+User Story Concept: "${conceptInput}".
+Target Genre & Atmosphere: "${genre}".
+Target Scene Count: ${sceneCount} scenes.
+Target Video Generator: "${engine}".
+Aspect Ratio: "${activeRatio}".
+Camera Pacing: "${pacingTags}".
+
+Generate a cinematic multi-scene storyboard breakdown.
+For EACH scene (Scene 1 to Scene ${sceneCount}), create a detailed, physics-accurate, high-converting video AI prompt suitable for ${engine}, Sora, Veo, Luma, and Kling AI.
+
+Return ONLY a valid JSON array of ${sceneCount} objects with this EXACT schema:
+[
+  {
+    "sceneNum": 1,
+    "title": "Scene 1: Short Scene Title",
+    "timestamp": "00:00 - 00:05",
+    "cameraMotion": "Pan Left / Drone Tracking / Low Angle Push-in",
+    "visualDescription": "Detailed cinematic visual scene description...",
+    "audioCue": "Eerie howling wind, rain tapping, tension sound design",
+    "fullPrompt": "Full copy-ready video AI prompt including lighting, camera motion, atmosphere, and --ar ${activeRatio}"
+  }
+]`;
+
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: systemPrompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+
+            const data = await res.json();
+            if (loading) loading.style.display = 'none';
+            if (genBtn) genBtn.disabled = false;
+
+            if (data.error) {
+                if (typeof checkAndHandleQuotaError === 'function' && checkAndHandleQuotaError(data.error)) return;
+                alert("Gemini API Error: " + data.error.message);
+                return;
+            }
+
+            const candidate = data.candidates?.[0];
+            if (!candidate?.content?.parts?.[0]?.text) {
+                alert("Gemini se response nahi mil paya. Please try again.");
+                return;
+            }
+
+            let rawText = candidate.content.parts[0].text.trim();
+            rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+            const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+            const scenes = JSON.parse(jsonMatch ? jsonMatch[0] : rawText);
+
+            if (!Array.isArray(scenes)) {
+                throw new Error("Expected an array of storyboard scenes");
+            }
+
+            _currentStoryboardResult = scenes;
+
+            // Auto-save storyboard to Firebase
+            if (typeof saveBrainstormToFirebase === 'function') {
+                const scenesPrompts = scenes.map(s => `[Story Scene ${s.sceneNum}: ${s.title}] ${s.fullPrompt || s.visualDescription}`);
+                saveBrainstormToFirebase(scenesPrompts);
+            }
+
+            renderStoryboardScenes(scenes);
+
+        } catch (err) {
+            if (loading) loading.style.display = 'none';
+            if (genBtn) genBtn.disabled = false;
+            alert("Storyboard Generation Error: " + err.message);
+            console.error("Storyboard Error:", err);
+        }
+    }
+
+    function renderStoryboardScenes(scenes) {
+        const list = document.getElementById('storyboard-scenes-list');
+        if (!list) return;
+
+        function escapeHTML(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        list.innerHTML = scenes.map((sc, idx) => `
+            <div style="background:#060b18; border:1px solid #1e3a5f; border-radius:12px; padding:14px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                    <div style="font-weight:700; color:#38bdf8; font-size:13px;">
+                        🎬 Scene ${sc.sceneNum || idx+1} (${escapeHTML(sc.timestamp || '00:00 - 00:05')}): ${escapeHTML(sc.title || `Shot ${idx+1}`)}
+                    </div>
+                    <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                        <span style="background:rgba(236,72,153,0.15); border:1px solid rgba(236,72,153,0.3); color:#f472b6; font-size:10px; padding:2px 7px; border-radius:4px; font-weight:600;">🎥 ${escapeHTML(sc.cameraMotion || 'Cinematic Motion')}</span>
+                        <button type="button" class="api-btn" style="background:#3b82f6; color:white; padding:2px 8px; font-size:10px; font-weight:600;" onclick="copySingleScenePrompt(${idx})">📋 Copy Scene Prompt</button>
+                        <button type="button" class="api-btn" style="background:#10b981; color:white; padding:2px 8px; font-size:10px; font-weight:600;" onclick="applySceneToBaseConcept(${idx})">✨ Set as Base Concept</button>
+                    </div>
+                </div>
+
+                <div style="font-size:10px; color:#94a3b8; margin-bottom:4px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Video AI Prompt (Sora / Veo / Runway / Kling / Luma):</div>
+                <textarea id="storyboard-scene-txt-${idx}" class="input-box" rows="3" style="font-family:monospace; font-size:11px; margin-bottom:8px; resize:vertical; width:100%; box-sizing:border-box;">${escapeHTML(sc.fullPrompt || sc.visualDescription || '')}</textarea>
+
+                ${sc.audioCue ? `
+                <div style="font-size:11px; color:#c084fc; line-height:1.4; background:rgba(192,132,252,0.08); border:1px solid rgba(192,132,252,0.2); padding:6px 10px; border-radius:6px;">
+                    <strong>🎵 Sound &amp; Audio Cue:</strong> ${escapeHTML(sc.audioCue)}
+                </div>` : ''}
+            </div>
+        `).join('');
+
+        document.getElementById('storyboard-results-wrap').style.display = 'block';
+    }
+
+    function copySingleScenePrompt(idx) {
+        const textEl = document.getElementById(`storyboard-scene-txt-${idx}`);
+        if (!textEl) return;
+        const text = textEl.value;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => alert(`✅ Scene ${idx+1} Prompt Copied to Clipboard!`));
+        } else {
+            alert(`Scene ${idx+1} Prompt: ` + text);
+        }
+    }
+
+    function applySceneToBaseConcept(idx) {
+        const textEl = document.getElementById(`storyboard-scene-txt-${idx}`);
+        if (!textEl) return;
+        const text = textEl.value;
+        const inputEl = document.getElementById('subject-input');
+        if (inputEl) {
+            inputEl.value = text;
+            switchVideoStudioMode('single');
+            if (typeof updatePrompt === 'function') updatePrompt();
+            if (typeof triggerAutoSaveConcept === 'function') triggerAutoSaveConcept(300);
+            alert(`✅ Scene ${idx+1} Single Clip Mode me active concept set ho gaya!`);
+        }
+    }
+
+    function copyFullMasterScript() {
+        if (!_currentStoryboardResult || _currentStoryboardResult.length === 0) {
+            alert("Pehle storyboard generate karein!");
+            return;
+        }
+        let masterText = `🎬 MULTI-SCENE CINEMATIC STORYBOARD SCRIPT\n`;
+        masterText += `===========================================\n\n`;
+
+        _currentStoryboardResult.forEach((sc, idx) => {
+            const textEl = document.getElementById(`storyboard-scene-txt-${idx}`);
+            const currentTxt = textEl ? textEl.value : (sc.fullPrompt || sc.visualDescription);
+
+            masterText += `[SCENE ${sc.sceneNum || idx+1}: ${sc.title || `Shot ${idx+1}`} (${sc.timestamp || ''})]\n`;
+            masterText += `Camera Trajectory: ${sc.cameraMotion || 'Cinematic'}\n`;
+            masterText += `AI Video Prompt: ${currentTxt}\n`;
+            if (sc.audioCue) masterText += `Sound & Audio Cue: ${sc.audioCue}\n`;
+            masterText += `-------------------------------------------\n\n`;
+        });
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(masterText).then(() => alert("✅ Full Master Storyboard Script Copied to Clipboard!"));
+        } else {
+            alert("Full Script Copied!");
+        }
+    }
 
     // GEMINI AI VIDEO MOTION BRAINSTORMING ENGINE
     async function generateAiIdeas() {
