@@ -1112,16 +1112,51 @@ function copyOptimizedPromptText() {
 // ── 6. INSTANT LIVE AI IMAGE PREVIEW ENGINE (GEMINI IMAGEN 3 + FLUX DUAL ENGINE) ──
 let _currentLiveImgSeed = Math.floor(Math.random() * 1000000);
 
-async function generateLiveImagePreview(forceRegen = false) {
-    const promptText = document.getElementById('imagen-prompt-output')?.innerText || 
-                       document.getElementById('prompt-output')?.innerText || 
-                       document.getElementById('subject-input')?.value;
+async function _getCleanEnglishVisualPrompt() {
+    // 1. Try to get already generated English prompt
+    const candidates = [
+        document.getElementById('imagen-prompt-output')?.innerText,
+        document.getElementById('flux-prompt-output')?.innerText,
+        document.getElementById('prompt-output')?.innerText
+    ];
 
-    if (!promptText || promptText === 'Generating...' || promptText === 'Generating Imagen 3 prompt...') {
-        alert("Pehle base concept enter karein!");
-        return;
+    for (const cand of candidates) {
+        if (cand && !cand.includes('Generating') && !cand.includes('generate ho raha') && !cand.includes('convert kar raha') && cand.length > 25) {
+            // Remove technical engine flags
+            return cand.replace(/--ar\s+[0-9:]+/gi, '').replace(/--v\s+[0-9.]+/gi, '').replace(/--no\s+[^,]+/gi, '').replace(/[\n\r]+/g, ' ').trim();
+        }
     }
 
+    // 2. If no generated prompt or it's in Hinglish, convert with Gemini
+    const rawConcept = document.getElementById('subject-input')?.value?.trim() || "Mumbai rain cyberpunk king";
+    const apiKey = typeof getApiKey === 'function' ? getApiKey() : null;
+
+    if (apiKey) {
+        try {
+            const modelInfo = await fetchBestAvailableModel(apiKey);
+            if (modelInfo) {
+                const apiUrl = `https://generativelanguage.googleapis.com/${modelInfo.apiVersion}/${modelInfo.modelPath}:generateContent?key=${apiKey}`;
+                const promptReq = `Convert this user concept into a single, highly detailed, photorealistic 8k English image prompt for an AI image generator (include characters, costumes, environment, cultural details, lighting, weather, camera angle): "${rawConcept}". Return ONLY the English prompt string.`;
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: promptReq }] }] })
+                });
+                const data = await res.json();
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text && text.trim().length > 10) {
+                    return text.trim().replace(/^["']|["']$/g, '');
+                }
+            }
+        } catch (e) {
+            console.warn("Visual prompt translation error:", e);
+        }
+    }
+
+    return rawConcept;
+}
+
+async function generateLiveImagePreview(forceRegen = false) {
     const box = document.getElementById('live-image-preview-box');
     const loading = document.getElementById('live-img-loading');
     const wrap = document.getElementById('live-img-wrap');
@@ -1130,7 +1165,7 @@ async function generateLiveImagePreview(forceRegen = false) {
     if (box) box.style.display = 'block';
     if (loading) {
         loading.style.display = 'block';
-        loading.innerHTML = `<div class="loading-spinner" style="display:inline-block; margin-right:8px;"></div>⚡ Gemini &amp; Imagen 3 se photo render ho rahi hai...`;
+        loading.innerHTML = `<div class="loading-spinner" style="display:inline-block; margin-right:8px;"></div>⚡ Gemini &amp; AI Image Engine se photo render ho rahi hai...`;
     }
     if (wrap) wrap.style.display = 'none';
 
@@ -1148,7 +1183,7 @@ async function generateLiveImagePreview(forceRegen = false) {
     else if (ratio === '4:5') { width = 800; height = 1000; imagenRatio = "3:4"; }
 
     const modelChoice = document.getElementById('live-img-model')?.value || 'gemini-imagen';
-    const cleanPrompt = promptText.replace(/[\n\r]+/g, ' ').trim();
+    const cleanPrompt = await _getCleanEnglishVisualPrompt();
 
     // 1. Try Google Imagen 3 via Gemini API if selected
     if (modelChoice === 'gemini-imagen') {
@@ -1179,7 +1214,7 @@ async function generateLiveImagePreview(forceRegen = false) {
         }
     }
 
-    // 2. High-speed Fallback / Flux Engine
+    // 2. High-speed Fallback / Flux Engine with rich English visual prompt
     const model = (modelChoice === 'turbo') ? 'turbo' : 'flux';
     const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&seed=${_currentLiveImgSeed}&nologo=true&model=${model}`;
 

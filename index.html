@@ -933,15 +933,17 @@ Return ONLY a valid JSON array of 3 strings. Example:
                 const modelInfo = await fetchBestAvailableModel(apiKey);
                 if (modelInfo) {
                     const apiUrl = `https://generativelanguage.googleapis.com/${modelInfo.apiVersion}/${modelInfo.modelPath}:generateContent?key=${apiKey}`;
-                    const sysPrompt = `You are a World-Class AI Prompt Director for Midjourney v6, Google Imagen 3, Flux, and Sora.
-The user gave this raw idea: "${rawText}".
-Convert and expand it into a visually stunning, photorealistic, culturally accurate, high-detail English visual description (e.g. detailed characters, environment, lighting, cultural elements, textures, atmosphere).
-Return ONLY valid JSON with keys:
+                    const sysPrompt = `You are a World-Class AI Image & Video Prompt Director.
+The user entered an idea in Hinglish or Hindi: "${rawText}".
+Accurately translate, enrich, and expand this idea into vivid, photorealistic English visual descriptions with cultural authenticity, environment details, weather, cinematic lighting, and textures.
+Example for "Mumbai ki baarish me cyberpunk raja": An Indian king in glowing high-tech cyberpunk cyber-armor and ornate neon crown, walking through a bustling wet Mumbai street at night during heavy monsoon rain, glowing Hindi neon shop boards, auto-rickshaws, reflective wet puddles, cinematic lighting, 8k resolution.
+
+Return ONLY a valid JSON object with these 4 keys:
 {
-  "midjourney": "English Midjourney prompt with photorealistic styling",
-  "flux": "English Flux 8k prompt with realistic textures and lighting",
-  "imagen": "English Google Imagen 3 prompt with cinematic composition and depth",
-  "video": "English Sora/Runway video motion prompt with camera movement"
+  "midjourney": "Photorealistic Midjourney v6 prompt with --ar 16:9 --v 6.0",
+  "flux": "Photorealistic Flux.1 8k resolution prompt with ultra-detailed textures",
+  "imagen": "A cinematic photorealistic depiction for Google Imagen 3 with depth of field and natural lighting",
+  "video": "A cinematic continuous tracking camera motion prompt for Sora & Runway video"
 }`;
                     const res = await fetch(apiUrl, {
                         method: 'POST',
@@ -954,7 +956,8 @@ Return ONLY valid JSON with keys:
                     const resData = await res.json();
                     const txt = resData?.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (txt) {
-                        const parsed = JSON.parse(txt.replace(/```json/gi, '').replace(/```/g, '').trim());
+                        const cleanJson = txt.replace(/```json/gi, '').replace(/```/g, '').trim();
+                        const parsed = JSON.parse(cleanJson);
                         if (parsed.midjourney && outMid) outMid.innerText = parsed.midjourney;
                         if (parsed.flux && outFlux) outFlux.innerText = parsed.flux;
                         if (parsed.imagen && outImg) outImg.innerText = parsed.imagen;
