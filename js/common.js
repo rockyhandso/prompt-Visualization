@@ -936,10 +936,15 @@ async function runPromptOptimizer() {
 The user wants to audit and optimize a prompt for target generator: "${targetName}".
 Prompt text: "${textInput}".
 
+CRITICAL INSTRUCTION FOR DIALOGUES & SCRIPT BLOCKS:
+- If the original prompt contains character dialogues, spoken lines, quotes, or script blocks (e.g. [Cinematic Character Script: ...], "character says ...", lip-sync cues, or dialogue text), YOU MUST ABSOLUTELY PRESERVE AND KEEP THEM IN THE OPTIMIZED PROMPT!
+- NEVER strip out or remove spoken lines, quotes, or dialogue cues!
+- Keep character speech & lip-sync dialogue intact while optimizing the visual description, camera motion, and replacing copyrighted names.
+
 Tasks:
 1. Scan for copyrighted characters, studio names, trademarked logos, or celebrity names that trigger safety filters/bans on ${targetName}.
 2. Scan for forbidden/weak buzzwords (e.g. "photorealistic", "4K", "8K" if discouraged on ${targetName}).
-3. Re-write the prompt into a high-converting, fully compliant, copyright-safe, descriptive prompt tailored for ${targetName}.
+3. Re-write the prompt into a high-converting, fully compliant, copyright-safe, descriptive prompt tailored for ${targetName}, WHILE PRESERVING ALL CHARACTER DIALOGUES & SPOKEN SCRIPT LINES INTACT.
 4. Provide a quality & safety score out of 100.
 
 Return ONLY a valid JSON object matching this exact schema:
@@ -952,7 +957,7 @@ Return ONLY a valid JSON object matching this exact schema:
     { "original": "photorealistic", "replacement": "shot on 35mm camera, soft skin detail", "reason": "Midjourney v6 prefers camera parameters over generic quality buzzwords" }
   ],
   "platformAdvice": "Specific formatting advice for ${targetName}",
-  "optimizedPrompt": "fully rewritten copyright-safe descriptive prompt string"
+  "optimizedPrompt": "fully rewritten copyright-safe descriptive prompt string WITH ALL CHARACTER DIALOGUES & SPOKEN LINES INTACT"
 }`;
 
         const res = await fetch(apiUrl, {
