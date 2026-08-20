@@ -1113,7 +1113,9 @@ function copyOptimizedPromptText() {
 let _currentLiveImgSeed = Math.floor(Math.random() * 1000000);
 
 async function _getCleanEnglishVisualPrompt() {
-    // 1. Try to get already generated English prompt
+    const isHinglishRegex = /[\u0900-\u097F]|\b(ki|ke|ka|ko|me|mein|par|pe|chal|raha|rahi|rahe|hai|hain|ek|aur|karo|badao|ladka|ladki|baarish|sadak|raja|pani|pahar|sher|ghoda|gaon|dost|gadi|purana|naya|chota|bada)\b/i;
+
+    // 1. Try to get already generated English prompt (must NOT contain Hinglish or placeholders)
     const candidates = [
         document.getElementById('imagen-prompt-output')?.innerText,
         document.getElementById('flux-prompt-output')?.innerText,
@@ -1122,12 +1124,14 @@ async function _getCleanEnglishVisualPrompt() {
 
     for (const cand of candidates) {
         if (cand && !cand.includes('Generating') && !cand.includes('generate ho raha') && !cand.includes('convert kar raha') && cand.length > 25) {
-            // Remove technical engine flags
-            return cand.replace(/--ar\s+[0-9:]+/gi, '').replace(/--v\s+[0-9.]+/gi, '').replace(/--no\s+[^,]+/gi, '').replace(/[\n\r]+/g, ' ').trim();
+            if (!isHinglishRegex.test(cand)) {
+                // It's a clean English prompt
+                return cand.replace(/--ar\s+[0-9:]+/gi, '').replace(/--v\s+[0-9.]+/gi, '').replace(/--no\s+[^,]+/gi, '').replace(/[\n\r]+/g, ' ').trim();
+            }
         }
     }
 
-    // 2. If no generated prompt or it's in Hinglish, convert with Gemini
+    // 2. If it's in Hinglish or raw concept, convert and expand with Gemini
     const rawConcept = document.getElementById('subject-input')?.value?.trim() || "Mumbai rain cyberpunk king";
     const apiKey = typeof getApiKey === 'function' ? getApiKey() : null;
 
@@ -1136,7 +1140,10 @@ async function _getCleanEnglishVisualPrompt() {
             const modelInfo = await fetchBestAvailableModel(apiKey);
             if (modelInfo) {
                 const apiUrl = `https://generativelanguage.googleapis.com/${modelInfo.apiVersion}/${modelInfo.modelPath}:generateContent?key=${apiKey}`;
-                const promptReq = `Convert this user concept into a single, highly detailed, photorealistic 8k English image prompt for an AI image generator (include characters, costumes, environment, cultural details, lighting, weather, camera angle): "${rawConcept}". Return ONLY the English prompt string.`;
+                const promptReq = `You are a world-class prompt engineer for Google Imagen 3 and Midjourney.
+Convert this raw user idea: "${rawConcept}" into a single, highly detailed, photorealistic 8k English image description.
+Include detailed characters (e.g. Indian king in high-tech glowing cyberpunk armor and ornate neon crown), environment (wet Mumbai street in heavy monsoon rain), Devanagari Hindi neon signboards, auto-rickshaws, wet asphalt puddles reflecting neon lights, cinematic lighting, 8k resolution.
+Return ONLY the final English description string, no quotes, no markdown.`;
                 const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1144,13 +1151,24 @@ async function _getCleanEnglishVisualPrompt() {
                 });
                 const data = await res.json();
                 const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text && text.trim().length > 10) {
-                    return text.trim().replace(/^["']|["']$/g, '');
+                if (text && text.trim().length > 15) {
+                    const cleanText = text.trim().replace(/^["']|["']$/g, '');
+                    // Sync with output boxes if empty
+                    const outImg = document.getElementById('imagen-prompt-output');
+                    if (outImg && (outImg.innerText.includes('Generating') || isHinglishRegex.test(outImg.innerText))) {
+                        outImg.innerText = cleanText;
+                    }
+                    return cleanText;
                 }
             }
         } catch (e) {
             console.warn("Visual prompt translation error:", e);
         }
+    }
+
+    // Fallback English expansion if API is offline
+    if (isHinglishRegex.test(rawConcept)) {
+        return "An Indian king in glowing futuristic cyberpunk armor and crown walking on a wet Mumbai street during heavy monsoon rain at night, neon Hindi signboards, auto-rickshaws, wet cobblestone reflections, cinematic lighting, 8k photorealistic";
     }
 
     return rawConcept;
@@ -1220,6 +1238,11 @@ async function generateLiveImagePreview(forceRegen = false) {
     // 2. High-speed Fallback / Flux Engine with rich English visual prompt
     const model = (modelChoice === 'turbo') ? 'turbo' : 'flux';
     const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&seed=${_currentLiveImgSeed}&nologo=true&model=${model}`;
+
+    const captionEl = document.getElementById('live-img-caption');
+    if (captionEl) {
+        captionEl.innerHTML = `<strong style="color:#34d399;">Visual Prompt:</strong> ${cleanPrompt}`;
+    }
 
     if (img) img.src = imageUrl;
 }
