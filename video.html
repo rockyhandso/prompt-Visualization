@@ -362,6 +362,8 @@
             margin-top: 8px;
         }
 
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
         .vmode-btn {
             background: #0f1929; border: 1px solid #1e3a5f; color: #94a3b8;
             padding: 10px 18px; border-radius: 30px; font-size: 13px; font-weight: 700;
@@ -379,14 +381,26 @@
 <body>
 
 <div class="container">
-    <div class="nav-bar">
-        <a href="index.html" class="nav-btn">🎨 Switch to Image Prompt Studio</a>
-        <div style="font-weight: bold; font-size: 13px; color: #f472b6;">🎬 AI Video Motion Studio</div>
+    <div class="nav-bar" style="background: rgba(15, 25, 41, 0.85); backdrop-filter: blur(12px); padding: 10px 18px; border-radius: 40px; margin-bottom: 24px; border: 1px solid #1e3a5f; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">✦</span>
+            <span style="font-weight: 800; font-size: 14px; background: linear-gradient(135deg, #f472b6, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">JOLLY NOBEL AI VIDEO STUDIO</span>
+            <span style="background: rgba(236,72,153,0.18); border: 1px solid rgba(236,72,153,0.35); color: #f472b6; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;">PRO 2.0</span>
+        </div>
+        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+            <a href="index.html" class="nav-btn" style="background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.35); color: #818cf8; text-decoration: none; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;">🎨 Image Studio</a>
+            <a href="video.html" class="nav-btn" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; text-decoration: none; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;">🎬 Video Studio</a>
+            <a href="insights.html" class="nav-btn" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35); color: #34d399; text-decoration: none; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;">📊 Insights</a>
+        </div>
     </div>
 
-    <header>
-        <h1>AI Video Prompt & Motion Director Studio</h1>
-        <p style="color: var(--subtext); margin-bottom: 8px;">Powered by Gemini AI Real-time Video Motion & Physics Expansion</p>
+    <header style="margin-bottom: 28px; text-align: center;">
+        <h1 style="font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, #ffffff 30%, #f472b6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px;">
+            AI Video Prompt &amp; Motion Director Studio
+        </h1>
+        <p style="color: #94a3b8; font-size: 0.88rem; max-width: 600px; margin: 0 auto; line-height: 1.5;">
+            🎬 Direct single-shot clips &amp; full multi-scene cinematic storyboards for Sora, Veo, Runway &amp; Kling AI!
+        </p>
     </header>
 
     <!-- MODE SWITCHER BAR -->

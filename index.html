@@ -3,87 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Prompt Visualizer & Multi-Engine Studio</title>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MV1SEZRYY6"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-MV1SEZRYY6');
-    </script>
-    <!-- Firebase Auth + RTDB -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
-      import { getDatabase, ref, set, push, onDisconnect }
-               from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
-      import { getAuth, GoogleAuthProvider,
-               signInWithPopup, signInWithEmailAndPassword,
-               createUserWithEmailAndPassword }
-               from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
-
-      const firebaseConfig = {
-        apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
-        authDomain: "prompt-visualization.firebaseapp.com",
-        databaseURL: "https://prompt-visualization-default-rtdb.firebaseio.com",
-        projectId: "prompt-visualization",
-        storageBucket: "prompt-visualization.firebasestorage.app",
-        messagingSenderId: "93895633100",
-        appId: "1:93895633100:web:3aba969e689d23b7313a69",
-        measurementId: "G-6BQZE1T6JG"
-      };
-      const app = initializeApp(firebaseConfig);
-      getAnalytics(app);
-      const db   = getDatabase(app, "https://prompt-visualization-default-rtdb.firebaseio.com");
-      const auth = getAuth(app);
-      const googleProvider = new GoogleAuthProvider();
-
-      // ── Presence Tracking ────────────────────────────
-      let sessionUid = sessionStorage.getItem('_studio_uid');
-      if (!sessionUid) {
-        sessionUid = 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        sessionStorage.setItem('_studio_uid', sessionUid);
-      }
-      let presenceRef = ref(db, `presence/${sessionUid}`);
-
-      async function pingPresence(data) {
-        try { await set(presenceRef, data); } catch(e) {}
-      }
-      pingPresence({ label: 'Visitor ' + sessionUid.slice(-4).toUpperCase(), page: 'Image Studio', lastSeen: Date.now() });
-      const _presencePingTimer = setInterval(() => {
-        const u = auth.currentUser;
-        pingPresence(u ? {
-          label: u.displayName || u.email?.split('@')[0] || 'User',
-          email: u.email || '', photoURL: u.photoURL || '',
-          uid: u.uid, page: 'Image Studio', lastSeen: Date.now(), authenticated: true
-        } : { label: 'Visitor ' + sessionUid.slice(-4).toUpperCase(), page: 'Image Studio', lastSeen: Date.now() });
-      }, 30000);
-      onDisconnect(presenceRef).remove();
-
-      // ── Expose helpers to non-module scripts ─────────
-      window._studioDB  = db;
-      window._studioRef = ref;
-      window._studioPush = push;
-      window._studioPresenceRef = presenceRef;
-      window._studioSetPresence = (data) => set(presenceRef, { ...data, lastSeen: Date.now() });
-      window._studioSetUser = (uid, data) => set(ref(db, `users/${uid}`), data);
-
-      // Boot auth module
-      window._studioAuthReady(auth, googleProvider, {
-        signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword
-      });
-
-      document.dispatchEvent(new Event('studioRtdbReady'));
-    </script>
-    <script src="js/auth.js"></script>
-    <script src="js/common.js"></script>
-    <script src="js/tour.js"></script>
-
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
+            --bg-color: #060b18;
+            --card-bg: rgba(15, 25, 41, 0.85);
+            --border-color: #1e3a5f;
             --accent: #6366f1;
             --accent-hover: #4f46e5;
             --magic: #10b981;
@@ -96,138 +21,180 @@
 
         [data-theme="cyberpunk"] {
             --bg-color: #180b28;
-            --card-bg: #2d124d;
+            --card-bg: rgba(45, 18, 77, 0.85);
+            --border-color: #4c1d95;
             --accent: #d946ef;
             --accent-hover: #c026d3;
         }
 
         [data-theme="emerald"] {
             --bg-color: #06231c;
-            --card-bg: #0b3c30;
+            --card-bg: rgba(11, 60, 48, 0.85);
+            --border-color: #065f46;
             --accent: #10b981;
             --accent-hover: #059669;
         }
 
         [data-theme="oled"] {
             --bg-color: #000000;
-            --card-bg: #121212;
+            --card-bg: rgba(18, 18, 18, 0.9);
+            --border-color: #27272a;
             --accent: #38bdf8;
             --accent-hover: #0284c7;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 0%, rgba(99,102,241,0.18), transparent 65%);
             color: var(--text);
             margin: 0;
-            padding: 20px;
+            padding: 24px 16px;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1080px;
             margin: 0 auto;
         }
 
         header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 28px;
         }
 
         header h1 {
-            color: #818cf8;
-            margin-bottom: 5px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
         }
 
         .studio-grid {
             display: grid;
-            grid-template-columns: 1fr 1.3fr;
-            gap: 20px;
+            grid-template-columns: 1fr 1.35fr;
+            gap: 24px;
         }
 
-        @media (max-width: 800px) {
+        @media (max-width: 850px) {
             .studio-grid { grid-template-columns: 1fr; }
             .nav-bar { flex-wrap: wrap; gap: 8px; justify-content: center; text-align: center; }
             .nav-bar > * { margin-bottom: 2px; }
             .output-card div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
-            .tag { padding: 8px 12px; font-size: 13px; margin: 2px 0; }
-            body { padding: 10px; }
+            .tag { padding: 8px 12px; font-size: 12px; margin: 2px 0; }
+            body { padding: 12px; }
         }
 
         .card {
             background: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+            transition: border-color 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: #2e5182;
         }
 
         .input-box {
             width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #475569;
-            background: #0f172a;
-            color: white;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: #060b18;
+            color: #f1f5f9;
+            font-family: inherit;
+            font-size: 13px;
             box-sizing: border-box;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-box:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 16px rgba(99,102,241,0.3);
         }
 
         .tag-group {
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .tag {
-            background: #334155;
-            padding: 5px 10px;
-            border-radius: 16px;
+            background: #111c30;
+            color: #94a3b8;
+            padding: 6px 13px;
+            border-radius: 20px;
             font-size: 12px;
+            font-weight: 500;
             cursor: pointer;
-            transition: 0.2s;
-            border: 1px solid transparent;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border-color);
             user-select: none;
         }
 
+        .tag:hover {
+            border-color: var(--accent);
+            color: #f1f5f9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
         .tag.active {
-            background: var(--accent);
-            border-color: #c7d2fe;
-            color: white;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-color: #818cf8;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(99,102,241,0.4);
         }
 
         .neg-tag {
-            background: #334155;
-            padding: 5px 10px;
-            border-radius: 16px;
+            background: #111c30;
+            color: #94a3b8;
+            padding: 6px 13px;
+            border-radius: 20px;
             font-size: 12px;
+            font-weight: 500;
             cursor: pointer;
-            transition: 0.2s;
-            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
             user-select: none;
         }
 
         .neg-tag.active {
-            background: var(--danger);
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             border-color: #fca5a5;
             color: white;
+            font-weight: 600;
         }
 
         .section-title {
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--subtext);
-            margin-top: 15px;
-            margin-bottom: 6px;
+            font-weight: 700;
+            margin-top: 18px;
+            margin-bottom: 8px;
         }
 
         /* GEMINI AI ARCHITECT BOX */
         .gemini-box {
             background: #020617;
             border: 1px solid #db2777;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 15px;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 16px;
         }
 
         .gemini-header {
@@ -244,30 +211,40 @@
         }
 
         .api-btn {
-            background: #334155;
+            background: #1e293b;
             color: #f1f5f9;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 10px;
+            border: 1px solid var(--border-color);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .api-btn:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
         }
 
         .gemini-btn {
-            background: linear-gradient(90deg, #ec4899, #8b5cf6);
+            background: linear-gradient(135deg, #ec4899, #8b5cf6);
             color: white;
             border: none;
-            padding: 10px;
-            border-radius: 6px;
+            padding: 12px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 700;
             width: 100%;
-            transition: 0.2s;
+            transition: all 0.2s ease;
             font-size: 13px;
+            font-family: inherit;
+            box-shadow: 0 4px 14px rgba(236,72,153,0.35);
         }
 
         .gemini-btn:hover {
-            opacity: 0.9;
+            opacity: 0.92;
+            transform: translateY(-1px);
         }
 
         .ai-suggestions {
@@ -278,51 +255,64 @@
         }
 
         .suggestion-card {
-            background: #1e293b;
-            border: 1px solid #475569;
-            padding: 8px 10px;
-            border-radius: 6px;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            padding: 10px 12px;
+            border-radius: 8px;
             font-size: 12px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s ease;
             color: #cbd5e1;
+            line-height: 1.4;
         }
 
         .suggestion-card:hover {
             border-color: #ec4899;
-            background: #334155;
+            background: #1e1b4b;
             color: white;
+            transform: translateX(3px);
         }
 
         .output-card {
-            margin-top: 20px;
+            margin-top: 24px;
             background: #020617;
-            border: 1px solid #334155;
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
         }
 
         .prompt-text-box {
             font-family: monospace;
             font-size: 13px;
             color: #38bdf8;
-            background: #0f172a;
-            padding: 12px;
-            border-radius: 6px;
+            background: #060b18;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
             word-break: break-all;
             min-height: 45px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             white-space: pre-wrap;
+            line-height: 1.5;
         }
 
         .btn {
-            background: var(--accent);
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
+            padding: 13px 20px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 700;
             width: 100%;
-            transition: 0.2s;
+            transition: all 0.2s ease;
+            font-size: 13px;
+            font-family: inherit;
+            box-shadow: 0 4px 14px rgba(79,70,229,0.35);
+        }
+
+        .btn:hover {
+            opacity: 0.93;
+            transform: translateY(-1px);
         }
 
         .loading-spinner {
@@ -337,42 +327,58 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: var(--card-bg);
-            padding: 10px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #334155;
+            background: rgba(15, 25, 41, 0.85);
+            backdrop-filter: blur(12px);
+            padding: 10px 18px;
+            border-radius: 40px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
         }
 
         .nav-btn {
-            background: #334155;
+            background: #111c30;
             color: #f8fafc;
-            border: none;
+            border: 1px solid var(--border-color);
             padding: 6px 14px;
-            border-radius: 6px;
-            font-weight: bold;
+            border-radius: 20px;
+            font-weight: 600;
             font-size: 12px;
             cursor: pointer;
             text-decoration: none;
-            transition: 0.2s;
+            transition: all 0.2s ease;
         }
 
         .nav-btn:hover {
             background: var(--accent);
             color: white;
+            border-color: #818cf8;
         }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="nav-bar">
-        <div style="font-weight: bold; font-size: 13px; color: #818cf8;">🎨 AI Image Prompt Studio</div>
-        <a href="video.html" class="nav-btn" style="background: #ec4899; color: white;">🎬 Switch to Video Motion Studio</a>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">✦</span>
+            <span style="font-weight: 800; font-size: 14px; background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">JOLLY NOBEL AI STUDIO</span>
+            <span style="background: rgba(99,102,241,0.18); border: 1px solid rgba(99,102,241,0.35); color: #818cf8; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;">PRO 2.0</span>
+        </div>
+        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+            <a href="index.html" class="nav-btn" style="background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; border: none;">🎨 Image Studio</a>
+            <a href="video.html" class="nav-btn" style="background: rgba(236,72,153,0.15); border: 1px solid rgba(236,72,153,0.35); color: #f472b6;">🎬 Video Studio</a>
+            <a href="insights.html" class="nav-btn" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35); color: #34d399;">📊 Insights</a>
+            <a href="users.html" class="nav-btn" style="background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.35); color: #a78bfa;">👥 Users</a>
+        </div>
     </div>
 
-    <header>
-        <h1>AI Prompt Visualizer & Multi-Engine Studio</h1>
-        <p style="color: var(--subtext); margin-bottom: 8px;">Powered by Gemini AI Real-time Prompt Expansion</p>
+    <header style="margin-bottom: 28px;">
+        <h1 style="font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px;">
+            AI Image Prompt Visualizer &amp; Multi-Engine Studio
+        </h1>
+        <p style="color: #94a3b8; font-size: 0.88rem; max-width: 600px; margin: 0 auto; line-height: 1.5;">
+            🇮🇳 Apni Hindi/Hinglish soch ko Midjourney, Imagen 3 &amp; Flux ke viral AI prompts mein badlein!
+        </p>
     </header>
 
     <div class="studio-grid">
