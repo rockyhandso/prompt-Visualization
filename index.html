@@ -3,7 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>AI Prompt Visualizer &amp; Multi-Engine Studio</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MV1SEZRYY6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-MV1SEZRYY6');
+    </script>
+    <!-- Firebase Auth + RTDB -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
+      import { getDatabase, ref, set, push, onDisconnect }
+               from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+      import { getAuth, GoogleAuthProvider,
+               signInWithPopup, signInWithEmailAndPassword,
+               createUserWithEmailAndPassword }
+               from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
+        authDomain: "prompt-visualization.firebaseapp.com",
+        databaseURL: "https://prompt-visualization-default-rtdb.firebaseio.com",
+        projectId: "prompt-visualization",
+        storageBucket: "prompt-visualization.firebasestorage.app",
+        messagingSenderId: "93895633100",
+        appId: "1:93895633100:web:3aba969e689d23b7313a69",
+        measurementId: "G-6BQZE1T6JG"
+      };
+      const app = initializeApp(firebaseConfig);
+      getAnalytics(app);
+      const db   = getDatabase(app, "https://prompt-visualization-default-rtdb.firebaseio.com");
+      const auth = getAuth(app);
+      const googleProvider = new GoogleAuthProvider();
+
+      // ── Presence Tracking ────────────────────────────
+      let sessionUid = sessionStorage.getItem('_studio_uid');
+      if (!sessionUid) {
+        sessionUid = 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        sessionStorage.setItem('_studio_uid', sessionUid);
+      }
+      let presenceRef = ref(db, `presence/${sessionUid}`);
+
+      async function pingPresence(data) {
+        try { await set(presenceRef, data); } catch(e) {}
+      }
+      pingPresence({ label: 'Visitor ' + sessionUid.slice(-4).toUpperCase(), page: 'Image Studio', lastSeen: Date.now() });
+      const _presencePingTimer = setInterval(() => {
+        const u = auth.currentUser;
+        pingPresence(u ? {
+          label: u.displayName || u.email?.split('@')[0] || 'User',
+          email: u.email || '', photoURL: u.photoURL || '',
+          uid: u.uid, page: 'Image Studio', lastSeen: Date.now(), authenticated: true
+        } : { label: 'Visitor ' + sessionUid.slice(-4).toUpperCase(), page: 'Image Studio', lastSeen: Date.now() });
+      }, 30000);
+      onDisconnect(presenceRef).remove();
+
+      // ── Expose helpers to non-module scripts ─────────
+      window._studioDB  = db;
+      window._studioRef = ref;
+      window._studioPush = push;
+      window._studioPresenceRef = presenceRef;
+      window._studioSetPresence = (data) => set(presenceRef, { ...data, lastSeen: Date.now() });
+      window._studioSetUser = (uid, data) => set(ref(db, `users/${uid}`), data);
+
+      // Boot auth module
+      window._studioAuthReady(auth, googleProvider, {
+        signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword
+      });
+
+      document.dispatchEvent(new Event('studioRtdbReady'));
+    </script>
+    <script src="js/auth.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/tour.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #060b18;
