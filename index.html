@@ -911,8 +911,64 @@ Return ONLY a valid JSON array of 3 strings. Example:
         }
     }
 
-    function generateMyPrompt() {
-        updatePrompt();
+    async function generateMyPrompt() {
+        const inputEl = document.getElementById('subject-input');
+        const rawText = inputEl ? inputEl.value.trim() : '';
+
+        // If rawText has Hinglish/Hindi or is entered by user, let Gemini expand it
+        const apiKey = typeof getApiKey === 'function' ? getApiKey() : null;
+        const isHinglish = /[\u0900-\u097F]|ki|ke|ka|me|par|chal|raha|hai|ek|aur|karo|badao|ladka|ladki|baarish|sadak|raja|pani|pahar|sher|ghoda/i.test(rawText);
+
+        if (apiKey && isHinglish && rawText) {
+            try {
+                const outMid = document.getElementById('prompt-output');
+                const outFlux = document.getElementById('flux-prompt-output');
+                const outImg = document.getElementById('imagen-prompt-output');
+                const outVid = document.getElementById('video-motion-output');
+                if (outMid) outMid.innerText = "🤖 Gemini Hinglish idea ko Midjourney prompt me convert kar raha hai...";
+                if (outFlux) outFlux.innerText = "⚡ Flux 8k format generate ho raha hai...";
+                if (outImg) outImg.innerText = "🤖 Imagen 3 cinematic format generate ho raha hai...";
+                if (outVid) outVid.innerText = "🎬 Sora video prompt generate ho raha hai...";
+
+                const modelInfo = await fetchBestAvailableModel(apiKey);
+                if (modelInfo) {
+                    const apiUrl = `https://generativelanguage.googleapis.com/${modelInfo.apiVersion}/${modelInfo.modelPath}:generateContent?key=${apiKey}`;
+                    const sysPrompt = `You are a World-Class AI Prompt Director for Midjourney v6, Google Imagen 3, Flux, and Sora.
+The user gave this raw idea: "${rawText}".
+Convert and expand it into a visually stunning, photorealistic, culturally accurate, high-detail English visual description (e.g. detailed characters, environment, lighting, cultural elements, textures, atmosphere).
+Return ONLY valid JSON with keys:
+{
+  "midjourney": "English Midjourney prompt with photorealistic styling",
+  "flux": "English Flux 8k prompt with realistic textures and lighting",
+  "imagen": "English Google Imagen 3 prompt with cinematic composition and depth",
+  "video": "English Sora/Runway video motion prompt with camera movement"
+}`;
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: sysPrompt }] }],
+                            generationConfig: { responseMimeType: "application/json" }
+                        })
+                    });
+                    const resData = await res.json();
+                    const txt = resData?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (txt) {
+                        const parsed = JSON.parse(txt.replace(/```json/gi, '').replace(/```/g, '').trim());
+                        if (parsed.midjourney && outMid) outMid.innerText = parsed.midjourney;
+                        if (parsed.flux && outFlux) outFlux.innerText = parsed.flux;
+                        if (parsed.imagen && outImg) outImg.innerText = parsed.imagen;
+                        if (parsed.video && outVid) outVid.innerText = parsed.video;
+                    }
+                }
+            } catch (err) {
+                console.warn("AI Prompt Director fallback:", err);
+                updatePrompt();
+            }
+        } else {
+            updatePrompt();
+        }
+
         if (typeof generateLiveImagePreview === 'function') {
             generateLiveImagePreview();
         }
