@@ -549,8 +549,13 @@
         <!-- LIVE AI IMAGE PREVIEW CARD -->
         <div class="card" style="background: #060b18; border: 1px solid #10b981; padding: 18px; border-radius: 14px; text-align: center;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
-                <span style="font-weight: 800; color: #34d399; font-size: 13px;">🖼️ Live AI Image Preview (Instant Flux.1 Render):</span>
-                <div style="display: flex; gap: 6px;">
+                <span style="font-weight: 800; color: #34d399; font-size: 13px;">🖼️ Live AI Image Preview:</span>
+                <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                    <select id="live-img-model" class="input-box" style="font-size: 11px; padding: 4px 8px; width: auto; background: #111c30; border: 1px solid #1e3a5f; color: #f8fafc; border-radius: 8px; margin-bottom: 0;" onchange="generateLiveImagePreview(true)">
+                        <option value="gemini-imagen" selected>🤖 Google Imagen 3 (Gemini)</option>
+                        <option value="flux">⚡ Flux.1 (Ultra Fast)</option>
+                        <option value="turbo">🚀 SDXL Turbo</option>
+                    </select>
                     <button type="button" class="api-btn" style="background: #3b82f6; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold;" onclick="generateLiveImagePreview(true)">🔄 Regenerate</button>
                     <button type="button" class="api-btn" style="background: #10b981; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold;" onclick="downloadLiveImage()">⬇️ Download Image</button>
                 </div>
@@ -558,7 +563,7 @@
 
             <div id="live-img-loading" style="display: none; padding: 20px 10px; color: #38bdf8; font-size: 13px; font-weight: 600;">
                 <div class="loading-spinner" style="display: inline-block; margin-right: 8px;"></div>
-                ⚡ Rendering high-res Flux AI Image Preview... (takes 2-4 seconds)
+                ⚡ Rendering high-res AI Image Preview... (takes 2-4 seconds)
             </div>
 
             <div id="live-img-wrap" style="position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #1e3a5f; background: #020617;">

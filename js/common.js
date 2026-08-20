@@ -1109,13 +1109,16 @@ function copyOptimizedPromptText() {
     }
 }
 
-// ── 6. INSTANT LIVE AI IMAGE PREVIEW ENGINE ─────────────────────────
+// ── 6. INSTANT LIVE AI IMAGE PREVIEW ENGINE (GEMINI IMAGEN 3 + FLUX DUAL ENGINE) ──
 let _currentLiveImgSeed = Math.floor(Math.random() * 1000000);
 
-function generateLiveImagePreview(forceRegen = false) {
-    const promptText = document.getElementById('prompt-output')?.innerText || document.getElementById('subject-input')?.value;
-    if (!promptText || promptText === 'Generating...') {
-        alert("Pehle prompt generate hone dein ya base concept enter karein!");
+async function generateLiveImagePreview(forceRegen = false) {
+    const promptText = document.getElementById('imagen-prompt-output')?.innerText || 
+                       document.getElementById('prompt-output')?.innerText || 
+                       document.getElementById('subject-input')?.value;
+
+    if (!promptText || promptText === 'Generating...' || promptText === 'Generating Imagen 3 prompt...') {
+        alert("Pehle base concept enter karein!");
         return;
     }
 
@@ -1125,24 +1128,59 @@ function generateLiveImagePreview(forceRegen = false) {
     const img = document.getElementById('live-ai-img-element');
 
     if (box) box.style.display = 'block';
-    if (loading) { loading.style.display = 'block'; loading.innerText = "⚡ Generating high-res Flux AI Image Preview... (takes 2-4 seconds)"; }
+    if (loading) {
+        loading.style.display = 'block';
+        loading.innerHTML = `<div class="loading-spinner" style="display:inline-block; margin-right:8px;"></div>⚡ Gemini &amp; Imagen 3 se photo render ho rahi hai...`;
+    }
     if (wrap) wrap.style.display = 'none';
 
     if (forceRegen) {
         _currentLiveImgSeed = Math.floor(Math.random() * 1000000);
     }
 
-    // Get active aspect ratio dimensions
+    // Get active aspect ratio
     const ratioTag = document.querySelector('#ratio-tags .tag.active');
     const ratio = ratioTag ? ratioTag.getAttribute('data-ratio') : '1:1';
     let width = 1024, height = 1024;
-    if (ratio === '16:9') { width = 1280; height = 720; }
-    else if (ratio === '9:16') { width = 720; height = 1280; }
-    else if (ratio === '4:5') { width = 800; height = 1000; }
+    let imagenRatio = "1:1";
+    if (ratio === '16:9') { width = 1280; height = 720; imagenRatio = "16:9"; }
+    else if (ratio === '9:16') { width = 720; height = 1280; imagenRatio = "9:16"; }
+    else if (ratio === '4:5') { width = 800; height = 1000; imagenRatio = "3:4"; }
 
+    const modelChoice = document.getElementById('live-img-model')?.value || 'gemini-imagen';
     const cleanPrompt = promptText.replace(/[\n\r]+/g, ' ').trim();
-    const model = document.getElementById('live-img-model')?.value || 'flux';
 
+    // 1. Try Google Imagen 3 via Gemini API if selected
+    if (modelChoice === 'gemini-imagen') {
+        try {
+            const apiKey = getApiKey();
+            if (apiKey) {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instances: [{ prompt: cleanPrompt }],
+                        parameters: { sampleCount: 1, aspectRatio: imagenRatio, personGeneration: "ALLOW_ADULT" }
+                    })
+                });
+
+                if (response.ok) {
+                    const resData = await response.json();
+                    const b64 = resData?.predictions?.[0]?.bytesBase64Encoded;
+                    const mime = resData?.predictions?.[0]?.mimeType || 'image/jpeg';
+                    if (b64) {
+                        if (img) img.src = `data:${mime};base64,${b64}`;
+                        return;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("Imagen 3 API fallback to high-quality Flux engine:", e);
+        }
+    }
+
+    // 2. High-speed Fallback / Flux Engine
+    const model = (modelChoice === 'turbo') ? 'turbo' : 'flux';
     const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&seed=${_currentLiveImgSeed}&nologo=true&model=${model}`;
 
     if (img) img.src = imageUrl;
