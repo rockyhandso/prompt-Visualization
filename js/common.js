@@ -1105,3 +1105,66 @@ function copyOptimizedPromptText() {
     }
 }
 
+// ── 6. INSTANT LIVE AI IMAGE PREVIEW ENGINE ─────────────────────────
+let _currentLiveImgSeed = Math.floor(Math.random() * 1000000);
+
+function generateLiveImagePreview(forceRegen = false) {
+    const promptText = document.getElementById('prompt-output')?.innerText || document.getElementById('subject-input')?.value;
+    if (!promptText || promptText === 'Generating...') {
+        alert("Pehle prompt generate hone dein ya base concept enter karein!");
+        return;
+    }
+
+    const box = document.getElementById('live-image-preview-box');
+    const loading = document.getElementById('live-img-loading');
+    const wrap = document.getElementById('live-img-wrap');
+    const img = document.getElementById('live-ai-img-element');
+
+    if (box) box.style.display = 'block';
+    if (loading) { loading.style.display = 'block'; loading.innerText = "⚡ Generating high-res Flux AI Image Preview... (takes 2-4 seconds)"; }
+    if (wrap) wrap.style.display = 'none';
+
+    if (forceRegen) {
+        _currentLiveImgSeed = Math.floor(Math.random() * 1000000);
+    }
+
+    // Get active aspect ratio dimensions
+    const ratioTag = document.querySelector('#ratio-tags .tag.active');
+    const ratio = ratioTag ? ratioTag.getAttribute('data-ratio') : '1:1';
+    let width = 1024, height = 1024;
+    if (ratio === '16:9') { width = 1280; height = 720; }
+    else if (ratio === '9:16') { width = 720; height = 1280; }
+    else if (ratio === '4:5') { width = 800; height = 1000; }
+
+    const cleanPrompt = promptText.replace(/[\n\r]+/g, ' ').trim();
+    const model = document.getElementById('live-img-model')?.value || 'flux';
+
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&seed=${_currentLiveImgSeed}&nologo=true&model=${model}`;
+
+    if (img) img.src = imageUrl;
+}
+
+function _onLiveImgLoaded() {
+    const loading = document.getElementById('live-img-loading');
+    const wrap = document.getElementById('live-img-wrap');
+    if (loading) loading.style.display = 'none';
+    if (wrap) wrap.style.display = 'block';
+}
+
+function _onLiveImgError() {
+    const loading = document.getElementById('live-img-loading');
+    if (loading) loading.innerText = "❌ Image render timeout ho gaya. '🔄 Regenerate' button try karein.";
+}
+
+function downloadLiveImage() {
+    const img = document.getElementById('live-ai-img-element');
+    if (!img || !img.src) return;
+    const a = document.createElement('a');
+    a.href = img.src;
+    a.download = `AI_Studio_Preview_${Date.now()}.jpg`;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+

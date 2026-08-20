@@ -438,6 +438,18 @@
                     <button class="api-btn" style="background: #8b5cf6; color: white; padding: 3px 8px; font-size: 10px;" onclick="polishBasePrompt()">🪄 AI Fix Grammar</button>
                 </div>
             </div>
+
+            <div style="margin-top: 8px; margin-bottom: 8px;">
+                <div style="font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">✨ 1-Click Popular Trending Ideas:</div>
+                <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin;">
+                    <span class="tag" style="background:#1e293b; border-color:#38bdf8; color:#38bdf8; white-space:nowrap; font-size:11px; cursor:pointer;" onclick="setPresetConcept('cyberpunk warrior in rainy neo tokyo night, neon reflections')">🤖 Cyberpunk Warrior</span>
+                    <span class="tag" style="background:#1e293b; border-color:#c084fc; color:#c084fc; white-space:nowrap; font-size:11px; cursor:pointer;" onclick="setPresetConcept('majestic crystal dragon flying over glowing alien floating islands')">🐉 Crystal Dragon</span>
+                    <span class="tag" style="background:#1e293b; border-color:#f59e0b; color:#f59e0b; white-space:nowrap; font-size:11px; cursor:pointer;" onclick="setPresetConcept('cinematic portrait of an ancient indian royal king warrior, dramatic lighting')">👑 Ancient Indian King</span>
+                    <span class="tag" style="background:#1e293b; border-color:#34d399; color:#34d399; white-space:nowrap; font-size:11px; cursor:pointer;" onclick="setPresetConcept('cute 3D pixar style fluffy astronaut cat in space station')">🐱 3D Pixar Cat</span>
+                    <span class="tag" style="background:#1e293b; border-color:#f472b6; color:#f472b6; white-space:nowrap; font-size:11px; cursor:pointer;" onclick="setPresetConcept('futuristic hypercar drifting on wet highway at night, speed motion blur')">🏎️ Hypercar Drift</span>
+                </div>
+            </div>
+
             <textarea id="subject-input" class="input-box" rows="4" placeholder="Hinglish ya Hindi me bhi likh sakte hain... e.g. 'mumbai ki sadak par ek bada hara yoddha slow motion me chal raha hai' ya 'a cat in car'" oninput="debouncedUpdatePrompt(); triggerAutoSaveConcept();" style="resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5;">a cat in car</textarea>
 
             <!-- GEMINI AI REALTIME PROMPT EXPANDER -->
@@ -446,28 +458,27 @@
                     <span class="gemini-title">✨ Gemini AI Prompt Architect</span>
                 </div>
                 
-                <button class="gemini-btn" onclick="generateAiIdeas()">🤖 Brainstorm Detailed Scenarios</button>
-                <div id="loading" class="loading-spinner">⚡ Gemini is thinking up creative scenarios...</div>
+                <button class="gemini-btn" onclick="generateAiIdeas()">🤖 Brainstorm Detailed Scenarios &amp; Variations</button>
+                <div id="loading" class="loading-spinner">⚡ Gemini is exploring creative prompt directions...</div>
 
                 <div id="ai-suggestions" class="ai-suggestions"></div>
             </div>
 
-            <div class="section-title">Artistic Style</div>
+            <div class="section-title">Visual Style & Art Engine</div>
             <div class="tag-group" id="style-tags">
-                <span class="tag active" onclick="toggleTag(this)">Photorealistic</span>
-                <span class="tag" onclick="toggleTag(this)">Cyberpunk</span>
-                <span class="tag" onclick="toggleTag(this)">Studio Ghibli Anime</span>
-                <span class="tag" onclick="toggleTag(this)">Oil Painting</span>
-                <span class="tag" onclick="toggleTag(this)">3D Unreal Engine 5</span>
+                <span class="tag active" onclick="toggleTag(this)">Photorealistic 35mm</span>
+                <span class="tag" onclick="toggleTag(this)">Unreal Engine 5 Render</span>
+                <span class="tag" onclick="toggleTag(this)">Anime & Manga Concept Art</span>
+                <span class="tag" onclick="toggleTag(this)">Oil Painting Masterpiece</span>
+                <span class="tag" onclick="toggleTag(this)">Cyberpunk Neon Style</span>
+                <span class="tag" onclick="toggleTag(this)">Dark Fantasy Digital Art</span>
             </div>
 
-            <div class="section-title">Color Palette & Mood</div>
+            <div class="section-title">Color Grade & Mood</div>
             <div class="tag-group" id="color-tags">
-                <span class="tag active" onclick="toggleTag(this)">Vibrant Colors</span>
-                <span class="tag" onclick="toggleTag(this)">Teal & Orange</span>
-                <span class="tag" onclick="toggleTag(this)">Neon Cyberpunk</span>
-                <span class="tag" onclick="toggleTag(this)">Warm Sunset Glow</span>
-                <span class="tag" onclick="toggleTag(this)">Monochrome B&W</span>
+                <span class="tag active" onclick="toggleTag(this)">Cinematic Teal & Orange</span>
+                <span class="tag" onclick="toggleTag(this)">Warm Golden Hour</span>
+                <span class="tag" onclick="toggleTag(this)">Moody Dark & Gritty</span>
                 <span class="tag" onclick="toggleTag(this)">Pastel Palette</span>
                 <span class="tag" onclick="toggleTag(this)">Synthwave Purple</span>
             </div>
@@ -522,6 +533,36 @@
             <button class="btn" style="background: #8b5cf6;" onclick="translatePromptToHindi()">🌐 Translate Output to Hindi (हिंदी अनुवाद)</button>
         </div>
 
+        <!-- LIVE AI IMAGE PREVIEW SECTION -->
+        <button class="btn" style="background: linear-gradient(135deg, #10b981, #0284c7); margin-top: 10px; width: 100%; font-size: 14px; font-weight: bold; box-shadow: 0 4px 15px rgba(16,185,129,0.3);" onclick="generateLiveImagePreview()">
+            🖼️ Generate Instant Live AI Image Preview (Flux.1)
+        </button>
+
+        <div id="live-image-preview-box" style="display: none; margin-top: 14px; background: #060b18; border: 1px solid #1e3a5f; border-radius: 12px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 6px;">
+                <span style="font-weight: bold; color: #38bdf8; font-size: 13px;">🖼️ Live AI Image Render (Flux.1 Engine):</span>
+                <div style="display: flex; gap: 6px;">
+                    <select id="live-img-model" class="input-box" style="font-size: 11px; padding: 3px 6px;" onchange="generateLiveImagePreview(true)">
+                        <option value="flux" selected>⚡ Flux.1 (Fast &amp; Realistic)</option>
+                        <option value="turbo">🚀 SDXL Turbo</option>
+                    </select>
+                    <button type="button" class="api-btn" style="background: #3b82f6; color: white; padding: 3px 8px; font-size: 11px; font-weight: bold;" onclick="generateLiveImagePreview(true)">🔄 Regenerate</button>
+                    <button type="button" class="api-btn" style="background: #10b981; color: white; padding: 3px 8px; font-size: 11px; font-weight: bold;" onclick="downloadLiveImage()">⬇️ Download</button>
+                </div>
+            </div>
+
+            <!-- Loading spinner -->
+            <div id="live-img-loading" style="display: none; padding: 24px 10px; color: #38bdf8; font-size: 13px; font-weight: 600; text-align: center;">
+                <div class="loading-spinner" style="display: inline-block; margin-right: 8px;"></div>
+                ⚡ Rendering high-res Flux AI Image Preview... (takes 2-4 seconds)
+            </div>
+
+            <!-- Image preview -->
+            <div id="live-img-wrap" style="display: none; position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #1e3a5f; background: #020617;">
+                <img id="live-ai-img-element" style="width: 100%; max-height: 520px; object-fit: contain; display: block; margin: 0 auto;" alt="Live AI Image Preview" onload="_onLiveImgLoaded()" onerror="_onLiveImgError()">
+            </div>
+        </div>
+
         <div id="hindi-translation-box" style="display: none; margin-top: 12px; background: #0f172a; border: 1px solid #8b5cf6; border-radius: 8px; padding: 12px;">
             <div style="font-weight: bold; color: #a78bfa; font-size: 12px; margin-bottom: 4px;">🇮🇳 Hindi & Hinglish Meaning / हिंदी अर्थ:</div>
             <div id="hindi-translation-text" style="font-size: 12px; color: #e2e8f0; line-height: 1.6; white-space: pre-wrap;"></div>
@@ -530,6 +571,15 @@
 </div>
 
 <script>
+    function setPresetConcept(text) {
+        const inputEl = document.getElementById('subject-input');
+        if (inputEl) {
+            inputEl.value = text;
+            updatePrompt();
+            if (typeof triggerAutoSaveConcept === 'function') triggerAutoSaveConcept(300);
+        }
+    }
+
     // DEBOUNCED PROMPT UPDATER FOR PERFORMANCE
     const debouncedUpdatePrompt = debounce(updatePrompt, 150);
 
