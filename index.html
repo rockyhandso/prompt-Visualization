@@ -443,8 +443,7 @@
         <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
             <a href="index.html" class="nav-btn" style="background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; border: none;">🎨 Image Studio</a>
             <a href="video.html" class="nav-btn" style="background: rgba(236,72,153,0.15); border: 1px solid rgba(236,72,153,0.35); color: #f472b6;">🎬 Video Studio</a>
-            <a href="insights.html" class="nav-btn" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35); color: #34d399;">📊 Insights</a>
-            <a href="users.html" class="nav-btn" style="background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.35); color: #a78bfa;">👥 Users</a>
+            <a href="admin.html" class="nav-btn" style="background: rgba(255,255,255,0.06); border: 1px solid #1e3a5f; color: #94a3b8;" title="Admin Panel">⚙️ Admin</a>
         </div>
     </div>
 
@@ -456,6 +455,7 @@
             <span style="background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); color: #c7d2fe; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;">🎨 Midjourney v6</span>
             <span style="background: rgba(236,72,153,0.12); border: 1px solid rgba(236,72,153,0.3); color: #fbcfe8; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;">🎬 OpenAI Sora &amp; Veo</span>
             <span style="background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #a7f3d0; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;">⚡ Flux.1 &amp; DALL-E 3</span>
+            <span style="background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: #fde68a; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;">🤖 Google Imagen 3</span>
         </div>
     </header>
 
@@ -493,37 +493,55 @@
         </div>
     </div>
 
-    <!-- 2. GENERATED OUTPUT PROMPTS SECTION (CLEAR 3-CARD GRID) -->
+    <!-- 2. GENERATED OUTPUT PROMPTS SECTION (MULTI-ENGINE SUITE) -->
     <div style="margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="font-size: 14px; font-weight: 800; color: #f1f5f9; text-transform: uppercase; letter-spacing: 0.5px;">📋 Generated Output Prompts:</span>
-            <span style="font-size: 11px; color: #34d399; font-weight: 600;">✓ Ready to Copy &amp; Paste</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 14px; font-weight: 800; color: #f1f5f9; text-transform: uppercase; letter-spacing: 0.5px;">📋 Generated Multi-Engine Output Prompts:</span>
+            <span style="font-size: 11px; color: #34d399; font-weight: 600;">✓ Optimized for All Major AI Models</span>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
             <!-- Midjourney Card -->
-            <div class="card" style="background: #060b18; border: 1px solid #3b82f6; padding: 16px; border-radius: 14px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-weight: 700; color: #38bdf8; font-size: 13px;">🎨 Midjourney v6 Prompt:</span>
-                    <button type="button" class="api-btn" style="background: #3b82f6; color: white; padding: 3px 10px; font-size: 11px; font-weight: 700;" onclick="copyPrompt()">📋 Copy</button>
+            <div class="card" style="background: #060b18; border: 1px solid #3b82f6; padding: 14px; border-radius: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-weight: 700; color: #38bdf8; font-size: 12px;">🎨 1. Midjourney v6 Prompt:</span>
+                    <button type="button" class="api-btn" style="background: #3b82f6; color: white; padding: 2px 8px; font-size: 10px; font-weight: 700;" onclick="copySinglePrompt('prompt-output', 'Midjourney')">📋 Copy</button>
                 </div>
-                <div id="prompt-output" class="prompt-text-box" style="min-height: 70px; margin-bottom: 6px; font-size: 12px;">Generating...</div>
+                <div id="prompt-output" class="prompt-text-box" style="min-height: 60px; margin-bottom: 0; font-size: 11.5px;">Generating...</div>
+            </div>
+
+            <!-- Flux / SDXL Card -->
+            <div class="card" style="background: #060b18; border: 1px solid #10b981; padding: 14px; border-radius: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-weight: 700; color: #34d399; font-size: 12px;">⚡ 2. Flux.1 / Stable Diffusion XL:</span>
+                    <button type="button" class="api-btn" style="background: #10b981; color: white; padding: 2px 8px; font-size: 10px; font-weight: 700;" onclick="copySinglePrompt('flux-prompt-output', 'Flux / SDXL')">📋 Copy</button>
+                </div>
+                <div id="flux-prompt-output" class="prompt-text-box" style="min-height: 60px; margin-bottom: 0; font-size: 11.5px; color: #6ee7b7;">Generating Flux prompt...</div>
+            </div>
+
+            <!-- Imagen 3 / DALL-E 3 Card -->
+            <div class="card" style="background: #060b18; border: 1px solid #f59e0b; padding: 14px; border-radius: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-weight: 700; color: #fbbf24; font-size: 12px;">🤖 3. Google Imagen 3 &amp; DALL-E 3:</span>
+                    <button type="button" class="api-btn" style="background: #f59e0b; color: white; padding: 2px 8px; font-size: 10px; font-weight: 700;" onclick="copySinglePrompt('imagen-prompt-output', 'Imagen / DALL-E')">📋 Copy</button>
+                </div>
+                <div id="imagen-prompt-output" class="prompt-text-box" style="min-height: 60px; margin-bottom: 0; font-size: 11.5px; color: #fde68a;">Generating Imagen 3 prompt...</div>
             </div>
 
             <!-- Sora / Video Motion Card -->
-            <div class="card" style="background: #060b18; border: 1px solid #ec4899; padding: 16px; border-radius: 14px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-weight: 700; color: #f472b6; font-size: 13px;">🎬 Sora / Runway Video Motion Prompt:</span>
-                    <button type="button" class="api-btn" style="background: #ec4899; color: white; padding: 3px 10px; font-size: 11px; font-weight: 700;" onclick="copyVideoModePrompt()">📋 Copy</button>
+            <div class="card" style="background: #060b18; border: 1px solid #ec4899; padding: 14px; border-radius: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-weight: 700; color: #f472b6; font-size: 12px;">🎬 4. Sora, Runway &amp; Kling Video:</span>
+                    <button type="button" class="api-btn" style="background: #ec4899; color: white; padding: 2px 8px; font-size: 10px; font-weight: 700;" onclick="copyVideoModePrompt()">📋 Copy</button>
                 </div>
-                <div id="video-motion-output" class="prompt-text-box" style="min-height: 70px; margin-bottom: 6px; font-size: 12px; color: #f472b6;">Generating video motion prompt...</div>
+                <div id="video-motion-output" class="prompt-text-box" style="min-height: 60px; margin-bottom: 0; font-size: 11.5px; color: #fbcfe8;">Generating video motion prompt...</div>
             </div>
         </div>
 
-        <!-- Negative Prompt Card (if present) -->
+        <!-- Negative Prompt Card -->
         <div id="negative-container" style="margin-bottom: 14px;">
             <div style="font-size: 11px; font-weight: 700; color: #f87171; margin-bottom: 4px; text-transform: uppercase;">🚫 Negative Prompt (Quality Filters):</div>
-            <div id="neg-prompt-output" class="prompt-text-box" style="color: #fca5a5; min-height: 25px; padding: 8px 12px; font-size: 12px;">None</div>
+            <div id="neg-prompt-output" class="prompt-text-box" style="color: #fca5a5; min-height: 25px; padding: 8px 12px; font-size: 11.5px;">None</div>
         </div>
 
         <!-- LIVE AI IMAGE PREVIEW CARD -->
@@ -906,9 +924,18 @@ Return ONLY a valid JSON array of 3 strings. Example:
         }
     }
 
+    function copySinglePrompt(elementId, engineName) {
+        const txt = document.getElementById(elementId)?.innerText;
+        if (!txt || txt.includes('Generating')) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(txt).then(() => alert(`✅ ${engineName} Prompt Copied to Clipboard!`));
+        } else {
+            fallbackCopy(txt);
+        }
+    }
+
     function updatePrompt() {
         const subject = document.getElementById('subject-input')?.value || "a subject";
-        const engine = document.getElementById('engine-select')?.value || 'midjourney';
 
         const styles = Array.from(document.querySelectorAll('#style-tags .tag.active')).map(t => t.innerText);
         const colors = Array.from(document.querySelectorAll('#color-tags .tag.active')).map(t => t.innerText);
@@ -922,21 +949,32 @@ Return ONLY a valid JSON array of 3 strings. Example:
 
         let posAttributes = [...new Set([...styles, ...colors, ...lighting, ...camera, ...detail])].join(', ');
         let negAttributes = negatives.join(', ');
-
-        let finalPos = "";
         let finalNeg = negAttributes || "None";
-
         const attrText = posAttributes ? `, ${posAttributes}` : '';
         let negFlag = negAttributes ? ` --no ${negAttributes}` : '';
-        finalPos = `${subject}${attrText} --ar ${activeRatio} --v 6.0${negFlag}`;
 
+        // 1. Midjourney v6 Format
+        const midjourneyPrompt = `${subject}${attrText} --ar ${activeRatio} --v 6.0${negFlag}`;
+
+        // 2. Flux.1 / Stable Diffusion XL Format
+        const fluxPrompt = `masterpiece, 8k resolution, photorealistic, ${subject}, ${posAttributes || 'cinematic lighting, ultra detailed textures'}`;
+
+        // 3. Google Imagen 3 / DALL-E 3 Format
+        const stylePhrase = posAttributes ? ` rendered in ${posAttributes}` : '';
+        const imagenPrompt = `A stunning high-resolution cinematic depiction of ${subject}${stylePhrase}. Photorealistic clarity with natural lighting and depth of field. Aspect ratio ${activeRatio}.`;
+
+        // 4. Sora / Runway / Kling Video Motion Format
         const videoPrompt = `[Continuous cinematic shot], ${subject}, camera tracking push-in, volumetric rain lighting, dynamic motion blur, 4k ultra-detailed video, realistic physics --ar ${activeRatio}`;
 
         const outMid = document.getElementById('prompt-output');
+        const outFlux = document.getElementById('flux-prompt-output');
+        const outImg = document.getElementById('imagen-prompt-output');
         const outVid = document.getElementById('video-motion-output');
         const outNeg = document.getElementById('neg-prompt-output');
 
-        if (outMid) outMid.innerText = finalPos;
+        if (outMid) outMid.innerText = midjourneyPrompt;
+        if (outFlux) outFlux.innerText = fluxPrompt;
+        if (outImg) outImg.innerText = imagenPrompt;
         if (outVid) outVid.innerText = videoPrompt;
         if (outNeg) outNeg.innerText = finalNeg;
     }
