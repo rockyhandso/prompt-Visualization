@@ -383,25 +383,11 @@ function _friendlyError(e) {
     return e.message || 'Sign-in fail ho gaya. Dobara try karein.';
 }
 
-// ─── Navbar & Dock Auth Buttons ──────────────────────────────────────────────
+// ─── Navbar & Drawer Auth Sync ──────────────────────────────────────────────
 function _renderDockAuthBtn(user) {
-    // 1. Render Floating Dock Auth if dock exists
-    const dock = document.getElementById('floating-right-dock');
-    if (dock) {
-        let dockBtn = document.getElementById('dock-auth-btn');
-        if (!dockBtn) {
-            dockBtn = document.createElement('div');
-            dockBtn.id = 'dock-auth-btn';
-            dockBtn.style.position = 'relative';
-            dock.insertBefore(dockBtn, dock.firstChild);
-        }
-        _populateAuthElement(dockBtn, user);
-    }
-
-    // 2. Render Top Navbar Auth Button
-    const navBtn = document.getElementById('navbar-auth-btn');
-    if (navBtn) {
-        _populateAuthElement(navBtn, user);
+    // 1. Sync Slide Drawer Auth Content
+    if (typeof _updateDrawerAuthInfo === 'function') {
+        _updateDrawerAuthInfo();
     }
 }
 

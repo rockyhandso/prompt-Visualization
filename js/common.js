@@ -582,10 +582,129 @@ function showApiErrorBanner(errorMsg, containerOrId, retryFn) {
 }
 
 // ── 4. SLIDE-OUT SIDE DRAWER (OFFCANVAS MENU) ──────────────────────────
+function _createDrawerDOM() {
+    if (document.getElementById('slide-drawer-panel')) return;
+    if (!document.body) return;
+
+    // Inject styles
+    if (!document.getElementById('_drawer_styles')) {
+        const s = document.createElement('style');
+        s.id = '_drawer_styles';
+        s.textContent = `
+            #slide-drawer-backdrop {
+                position: fixed; inset: 0; z-index: 9998;
+                background: rgba(6, 11, 24, 0.65);
+                backdrop-filter: blur(6px);
+                opacity: 0; visibility: hidden;
+                transition: opacity 0.3s ease, visibility 0.3s ease;
+            }
+            #slide-drawer-backdrop.open {
+                opacity: 1; visibility: visible;
+            }
+            #slide-drawer-panel {
+                position: fixed; top: 0; right: 0; bottom: 0; width: 330px; max-width: 88vw;
+                background: rgba(15, 25, 41, 0.98);
+                backdrop-filter: blur(20px);
+                border-left: 1px solid #1e3a5f;
+                box-shadow: -15px 0 50px rgba(0,0,0,0.7);
+                z-index: 9999;
+                transform: translateX(100%);
+                transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+                display: flex; flex-direction: column;
+                padding: 22px; box-sizing: border-box; overflow-y: auto;
+                font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            }
+            #slide-drawer-panel.open {
+                transform: translateX(0);
+            }
+            .drawer-section {
+                margin-bottom: 18px;
+                padding-bottom: 14px;
+                border-bottom: 1px solid #1e3a5f;
+            }
+            .drawer-title {
+                font-size: 11px; font-weight: 700; color: #818cf8;
+                text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
+            }
+            .drawer-theme-btn {
+                display: flex; align-items: center; justify-content: space-between;
+                width: 100%; padding: 8px 12px; border-radius: 8px;
+                background: #060b18; border: 1px solid #1e3a5f; color: #f8fafc;
+                font-size: 12px; font-weight: 600; cursor: pointer; margin-bottom: 6px;
+                transition: all 0.2s ease;
+            }
+            .drawer-theme-btn:hover {
+                border-color: #6366f1; transform: translateX(3px); background: #111c30;
+            }
+        `;
+        document.head.appendChild(s);
+    }
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'slide-drawer-backdrop';
+    backdrop.onclick = toggleSlideDrawer;
+    document.body.appendChild(backdrop);
+
+    const drawer = document.createElement('div');
+    drawer.id = 'slide-drawer-panel';
+    drawer.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid #1e3a5f; padding-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:18px;">⚙️</span>
+                <span style="font-weight:800; font-size:14px; color:#f8fafc; letter-spacing:0.5px;">Studio Quick Menu</span>
+            </div>
+            <button type="button" onclick="toggleSlideDrawer()" style="background:#111c30; border:1px solid #1e3a5f; color:#94a3b8; font-size:14px; font-weight:bold; cursor:pointer; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center;">✕</button>
+        </div>
+
+        <!-- 1. ACCOUNT & SIGN IN -->
+        <div class="drawer-section">
+            <div class="drawer-title">👤 Account &amp; Access</div>
+            <div id="drawer-auth-content"></div>
+        </div>
+
+        <!-- 2. THEME SELECTOR -->
+        <div class="drawer-section">
+            <div class="drawer-title">🎨 Visual Themes</div>
+            <button type="button" class="drawer-theme-btn" onclick="changeAppTheme('default')"><span>🌌 Indigo Blue (Default)</span><span>🔵</span></button>
+            <button type="button" class="drawer-theme-btn" onclick="changeAppTheme('cyberpunk')"><span>🔮 Cyberpunk Neon</span><span>🟣</span></button>
+            <button type="button" class="drawer-theme-btn" onclick="changeAppTheme('emerald')"><span>🌲 Emerald Studio</span><span>🟢</span></button>
+            <button type="button" class="drawer-theme-btn" onclick="changeAppTheme('oled')"><span>🖤 OLED Midnight Dark</span><span>⚫</span></button>
+        </div>
+
+        <!-- 3. PERSONAL API KEY -->
+        <div class="drawer-section">
+            <div class="drawer-title">🗝️ Custom Gemini API Key</div>
+            <p style="font-size:11px; color:#94a3b8; line-height:1.4; margin-bottom:8px;">Agar shared limit full ho jaye toh apni free Gemini Key use karein.</p>
+            <button type="button" class="btn" style="background:#111c30; border:1px solid #1e3a5f; color:#38bdf8; font-size:12px; padding:9px;" onclick="setUserCustomApiKey()">🗝️ Update Personal API Key</button>
+        </div>
+
+        <!-- 4. TOUR GUIDE -->
+        <div class="drawer-section">
+            <div class="drawer-title">🧭 App Walkthrough</div>
+            <button type="button" class="btn" style="background:#111c30; border:1px solid #10b981; color:#34d399; font-size:12px; padding:9px;" onclick="toggleSlideDrawer(); if(typeof startTour==='function') startTour();">🧭 Start Interactive Tour</button>
+        </div>
+
+        <!-- 5. FEEDBACK -->
+        <div>
+            <a href="feedback.html" style="display:block; text-align:center; padding:10px; background:#060b18; border:1px solid #1e3a5f; border-radius:8px; color:#94a3b8; font-size:12px; text-decoration:none; font-weight:600;">
+                💬 Send Feedback or Report Bug
+            </a>
+        </div>
+    `;
+    document.body.appendChild(drawer);
+    _updateDrawerAuthInfo();
+}
+
 function toggleSlideDrawer() {
-    const drawer = document.getElementById('slide-drawer-panel');
-    const backdrop = document.getElementById('slide-drawer-backdrop');
+    let drawer = document.getElementById('slide-drawer-panel');
+    let backdrop = document.getElementById('slide-drawer-backdrop');
+    if (!drawer || !backdrop) {
+        _createDrawerDOM();
+        drawer = document.getElementById('slide-drawer-panel');
+        backdrop = document.getElementById('slide-drawer-backdrop');
+    }
     if (!drawer || !backdrop) return;
+
     const isOpen = drawer.classList.contains('open');
     if (isOpen) {
         drawer.classList.remove('open');
@@ -597,6 +716,7 @@ function toggleSlideDrawer() {
     }
 }
 window.toggleSlideDrawer = toggleSlideDrawer;
+window._createDrawerDOM = _createDrawerDOM;
 
 function _updateDrawerAuthInfo() {
     const userContainer = document.getElementById('drawer-auth-content');
@@ -623,118 +743,12 @@ function _updateDrawerAuthInfo() {
     }
 }
 
-(function initSlideDrawer() {
-    if (document.getElementById('_drawer_styles')) return;
-    const s = document.createElement('style');
-    s.id = '_drawer_styles';
-    s.textContent = `
-        #slide-drawer-backdrop {
-            position: fixed; inset: 0; z-index: 9998;
-            background: rgba(6, 11, 24, 0.6);
-            backdrop-filter: blur(4px);
-            opacity: 0; visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        #slide-drawer-backdrop.open {
-            opacity: 1; visibility: visible;
-        }
-        #slide-drawer-panel {
-            position: fixed; top: 0; right: 0; bottom: 0; width: 320px; max-width: 85vw;
-            background: rgba(15, 25, 41, 0.96);
-            backdrop-filter: blur(20px);
-            border-left: 1px solid #1e3a5f;
-            box-shadow: -15px 0 50px rgba(0,0,0,0.6);
-            z-index: 9999;
-            transform: translateX(100%);
-            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex; flex-direction: column;
-            padding: 20px; box-sizing: border-box; overflow-y: auto;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        }
-        #slide-drawer-panel.open {
-            transform: translateX(0);
-        }
-        .drawer-section {
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #1e3a5f;
-        }
-        .drawer-title {
-            font-size: 11px; font-weight: 700; color: #94a3b8;
-            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
-        }
-        .drawer-theme-btn {
-            display: flex; align-items: center; justify-content: space-between;
-            width: 100%; padding: 8px 12px; border-radius: 8px;
-            background: #060b18; border: 1px solid #1e3a5f; color: #f8fafc;
-            font-size: 12px; font-weight: 600; cursor: pointer; margin-bottom: 6px;
-            transition: all 0.2s ease;
-        }
-        .drawer-theme-btn:hover {
-            border-color: #6366f1; transform: translateX(3px);
-        }
-    `;
-    document.head.appendChild(s);
-
-    function createDrawerDOM() {
-        if (document.getElementById('slide-drawer-panel')) return;
-
-        const backdrop = document.createElement('div');
-        backdrop.id = 'slide-drawer-backdrop';
-        backdrop.onclick = toggleSlideDrawer;
-        document.body.appendChild(backdrop);
-
-        const drawer = document.createElement('div');
-        drawer.id = 'slide-drawer-panel';
-        drawer.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:16px;">⚙️</span>
-                    <span style="font-weight:800; font-size:14px; color:#f8fafc; letter-spacing:0.5px;">Studio Quick Menu</span>
-                </div>
-                <button type="button" onclick="toggleSlideDrawer()" style="background:none; border:none; color:#94a3b8; font-size:18px; cursor:pointer; padding:4px;">✕</button>
-            </div>
-
-            <div class="drawer-section">
-                <div class="drawer-title">👤 Account &amp; Access</div>
-                <div id="drawer-auth-content"></div>
-            </div>
-
-            <div class="drawer-section">
-                <div class="drawer-title">🎨 Visual Themes</div>
-                <button type="button" class="drawer-theme-btn" onclick="changeAppTheme('default')"><span>🌌 Indigo Blue (Default)</span><span>🔵</span></button>
-                <button type="button" class="drawer-theme-btn" onclick="changeAppTheme('cyberpunk')"><span>🔮 Cyberpunk Neon</span><span>🟣</span></button>
-                <button type="button" class="drawer-theme-btn" onclick="changeAppTheme('emerald')"><span>🌲 Emerald Studio</span><span>🟢</span></button>
-                <button type="button" class="drawer-theme-btn" onclick="changeAppTheme('oled')"><span>🖤 OLED Midnight Dark</span><span>⚫</span></button>
-            </div>
-
-            <div class="drawer-section">
-                <div class="drawer-title">🗝️ Custom Gemini API Key</div>
-                <p style="font-size:11px; color:#94a3b8; line-height:1.4; margin-bottom:8px;">Agar shared limit full ho jaye toh apni free Gemini Key use karein.</p>
-                <button type="button" class="btn" style="background:#111c30; border:1px solid #1e3a5f; color:#38bdf8; font-size:12px; padding:9px;" onclick="setUserCustomApiKey()">🗝️ Update Personal API Key</button>
-            </div>
-
-            <div class="drawer-section">
-                <div class="drawer-title">🧭 App Walkthrough</div>
-                <button type="button" class="btn" style="background:#111c30; border:1px solid #10b981; color:#34d399; font-size:12px; padding:9px;" onclick="toggleSlideDrawer(); if(typeof startTour==='function') startTour();">🧭 Start Interactive Tour</button>
-            </div>
-
-            <div>
-                <a href="feedback.html" style="display:block; text-align:center; padding:10px; background:#060b18; border:1px solid #1e3a5f; border-radius:8px; color:#94a3b8; font-size:12px; text-decoration:none; font-weight:600;">
-                    💬 Send Feedback or Report Bug
-                </a>
-            </div>
-        `;
-        document.body.appendChild(drawer);
-        _updateDrawerAuthInfo();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', createDrawerDOM);
-    } else {
-        createDrawerDOM();
-    }
-})();
+// Auto-init on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _createDrawerDOM);
+} else {
+    _createDrawerDOM();
+}
 
 
 // ── 5. AI PROMPT AUDITOR & PLATFORM OPTIMIZER ENGINE ─────────────────
