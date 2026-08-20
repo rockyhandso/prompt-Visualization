@@ -581,171 +581,161 @@ function showApiErrorBanner(errorMsg, containerOrId, retryFn) {
     }
 }
 
-// ── 8. FLOATING RIGHT-SIDE ACTION DOCK (Always Visible) ─────────────────
-(function initRightDock() {
-    const dockCSS = document.createElement('style');
-    dockCSS.textContent = `
-        .floating-right-dock {
-            position: fixed;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 99999;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            pointer-events: auto;
-        }
+// ── 4. SLIDE-OUT SIDE DRAWER (OFFCANVAS MENU) ──────────────────────────
+function toggleSlideDrawer() {
+    const drawer = document.getElementById('slide-drawer-panel');
+    const backdrop = document.getElementById('slide-drawer-backdrop');
+    if (!drawer || !backdrop) return;
+    const isOpen = drawer.classList.contains('open');
+    if (isOpen) {
+        drawer.classList.remove('open');
+        backdrop.classList.remove('open');
+    } else {
+        drawer.classList.add('open');
+        backdrop.classList.add('open');
+        _updateDrawerAuthInfo();
+    }
+}
+window.toggleSlideDrawer = toggleSlideDrawer;
 
-        .dock-item {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            text-decoration: none;
-            background: #1e293b;
-            border: 1px solid #334155;
-            color: #f8fafc;
-            border-radius: 30px;
-            padding: 6px 12px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(8px);
-            white-space: nowrap;
-        }
+function _updateDrawerAuthInfo() {
+    const userContainer = document.getElementById('drawer-auth-content');
+    if (!userContainer) return;
+    const u = window._firebaseAuth ? window._firebaseAuth.currentUser : null;
+    if (u) {
+        const name = u.displayName || u.email?.split('@')[0] || 'User';
+        const photo = u.photoURL;
+        userContainer.innerHTML = `
+            <div style="display:flex; align-items:center; gap:10px; padding:10px; background:#060b18; border:1px solid #1e3a5f; border-radius:10px; margin-bottom:8px;">
+                ${photo ? `<img src="${photo}" style="width:36px; height:36px; border-radius:50%; border:1px solid #6366f1;">` : `<div style="width:36px; height:36px; border-radius:50%; background:#6366f1; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold;">${name.charAt(0).toUpperCase()}</div>`}
+                <div style="overflow:hidden;">
+                    <div style="font-weight:700; color:#f8fafc; font-size:13px;">${name}</div>
+                    <div style="font-size:11px; color:#94a3b8; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${u.email || ''}</div>
+                </div>
+            </div>
+            <button type="button" class="btn" style="background:#ef4444; padding:8px; font-size:12px; border-radius:8px;" onclick="if(typeof signOutUser==='function') signOutUser(); _updateDrawerAuthInfo();">🚪 Sign Out</button>
+        `;
+    } else {
+        userContainer.innerHTML = `
+            <div style="font-size:12px; color:#94a3b8; margin-bottom:8px;">Sign in to save prompts &amp; access advanced AI director features.</div>
+            <button type="button" class="btn" style="background:linear-gradient(135deg, #6366f1, #8b5cf6); padding:10px; font-size:12px; border-radius:8px;" onclick="toggleSlideDrawer(); if(typeof _ensureAuthModal==='function'){_ensureAuthModal(); document.getElementById('auth-overlay').classList.add('open');}">🔑 Sign In with Google / Email</button>
+        `;
+    }
+}
 
-        .dock-item .dock-icon {
-            font-size: 16px;
-            margin-left: 6px;
+(function initSlideDrawer() {
+    if (document.getElementById('_drawer_styles')) return;
+    const s = document.createElement('style');
+    s.id = '_drawer_styles';
+    s.textContent = `
+        #slide-drawer-backdrop {
+            position: fixed; inset: 0; z-index: 9998;
+            background: rgba(6, 11, 24, 0.6);
+            backdrop-filter: blur(4px);
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
-
-        .dock-item .dock-text {
-            font-size: 12px;
-            line-height: 1;
+        #slide-drawer-backdrop.open {
+            opacity: 1; visibility: visible;
         }
-
-        .dock-item:hover {
-            transform: translateX(-4px) scale(1.04);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+        #slide-drawer-panel {
+            position: fixed; top: 0; right: 0; bottom: 0; width: 320px; max-width: 85vw;
+            background: rgba(15, 25, 41, 0.96);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid #1e3a5f;
+            box-shadow: -15px 0 50px rgba(0,0,0,0.6);
+            z-index: 9999;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column;
+            padding: 20px; box-sizing: border-box; overflow-y: auto;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
-
-        .dock-feedback {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            border-color: #fbbf24;
-            color: #0f172a !important;
-            font-weight: 700;
-            animation: dockPulse 2s infinite alternate;
+        #slide-drawer-panel.open {
+            transform: translateX(0);
         }
-        @keyframes dockPulse {
-            from { box-shadow: 0 0 4px rgba(245, 158, 11, 0.4); }
-            to   { box-shadow: 0 0 16px rgba(245, 158, 11, 0.8); }
+        .drawer-section {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #1e3a5f;
         }
-
-        .dock-tour {
-            background: linear-gradient(135deg, #3b82f6, #6366f1);
-            border-color: #60a5fa;
-            color: #ffffff !important;
+        .drawer-title {
+            font-size: 11px; font-weight: 700; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
         }
-
-        .dock-key {
-            background: #065f46;
-            border-color: #059669;
-            color: #a7f3d0 !important;
+        .drawer-theme-btn {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; padding: 8px 12px; border-radius: 8px;
+            background: #060b18; border: 1px solid #1e3a5f; color: #f8fafc;
+            font-size: 12px; font-weight: 600; cursor: pointer; margin-bottom: 6px;
+            transition: all 0.2s ease;
         }
-
-        .dock-admin {
-            background: #1e1e2e;
-            border-color: #4b5563;
-            color: #cbd5e1 !important;
-        }
-
-        .dock-themes {
-            display: flex;
-            gap: 4px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            padding: 4px 8px;
-            border-radius: 20px;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        .dock-theme-btn {
-            background: #1e293b;
-            border: none;
-            border-radius: 50%;
-            width: 22px;
-            height: 22px;
-            font-size: 11px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s;
-            padding: 0;
-        }
-        .dock-theme-btn:hover { transform: scale(1.2); }
-
-        @media (max-width: 600px) {
-            .floating-right-dock {
-                right: 6px;
-                top: auto;
-                bottom: 16px;
-                transform: none;
-                flex-direction: row;
-                gap: 6px;
-                background: rgba(15, 23, 42, 0.85);
-                padding: 6px;
-                border-radius: 40px;
-                border: 1px solid #334155;
-            }
-            .dock-item .dock-text { display: none; }
-            .dock-item { padding: 8px; border-radius: 50%; }
-            .dock-item .dock-icon { margin-left: 0; }
-            .dock-themes { display: none; }
+        .drawer-theme-btn:hover {
+            border-color: #6366f1; transform: translateX(3px);
         }
     `;
-    document.head.appendChild(dockCSS);
+    document.head.appendChild(s);
 
-    function createDock() {
-        if (document.getElementById('floating-right-dock')) return;
+    function createDrawerDOM() {
+        if (document.getElementById('slide-drawer-panel')) return;
 
-        const dock = document.createElement('div');
-        dock.id = 'floating-right-dock';
-        dock.className = 'floating-right-dock';
+        const backdrop = document.createElement('div');
+        backdrop.id = 'slide-drawer-backdrop';
+        backdrop.onclick = toggleSlideDrawer;
+        document.body.appendChild(backdrop);
 
-        dock.innerHTML = `
-            <a href="feedback.html" class="dock-item dock-feedback" title="Apna Feedback ya Bug Report dein">
-                <span class="dock-text">💬 Feedback</span>
-                <span class="dock-icon">💬</span>
-            </a>
-            <button type="button" class="dock-item dock-tour" onclick="if(typeof startTour==='function'){startTour();}" title="Interactive Hinglish Tour Guide">
-                <span class="dock-text">🧭 Tour Guide</span>
-                <span class="dock-icon">🧭</span>
-            </button>
-            <button type="button" class="dock-item dock-key" onclick="setUserCustomApiKey()" title="Enter your personal Gemini API Key">
-                <span class="dock-text">🔑 My API Key</span>
-                <span class="dock-icon">🔑</span>
-            </button>
-            <div class="dock-themes" title="Theme badlein">
-                <button type="button" class="dock-theme-btn" onclick="changeAppTheme('default')" title="Default Dark">🌙</button>
-                <button type="button" class="dock-theme-btn" onclick="changeAppTheme('cyberpunk')" style="background:#a855f7;" title="Cyberpunk">🟣</button>
-                <button type="button" class="dock-theme-btn" onclick="changeAppTheme('emerald')" style="background:#10b981;" title="Emerald">🟢</button>
-                <button type="button" class="dock-theme-btn" onclick="changeAppTheme('oled')" style="background:#334155;" title="OLED">🖤</button>
+        const drawer = document.createElement('div');
+        drawer.id = 'slide-drawer-panel';
+        drawer.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">⚙️</span>
+                    <span style="font-weight:800; font-size:14px; color:#f8fafc; letter-spacing:0.5px;">Studio Quick Menu</span>
+                </div>
+                <button type="button" onclick="toggleSlideDrawer()" style="background:none; border:none; color:#94a3b8; font-size:18px; cursor:pointer; padding:4px;">✕</button>
+            </div>
+
+            <div class="drawer-section">
+                <div class="drawer-title">👤 Account &amp; Access</div>
+                <div id="drawer-auth-content"></div>
+            </div>
+
+            <div class="drawer-section">
+                <div class="drawer-title">🎨 Visual Themes</div>
+                <button type="button" class="drawer-theme-btn" onclick="changeAppTheme('default')"><span>🌌 Indigo Blue (Default)</span><span>🔵</span></button>
+                <button type="button" class="drawer-theme-btn" onclick="changeAppTheme('cyberpunk')"><span>🔮 Cyberpunk Neon</span><span>🟣</span></button>
+                <button type="button" class="drawer-theme-btn" onclick="changeAppTheme('emerald')"><span>🌲 Emerald Studio</span><span>🟢</span></button>
+                <button type="button" class="drawer-theme-btn" onclick="changeAppTheme('oled')"><span>🖤 OLED Midnight Dark</span><span>⚫</span></button>
+            </div>
+
+            <div class="drawer-section">
+                <div class="drawer-title">🗝️ Custom Gemini API Key</div>
+                <p style="font-size:11px; color:#94a3b8; line-height:1.4; margin-bottom:8px;">Agar shared limit full ho jaye toh apni free Gemini Key use karein.</p>
+                <button type="button" class="btn" style="background:#111c30; border:1px solid #1e3a5f; color:#38bdf8; font-size:12px; padding:9px;" onclick="setUserCustomApiKey()">🗝️ Update Personal API Key</button>
+            </div>
+
+            <div class="drawer-section">
+                <div class="drawer-title">🧭 App Walkthrough</div>
+                <button type="button" class="btn" style="background:#111c30; border:1px solid #10b981; color:#34d399; font-size:12px; padding:9px;" onclick="toggleSlideDrawer(); if(typeof startTour==='function') startTour();">🧭 Start Interactive Tour</button>
+            </div>
+
+            <div>
+                <a href="feedback.html" style="display:block; text-align:center; padding:10px; background:#060b18; border:1px solid #1e3a5f; border-radius:8px; color:#94a3b8; font-size:12px; text-decoration:none; font-weight:600;">
+                    💬 Send Feedback or Report Bug
+                </a>
             </div>
         `;
-
-        document.body.appendChild(dock);
+        document.body.appendChild(drawer);
+        _updateDrawerAuthInfo();
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', createDock);
+        document.addEventListener('DOMContentLoaded', createDrawerDOM);
     } else {
-        createDock();
+        createDrawerDOM();
     }
 })();
+
 
 // ── 5. AI PROMPT AUDITOR & PLATFORM OPTIMIZER ENGINE ─────────────────
 let _optimizerCurrentResult = null;

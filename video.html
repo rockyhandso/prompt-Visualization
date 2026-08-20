@@ -392,16 +392,9 @@
         <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
             <a href="index.html" class="nav-btn" style="background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.35); color: #818cf8; text-decoration: none; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;">🎨 Image Studio</a>
             <a href="video.html" class="nav-btn" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; text-decoration: none; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;">🎬 Video Studio</a>
-            <!-- Quick Selection Controls -->
-            <select class="nav-btn" style="background: #111c30; padding: 4px 8px; font-size: 11px; cursor: pointer; border-radius: 20px; color: #f8fafc; border: 1px solid #1e3a5f;" onchange="changeAppTheme(this.value)" title="Change App Theme">
-                <option value="default">🌌 Indigo Theme</option>
-                <option value="cyberpunk">🔮 Cyberpunk</option>
-                <option value="emerald">🌲 Emerald</option>
-                <option value="oled">🖤 OLED Dark</option>
-            </select>
-            <button type="button" class="nav-btn" style="background: #111c30; padding: 5px 9px; font-size: 11px; border-radius: 20px; border: 1px solid #1e3a5f; color: #f8fafc; cursor: pointer;" onclick="setUserCustomApiKey()" title="Enter your free personal Gemini API Key">🗝️ API Key</button>
-            <button type="button" class="nav-btn" style="background: #111c30; padding: 5px 9px; font-size: 11px; border-radius: 20px; border: 1px solid #1e3a5f; color: #f8fafc; cursor: pointer;" onclick="startTour()" title="Start Interactive Feature Tour">🧭 Tour Guide</button>
-            <div id="navbar-auth-btn" style="position: relative; display: inline-block;"></div>
+            <button type="button" class="nav-btn" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; border: none; padding: 6px 14px; font-weight: 700; cursor: pointer; border-radius: 20px; font-size: 12px; box-shadow: 0 4px 14px rgba(236,72,153,0.35);" onclick="toggleSlideDrawer()" title="Open Quick Settings &amp; Tools Menu">
+                ⚙️ Quick Menu
+            </button>
         </div>
     </div>
 

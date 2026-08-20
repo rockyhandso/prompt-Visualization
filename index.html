@@ -443,16 +443,9 @@
         <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
             <a href="index.html" class="nav-btn" style="background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; border: none;">🎨 Image Studio</a>
             <a href="video.html" class="nav-btn" style="background: rgba(236,72,153,0.15); border: 1px solid rgba(236,72,153,0.35); color: #f472b6;">🎬 Video Studio</a>
-            <!-- Quick Selection Controls -->
-            <select class="nav-btn" style="background: #111c30; padding: 4px 8px; font-size: 11px; cursor: pointer;" onchange="changeAppTheme(this.value)" title="Change App Theme">
-                <option value="default">🌌 Indigo Theme</option>
-                <option value="cyberpunk">🔮 Cyberpunk</option>
-                <option value="emerald">🌲 Emerald</option>
-                <option value="oled">🖤 OLED Dark</option>
-            </select>
-            <button type="button" class="nav-btn" style="background: #111c30; padding: 5px 9px; font-size: 11px;" onclick="setUserCustomApiKey()" title="Enter your free personal Gemini API Key">🗝️ API Key</button>
-            <button type="button" class="nav-btn" style="background: #111c30; padding: 5px 9px; font-size: 11px;" onclick="startTour()" title="Start Interactive Feature Tour">🧭 Tour Guide</button>
-            <div id="navbar-auth-btn" style="position: relative; display: inline-block;"></div>
+            <button type="button" class="nav-btn" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; border: none; padding: 6px 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(59,130,246,0.35);" onclick="toggleSlideDrawer()" title="Open Quick Settings &amp; Tools Menu">
+                ⚙️ Quick Menu
+            </button>
         </div>
     </div>
 
