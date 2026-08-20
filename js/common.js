@@ -1202,46 +1202,28 @@ async function generateLiveImagePreview(forceRegen = false) {
     else if (ratio === '9:16') { width = 720; height = 1280; imagenRatio = "9:16"; }
     else if (ratio === '4:5') { width = 800; height = 1000; imagenRatio = "3:4"; }
 
-    const modelChoice = document.getElementById('live-img-model')?.value || 'gemini-imagen';
-    const cleanPrompt = await _getCleanEnglishVisualPrompt();
+    const modelChoice = document.getElementById('live-img-model')?.value || 'flux';
+    let cleanPrompt = await _getCleanEnglishVisualPrompt();
 
-    // 1. Try Google Imagen 3 via Gemini API if selected
-    if (modelChoice === 'gemini-imagen') {
-        try {
-            const apiKey = getApiKey();
-            if (apiKey) {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        instances: [{ prompt: cleanPrompt }],
-                        parameters: { sampleCount: 1, aspectRatio: imagenRatio, personGeneration: "ALLOW_ADULT" }
-                    })
-                });
+    // Enhance prompt based on selected model
+    let finalPrompt = cleanPrompt;
+    let modelParam = 'flux';
 
-                if (response.ok) {
-                    const resData = await response.json();
-                    const b64 = resData?.predictions?.[0]?.bytesBase64Encoded;
-                    const mime = resData?.predictions?.[0]?.mimeType || 'image/jpeg';
-                    if (b64) {
-                        if (img) img.src = `data:${mime};base64,${b64}`;
-                        _onLiveImgLoaded();
-                        return;
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn("Imagen 3 API fallback to high-quality Flux engine:", e);
-        }
+    if (modelChoice === 'flux-realism') {
+        finalPrompt = `${cleanPrompt}, cinematic lighting, photorealistic 8k, ultra-detailed textures, masterpiece, depth of field`;
+        modelParam = 'flux';
+    } else if (modelChoice === 'turbo') {
+        modelParam = 'turbo';
+    } else {
+        finalPrompt = `${cleanPrompt}, highly detailed, 8k resolution, photorealistic`;
+        modelParam = 'flux';
     }
 
-    // 2. High-speed Fallback / Flux Engine with rich English visual prompt
-    const model = (modelChoice === 'turbo') ? 'turbo' : 'flux';
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${width}&height=${height}&seed=${_currentLiveImgSeed}&nologo=true&model=${model}`;
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?width=${width}&height=${height}&seed=${_currentLiveImgSeed}&nologo=true&model=${modelParam}`;
 
     const captionEl = document.getElementById('live-img-caption');
     if (captionEl) {
-        captionEl.innerHTML = `<strong style="color:#34d399;">Visual Prompt:</strong> ${cleanPrompt}`;
+        captionEl.innerHTML = `<strong style="color:#34d399;">Visual Prompt:</strong> ${finalPrompt}`;
     }
 
     if (img) img.src = imageUrl;

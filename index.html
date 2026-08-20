@@ -552,9 +552,9 @@
                 <span style="font-weight: 800; color: #34d399; font-size: 13px;">🖼️ Live AI Image Preview:</span>
                 <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
                     <select id="live-img-model" class="input-box" style="font-size: 11px; padding: 4px 8px; width: auto; background: #111c30; border: 1px solid #1e3a5f; color: #f8fafc; border-radius: 8px; margin-bottom: 0;" onchange="generateLiveImagePreview(true)">
-                        <option value="gemini-imagen" selected>🤖 Google Imagen 3 (Gemini)</option>
-                        <option value="flux">⚡ Flux.1 (Ultra Fast)</option>
-                        <option value="turbo">🚀 SDXL Turbo</option>
+                        <option value="flux" selected>⚡ Flux.1 Photorealism (Recommended)</option>
+                        <option value="flux-realism">🎨 Cinematic Midjourney Style</option>
+                        <option value="turbo">🚀 Turbo Speed Render</option>
                     </select>
                     <button id="live-regen-btn" type="button" class="api-btn" style="background: #3b82f6; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold; display: none;" onclick="generateLiveImagePreview(true)">🔄 Regenerate</button>
                     <button id="live-dl-btn" type="button" class="api-btn" style="background: #10b981; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold; display: none;" onclick="downloadLiveImage()">⬇️ Download Image</button>
