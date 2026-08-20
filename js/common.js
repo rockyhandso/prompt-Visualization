@@ -1158,14 +1158,16 @@ async function _getCleanEnglishVisualPrompt() {
 
 async function generateLiveImagePreview(forceRegen = false) {
     const box = document.getElementById('live-image-preview-box');
+    const placeholder = document.getElementById('live-img-placeholder');
     const loading = document.getElementById('live-img-loading');
     const wrap = document.getElementById('live-img-wrap');
     const img = document.getElementById('live-ai-img-element');
 
     if (box) box.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
     if (loading) {
         loading.style.display = 'block';
-        loading.innerHTML = `<div class="loading-spinner" style="display:inline-block; margin-right:8px;"></div>⚡ Gemini &amp; AI Image Engine se photo render ho rahi hai...`;
+        loading.innerHTML = `<div class="loading-spinner" style="display:inline-block; margin-right:8px;"></div>⚡ Gemini &amp; AI Image Engine se photo render ho rahi hai... (takes 2-4 seconds)`;
     }
     if (wrap) wrap.style.display = 'none';
 
@@ -1205,6 +1207,7 @@ async function generateLiveImagePreview(forceRegen = false) {
                     const mime = resData?.predictions?.[0]?.mimeType || 'image/jpeg';
                     if (b64) {
                         if (img) img.src = `data:${mime};base64,${b64}`;
+                        _onLiveImgLoaded();
                         return;
                     }
                 }
@@ -1224,8 +1227,13 @@ async function generateLiveImagePreview(forceRegen = false) {
 function _onLiveImgLoaded() {
     const loading = document.getElementById('live-img-loading');
     const wrap = document.getElementById('live-img-wrap');
+    const regenBtn = document.getElementById('live-regen-btn');
+    const dlBtn = document.getElementById('live-dl-btn');
+
     if (loading) loading.style.display = 'none';
     if (wrap) wrap.style.display = 'block';
+    if (regenBtn) regenBtn.style.display = 'inline-block';
+    if (dlBtn) dlBtn.style.display = 'inline-block';
 }
 
 function _onLiveImgError() {

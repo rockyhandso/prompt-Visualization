@@ -546,7 +546,7 @@
             <div id="neg-prompt-output" class="prompt-text-box" style="color: #fca5a5; min-height: 25px; padding: 8px 12px; font-size: 11.5px;">None</div>
         </div>
 
-        <!-- LIVE AI IMAGE PREVIEW CARD -->
+        <!-- LIVE AI IMAGE PREVIEW CARD (ON-DEMAND GENERATION) -->
         <div class="card" style="background: #060b18; border: 1px solid #10b981; padding: 18px; border-radius: 14px; text-align: center;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
                 <span style="font-weight: 800; color: #34d399; font-size: 13px;">🖼️ Live AI Image Preview:</span>
@@ -556,17 +556,27 @@
                         <option value="flux">⚡ Flux.1 (Ultra Fast)</option>
                         <option value="turbo">🚀 SDXL Turbo</option>
                     </select>
-                    <button type="button" class="api-btn" style="background: #3b82f6; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold;" onclick="generateLiveImagePreview(true)">🔄 Regenerate</button>
-                    <button type="button" class="api-btn" style="background: #10b981; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold;" onclick="downloadLiveImage()">⬇️ Download Image</button>
+                    <button id="live-regen-btn" type="button" class="api-btn" style="background: #3b82f6; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold; display: none;" onclick="generateLiveImagePreview(true)">🔄 Regenerate</button>
+                    <button id="live-dl-btn" type="button" class="api-btn" style="background: #10b981; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold; display: none;" onclick="downloadLiveImage()">⬇️ Download Image</button>
                 </div>
             </div>
 
-            <div id="live-img-loading" style="display: none; padding: 20px 10px; color: #38bdf8; font-size: 13px; font-weight: 600;">
-                <div class="loading-spinner" style="display: inline-block; margin-right: 8px;"></div>
-                ⚡ Rendering high-res AI Image Preview... (takes 2-4 seconds)
+            <!-- INITIAL PLACEHOLDER (BEFORE USER CLICKS GENERATE) -->
+            <div id="live-img-placeholder" style="padding: 30px 16px; border: 2px dashed #1e3a5f; border-radius: 12px; background: rgba(15,25,41,0.5);">
+                <div style="font-size: 32px; margin-bottom: 8px;">🖼️</div>
+                <div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 4px;">Concept ready hai! Photo visualize karein</div>
+                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">AI photo render karne ke liye neeche diye gaye button par click karein.</div>
+                <button type="button" class="btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 800; font-size: 13px; padding: 12px 24px; border-radius: 10px; box-shadow: 0 4px 16px rgba(16,185,129,0.4);" onclick="generateLiveImagePreview(true)">
+                    🎨 Generate AI Image Preview
+                </button>
             </div>
 
-            <div id="live-img-wrap" style="position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #1e3a5f; background: #020617;">
+            <div id="live-img-loading" style="display: none; padding: 24px 10px; color: #38bdf8; font-size: 13px; font-weight: 600;">
+                <div class="loading-spinner" style="display: inline-block; margin-right: 8px;"></div>
+                ⚡ Gemini &amp; AI Image Engine se photo render ho rahi hai... (takes 2-4 seconds)
+            </div>
+
+            <div id="live-img-wrap" style="display: none; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #1e3a5f; background: #020617;">
                 <img id="live-ai-img-element" style="width: 100%; max-height: 480px; object-fit: contain; display: block; margin: 0 auto;" alt="Live AI Image Preview" onload="_onLiveImgLoaded()" onerror="_onLiveImgError()">
             </div>
         </div>
@@ -972,9 +982,6 @@ Return ONLY a valid JSON object with these 4 keys:
             updatePrompt();
         }
 
-        if (typeof generateLiveImagePreview === 'function') {
-            generateLiveImagePreview();
-        }
         if (typeof triggerAutoSaveConcept === 'function') {
             triggerAutoSaveConcept(300);
         }
@@ -1251,9 +1258,6 @@ Describe the main subject, composition, artistic style, lighting, atmosphere, an
     }
 
     updatePrompt();
-    if (typeof generateLiveImagePreview === 'function') {
-        generateLiveImagePreview();
-    }
 </script>
 
 
