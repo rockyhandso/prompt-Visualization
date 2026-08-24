@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -167,7 +167,7 @@ function renderUserBar(user) {
     const av = photo ? '<img src="'+photo+'" alt="avatar">' : '<div class="avatar-placeholder">'+name.charAt(0).toUpperCase()+'</div>';
     const n = document.getElementById('nav-user-area');
     if(n) n.innerHTML = (photo?'<img src="'+photo+'" style="width:28px;height:28px;border-radius:50%;border:1px solid #6366f1;">':'')+'<span style="font-size:12px;font-weight:700;margin:0 6px;">'+_esc(name)+'</span><button class="btn btn-red" style="padding:5px 10px;font-size:11px;" onclick="_signOut().then(()=>location.reload())">Sign Out</button>';
-    document.getElementById('user-bar').innerHTML = av+'<div class="user-info"><div class="user-name">'+_esc(name)+'</div><div class="user-email">'+_esc(user.email||'')+'</div><div style="font-size:11px;color:#34d399;margin-top:3px;font-weight:600;">✅ Firebase Sync Active</div></div><div class="user-stats"><div class="stat-pill"><div class="stat-num" id="stat-total">—</div><div class="stat-lbl">Total Prompts</div></div><div class="stat-pill"><div class="stat-num" id="stat-today">—</div><div class="stat-lbl">Today</div></div><div class="stat-pill"><div class="stat-num" id="stat-week">—</div><div class="stat-lbl">This Week</div></div></div>';
+    document.getElementById('user-bar').innerHTML = av+'<div class="user-info"><div class="user-name">'+_esc(name)+'</div><div class="user-email">'+_esc(user.email||'')+'</div></div><div class="user-stats"><div class="stat-pill"><div class="stat-num" id="stat-total">—</div><div class="stat-lbl">Total Prompts</div></div><div class="stat-pill"><div class="stat-num" id="stat-today">—</div><div class="stat-lbl">Today</div></div><div class="stat-pill"><div class="stat-num" id="stat-week">—</div><div class="stat-lbl">This Week</div></div></div>';
 }
 
 function loadHistory(uid) {

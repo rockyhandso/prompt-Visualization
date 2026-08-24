@@ -695,16 +695,7 @@ function _createDrawerDOM() {
             <button type="button" class="btn" style="background:#111c30; border:1px solid #10b981; color:#34d399; font-size:12px; padding:9px;" onclick="toggleSlideDrawer(); if(typeof startTour==='function') startTour();">🧭 Start Interactive Tour</button>
         </div>
 
-        <!-- 5. MY DASHBOARD -->
-        <div class="drawer-section">
-            <div class="drawer-title">📊 My Dashboard</div>
-            <p style="font-size:11px; color:#94a3b8; line-height:1.4; margin-bottom:8px;">Aapki prompt history, stats aur saved work ek jagah dekhein.</p>
-            <a href="dashboard.html" style="display:block; text-align:center; padding:10px; background:linear-gradient(135deg,#0f2d4a,#1e1b4b); border:1px solid #6366f1; border-radius:8px; color:#818cf8; font-size:12px; font-weight:700; text-decoration:none;">
-                📊 Open My Dashboard
-            </a>
-        </div>
-
-        <!-- 6. FEEDBACK -->
+        <!-- 5. FEEDBACK -->
         <div>
             <a href="feedback.html" style="display:block; text-align:center; padding:10px; background:#060b18; border:1px solid #1e3a5f; border-radius:8px; color:#94a3b8; font-size:12px; text-decoration:none; font-weight:600;">
                 💬 Send Feedback or Report Bug
@@ -753,6 +744,7 @@ function _updateDrawerAuthInfo() {
                     <div style="font-size:11px; color:#94a3b8; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${u.email || ''}</div>
                 </div>
             </div>
+            <a href="dashboard.html" style="display:block; text-align:center; padding:9px; background:linear-gradient(135deg,#0f2d4a,#1e1b4b); border:1px solid #6366f1; border-radius:8px; color:#818cf8; font-size:12px; font-weight:700; text-decoration:none; margin-bottom:6px;">📊 My Dashboard</a>
             <button type="button" class="btn" style="background:#ef4444; padding:8px; font-size:12px; border-radius:8px;" onclick="if(typeof signOutUser==='function') signOutUser(); _updateDrawerAuthInfo();">🚪 Sign Out</button>
         `;
     } else {
