@@ -466,8 +466,9 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
             <span style="font-size: 12px; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px;">💡 Write Your Idea (Hinglish / English):</span>
             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <button type="button" class="api-btn" style="background: linear-gradient(135deg, #0284c7, #8b5cf6); color: white; padding: 3px 8px; font-size: 10px; font-weight: 700;" onclick="openPromptOptimizerModal()" title="Analyze & Optimize Prompt for Public Figures, Safety & Target Platform">🚀 AI Audit &amp; Optimizer</button>
                 <button type="button" class="api-btn" style="background: #10b981; color: white; padding: 3px 8px; font-size: 10px; font-weight: 700;" onclick="convertHinglishToEnglishPrompt()" title="Convert Hinglish to rich English AI Prompt">🇮🇳 Hinglish ➔ AI</button>
-                <button type="button" class="api-btn" style="background: #f59e0b; color: white; padding: 3px 8px; font-size: 10px; font-weight: 700;" onclick="copyrightSafeRewrite()" title="Auto-remove copyrighted names">🛡️ Copyright Fix</button>
+                <button type="button" class="api-btn" style="background: #f59e0b; color: white; padding: 3px 8px; font-size: 10px; font-weight: 700;" onclick="copyrightSafeRewrite()" title="Auto-remove copyrighted names & public figures">🛡️ Copyright Fix</button>
                 <button type="button" class="api-btn" style="background: #8b5cf6; color: white; padding: 3px 8px; font-size: 10px; font-weight: 700;" onclick="polishBasePrompt()">🪄 Fix Grammar</button>
             </div>
         </div>
@@ -619,9 +620,23 @@
                     </button>
                     <div id="image-preview-container" style="display: none; margin-top: 8px;">
                         <img id="image-preview" style="max-width: 100%; max-height: 140px; border-radius: 6px;" alt="Image Preview">
-                        <button class="gemini-btn" style="margin-top: 6px; font-size: 11px;" onclick="analyzeImageWithGemini()">🔍 Extract AI Prompt</button>
+                        <button type="button" class="gemini-btn" style="margin-top: 6px; font-size: 11px;" onclick="analyzeImageWithGemini()">🔍 Extract AI Prompt</button>
                     </div>
-                    <div id="vision-loading" class="loading-spinner" style="margin-top: 6px; color: #38bdf8;">⚡ Analyzing image features...</div>
+                    <div id="vision-loading" class="loading-spinner" style="display: none; margin-top: 6px; color: #38bdf8;">⚡ Analyzing image features &amp; generating prompt...</div>
+
+                    <div id="vision-result" style="display: none; margin-top: 10px; background: #0f172a; border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; font-size: 12px; color: #cbd5e1;">
+                        <div style="font-weight: bold; color: #38bdf8; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>🖼️ Extracted AI Image Prompt:</span>
+                            <span style="font-size: 10px; color: #94a3b8; font-weight: normal;">✏️ Editable</span>
+                        </div>
+                        <textarea id="vision-text" class="input-box" rows="3" style="font-family: inherit; font-size: 11px; margin-bottom: 8px; resize: vertical; width: 100%; background: #060b18; box-sizing: border-box;" placeholder="Extracted prompt will appear here..."></textarea>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
+                            <button type="button" class="api-btn" style="background: #8b5cf6; color: white; padding: 7px; font-weight: bold; font-size: 11px;" onclick="polishVisionPrompt()">🪄 AI Fix Grammar</button>
+                            <button type="button" class="api-btn" style="background: #10b981; color: white; padding: 7px; font-weight: bold; font-size: 11px;" onclick="applyVisionPrompt()">✨ Set as Concept</button>
+                        </div>
+                        <button type="button" class="api-btn" style="background: #334155; color: #f8fafc; padding: 5px; width: 100%; font-size: 10px;" onclick="copyVisionExtractedPrompt()">📋 Copy Extracted Prompt</button>
+                    </div>
                 </div>
             </div>
 
@@ -1147,8 +1162,9 @@ Return ONLY a valid JSON object with these 4 keys:
             return;
         }
 
-        const systemPrompt = `Analyze this image in detail for AI image generation. 
-Describe the main subject, composition, artistic style, lighting, atmosphere, and visual details in a single concise, highly descriptive prompt phrase suitable for Midjourney/DALL-E (max 40 words).`;
+        const systemPrompt = `Analyze this uploaded image in detail for AI image generation.
+Describe the main subject, clothing, character appearance, artistic style, background environment, lighting, colors, atmosphere, and camera framing in a single concise, highly descriptive English prompt suitable for Midjourney v6, Google Imagen 3, and Flux (35-65 words).
+Return ONLY the final prompt text string, without introductory phrases or quotes.`;
 
         const apiUrl = `https://generativelanguage.googleapis.com/${activeModelInfo.apiVersion}/${activeModelInfo.modelPath}:generateContent?key=${apiKey}`;
 
@@ -1175,19 +1191,23 @@ Describe the main subject, composition, artistic style, lighting, atmosphere, an
             visionLoading.style.display = 'none';
 
             if (data.error) {
+                if (typeof checkAndHandleQuotaError === 'function' && checkAndHandleQuotaError(data.error)) return;
                 alert("Gemini Vision API Error: " + data.error.message);
                 return;
             }
 
             const candidate = data.candidates?.[0];
             if (!candidate || !candidate.content?.parts?.[0]?.text) {
-                alert("Image ki description fetch nahi ho saki.");
+                alert("Image ki description fetch nahi ho saki. Kripya doosri image try karein.");
                 return;
             }
 
-            const description = candidate.content.parts[0].text.trim();
-            visionText.value = description;
-            visionResult.style.display = 'block';
+            const description = candidate.content.parts[0].text.trim().replace(/^["']|["']$/g, '');
+            if (visionText) visionText.value = description;
+            if (visionResult) {
+                visionResult.style.display = 'block';
+                visionResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
 
         } catch (err) {
             visionLoading.style.display = 'none';
@@ -1197,14 +1217,29 @@ Describe the main subject, composition, artistic style, lighting, atmosphere, an
     }
 
     function applyVisionPrompt() {
-        const text = document.getElementById('vision-text').value.trim();
+        const text = document.getElementById('vision-text')?.value?.trim();
         if (text) {
-            document.getElementById('subject-input').value = text;
+            const subj = document.getElementById('subject-input');
+            if (subj) subj.value = text;
             updatePrompt();
-            triggerAutoSaveConcept(300);
-            alert("Edited image description base concept me transfer ho gayi hai!");
+            if (typeof triggerAutoSaveConcept === 'function') triggerAutoSaveConcept(300);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            alert("✅ Extracted image prompt Base Concept me set ho gaya!");
         } else {
             alert("Pehle prompt text enter karein!");
+        }
+    }
+
+    function copyVisionExtractedPrompt() {
+        const text = document.getElementById('vision-text')?.value?.trim();
+        if (!text) {
+            alert("Pehle image se prompt extract karein!");
+            return;
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => alert("✅ Extracted Prompt copied to clipboard!"));
+        } else {
+            fallbackCopy(text);
         }
     }
 

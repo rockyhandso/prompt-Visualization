@@ -218,17 +218,28 @@ const COPYRIGHT_MAP = [
     { r: /\b(luffy|monkey d\.? luffy)\b/gi,       s: 'straw-hat wearing rubber-bodied pirate captain' },
     { r: /\b(saitama|one punch man)\b/gi,         s: 'bald caped overpowered hero' },
     { r: /\b(zoro|roronoa zoro)\b/gi,             s: 'three-sword-wielding green-haired swordsman' },
+    // Indian Cricketers & Athletes (Public Figures often blocked by AI Safety)
+    { r: /\b(virat kohli|virat|king kohli)\b/gi,         s: 'athletic bearded Indian master cricket batsman with intense focus in sports jersey' },
+    { r: /\b(ms dhoni|m\.?s\.? dhoni|dhoni|mahi|thala)\b/gi, s: 'calm legendary Indian cricket captain wicketkeeper in number 7 jersey' },
+    { r: /\b(rohit sharma|hitman)\b/gi,                  s: 'power-hitting Indian cricket captain batsman playing a pull shot' },
+    { r: /\b(sachin tendulkar|sachin)\b/gi,              s: 'legendary master blaster Indian cricket batsman in white protective gear' },
+    { r: /\b(cristiano ronaldo|ronaldo|cr7)\b/gi,        s: 'chiseled athletic Portuguese football champion in jersey' },
+    { r: /\b(lionel messi|messi)\b/gi,                   s: 'agile bearded Argentine football maestro in number 10 jersey' },
+    // Public Leaders & Visionaries
+    { r: /\b(narendra modi|pm modi)\b/gi,                s: 'distinguished Indian statesman leader with silver beard in traditional kurta jacket' },
+    { r: /\b(elon musk)\b/gi,                            s: 'tech billionaire aerospace visionary innovator' },
     // Bollywood / South
-    { r: /\b(salman khan)\b/gi,                   s: 'muscular Bollywood action hero' },
-    { r: /\b(shahrukh khan|srk)\b/gi,             s: 'charming Bollywood romantic hero' },
-    { r: /\b(rajinikanth|thalaiva)\b/gi,          s: 'iconic South Indian action superstar' },
-    { r: /\b(allu arjun)\b/gi,                    s: 'stylish Telugu action hero with signature moves' },
+    { r: /\b(salman khan|bhaijaan)\b/gi,                 s: 'muscular Bollywood action hero with blue turquoise bracelet' },
+    { r: /\b(shahrukh khan|shah rukh khan|srk)\b/gi,     s: 'charming charismatic Bollywood romantic hero with dimpled smile' },
+    { r: /\b(amitabh bachchan|big b)\b/gi,               s: 'tall legendary Indian cinema veteran actor with silver French beard' },
+    { r: /\b(rajinikanth|thalaiva)\b/gi,                 s: 'iconic South Indian action superstar with signature sunglasses' },
+    { r: /\b(allu arjun|pushpa)\b/gi,                    s: 'stylish Telugu action hero with rugged intense look' },
     // Other
-    { r: /\b(harry potter)\b/gi,                  s: 'young wizard with round glasses and lightning scar' },
-    { r: /\b(gandalf)\b/gi,                       s: 'ancient long-bearded wizard in grey robes' },
-    { r: /\b(darth vader)\b/gi,                   s: 'black-helmeted dark side commander villain' },
-    { r: /\b(yoda)\b/gi,                          s: 'small green ancient alien Jedi master' },
-    { r: /\b(jack sparrow|captain jack)\b/gi,     s: 'eccentric dreadlocked pirate captain' },
+    { r: /\b(harry potter)\b/gi,                         s: 'young wizard with round glasses and lightning scar' },
+    { r: /\b(gandalf)\b/gi,                              s: 'ancient long-bearded wizard in grey robes' },
+    { r: /\b(darth vader)\b/gi,                          s: 'black-helmeted dark side commander villain' },
+    { r: /\b(yoda)\b/gi,                                 s: 'small green ancient alien Jedi master' },
+    { r: /\b(jack sparrow|captain jack)\b/gi,            s: 'eccentric dreadlocked pirate captain' },
 ];
 
 function copyrightSafeRewrite() {
@@ -936,32 +947,38 @@ async function runPromptOptimizer() {
 
         const targetName = platNames[_selectedOptPlatform] || 'AI Image Generators';
 
-        const systemPrompt = `You are a world-class AI Prompt Auditor & Copyright Safety Specialist.
+        const systemPrompt = `You are a world-class AI Prompt Auditor, Copyright Safety & Public Figure Policy Specialist.
 The user wants to audit and optimize a prompt for target generator: "${targetName}".
 Prompt text: "${textInput}".
 
-CRITICAL INSTRUCTION FOR DIALOGUES & SCRIPT BLOCKS:
-- If the original prompt contains character dialogues, spoken lines, quotes, or script blocks (e.g. [Cinematic Character Script: ...], "character says ...", lip-sync cues, or dialogue text), YOU MUST ABSOLUTELY PRESERVE AND KEEP THEM IN THE OPTIMIZED PROMPT!
-- NEVER strip out or remove spoken lines, quotes, or dialogue cues!
-- Keep character speech & lip-sync dialogue intact while optimizing the visual description, camera motion, and replacing copyrighted names.
+CRITICAL INSTRUCTIONS:
+1. PUBLIC FIGURES, CELEBRITIES & LIVING PEOPLE (e.g. Virat Kohli, MS Dhoni, Rohit Sharma, Modi, actors, athletes, politicians):
+   - AI image and video models (DALL-E 3, Midjourney, Imagen 3, Sora, Flux, Runway) strictly block or reject prompts containing names of real living public figures / celebrities to prevent deepfakes and policy violations.
+   - You MUST detect any real celebrity/public figure name and replace it with an extremely vivid, detailed visual descriptive surrogate (e.g. for "Virat Kohli" -> "athletic bearded Indian master cricket batsman with intense focus in blue national team jersey raising his bat in victory").
+2. COPYRIGHT & TRADEMARKS:
+   - Replace any Marvel, DC, Disney, Anime, studio, brand, or trademarked characters with vivid descriptive equivalents.
+3. PRESERVE DIALOGUES & SCRIPT BLOCKS:
+   - If the original prompt contains spoken lines, quotes, or character script blocks (e.g. [Cinematic Character Script: ...], "character says ..."), YOU MUST KEEP THEM INTACT!
+4. QUALITY & FORMAT:
+   - Optimize visual description, composition, lighting, camera angles, and atmospheric cues tailored for ${targetName}.
 
 Tasks:
-1. Scan for copyrighted characters, studio names, trademarked logos, or celebrity names that trigger safety filters/bans on ${targetName}.
+1. Identify all copyrighted characters, studio names, trademarked logos, or public figures / celebrity names.
 2. Scan for forbidden/weak buzzwords (e.g. "photorealistic", "4K", "8K" if discouraged on ${targetName}).
-3. Re-write the prompt into a high-converting, fully compliant, copyright-safe, descriptive prompt tailored for ${targetName}, WHILE PRESERVING ALL CHARACTER DIALOGUES & SPOKEN SCRIPT LINES INTACT.
+3. Re-write the prompt into a high-converting, 100% policy-compliant, copyright-safe, descriptive prompt tailored for ${targetName}.
 4. Provide a quality & safety score out of 100.
 
 Return ONLY a valid JSON object matching this exact schema:
 {
   "score": 88,
   "copyrightIssues": [
-    { "word": "Doctor Doom", "replacement": "masked green-cloaked metal-faced monarch villain", "reason": "Copyrighted Marvel character" }
+    { "word": "Virat Kohli", "replacement": "athletic bearded Indian master cricket batsman in sports jersey", "reason": "Public figure name blocked by AI safety policy" }
   ],
   "qualitySuggestions": [
     { "original": "photorealistic", "replacement": "shot on 35mm camera, soft skin detail", "reason": "Midjourney v6 prefers camera parameters over generic quality buzzwords" }
   ],
   "platformAdvice": "Specific formatting advice for ${targetName}",
-  "optimizedPrompt": "fully rewritten copyright-safe descriptive prompt string WITH ALL CHARACTER DIALOGUES & SPOKEN LINES INTACT"
+  "optimizedPrompt": "fully rewritten policy-compliant, copyright-safe descriptive prompt string WITH ALL DIALOGUES & SPOKEN LINES INTACT"
 }`;
 
         const res = await fetch(apiUrl, {
