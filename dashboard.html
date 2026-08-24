@@ -1,0 +1,323 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard — AI Prompt Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase -->
+    <script type="module">
+      import { initializeApp }        from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+      import { getDatabase, ref, onValue, remove, set }
+                                       from "https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js";
+      import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut }
+                                       from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCt0lcZX8H9j8Y0hwuSyq-NpEe3cqx3erM",
+        authDomain: "prompt-visualization.firebaseapp.com",
+        databaseURL: "https://prompt-visualization-default-rtdb.firebaseio.com",
+        projectId: "prompt-visualization",
+        storageBucket: "prompt-visualization.firebasestorage.app",
+        messagingSenderId: "93895633100",
+        appId: "1:93895633100:web:3aba969e689d23b7313a69"
+      };
+
+      const app  = initializeApp(firebaseConfig);
+      const db   = getDatabase(app, "https://prompt-visualization-default-rtdb.firebaseio.com");
+      const auth = getAuth(app);
+      const googleProvider = new GoogleAuthProvider();
+
+      window._db   = db;
+      window._ref  = ref;
+      window._onValue  = onValue;
+      window._remove   = remove;
+      window._set      = set;
+      window._auth     = auth;
+      window._signOut  = () => signOut(auth);
+      window._signInGoogle = () => signInWithPopup(auth, googleProvider);
+
+      onAuthStateChanged(auth, (user) => {
+        window._currentUser = user;
+        if (user) {
+          renderUserBar(user);
+          loadHistory(user.uid);
+        } else {
+          showLoginScreen();
+        }
+      });
+    </script>
+
+    <style>
+        :root { --bg: #060b18; --card: #0f1929; --border: #1e3a5f; --text: #f1f5f9; --muted: #64748b; --accent: #6366f1; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: rgba(15,25,41,0.98); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; gap: 12px; flex-wrap: wrap; }
+        .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 15px; color: var(--text); text-decoration: none; }
+        .nav-link { font-size: 12px; font-weight: 600; color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: 8px; border: 1px solid transparent; transition: all 0.2s; }
+        .nav-link:hover, .nav-link.active { color: #f1f5f9; border-color: var(--border); background: #111c30; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 9px; border: none; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+        .btn-red   { background: #ef4444; color: white; }
+        .btn-ghost { background: #111c30; border: 1px solid var(--border); color: #94a3b8; }
+        .container { max-width: 900px; margin: 0 auto; padding: 28px 20px; }
+        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; text-align: center; }
+        #login-screen h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+        #login-screen p  { color: var(--muted); font-size: 13px; margin-bottom: 24px; line-height: 1.6; }
+        #user-bar { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; margin-bottom: 24px; flex-wrap: wrap; }
+        #user-bar img { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--accent); }
+        .avatar-placeholder { width: 46px; height: 46px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; flex-shrink: 0; color:white; }
+        .user-info { flex: 1; }
+        .user-name { font-size: 16px; font-weight: 800; }
+        .user-email { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .user-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+        .stat-pill { background: #060b18; border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; text-align: center; }
+        .stat-num  { font-size: 20px; font-weight: 800; color: #38bdf8; }
+        .stat-lbl  { font-size: 10px; color: var(--muted); margin-top: 2px; font-weight: 600; }
+        .toolbar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .toolbar-title { font-size: 16px; font-weight: 800; flex: 1; }
+        .search-box { background: #111c30; border: 1px solid var(--border); border-radius: 9px; padding: 8px 14px; color: #f8fafc; font-size: 13px; font-family: inherit; width: 200px; }
+        .search-box::placeholder { color: var(--muted); }
+        .search-box:focus { outline: none; border-color: var(--accent); }
+        .filter-select { background: #111c30; border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px; color: #f8fafc; font-size: 12px; font-family: inherit; cursor: pointer; }
+        #history-container { display: flex; flex-direction: column; gap: 14px; }
+        .hist-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; transition: border-color 0.2s; }
+        .hist-card:hover { border-color: #334155; }
+        .hist-concept { font-size: 15px; font-weight: 700; line-height: 1.4; margin-bottom: 4px; }
+        .engine-tabs { display: flex; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
+        .engine-tab { padding: 4px 10px; border-radius: 7px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid transparent; }
+        .engine-tab.mj   { background: #172554; color: #93c5fd; border-color: #1e3a8a; }
+        .engine-tab.flux { background: #052e16; color: #6ee7b7; border-color: #064e3b; }
+        .engine-tab.img  { background: #431407; color: #fde68a; border-color: #78350f; }
+        .engine-tab.vid  { background: #2d0a3d; color: #e9d5ff; border-color: #4c1d95; }
+        .engine-tab.active { box-shadow: 0 0 0 2px currentColor; transform: scale(1.04); }
+        .prompt-display { background: #060b18; border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 12px; font-family: monospace; line-height: 1.6; color: #cbd5e1; min-height: 54px; white-space: pre-wrap; word-break: break-word; margin-bottom: 10px; }
+        .hist-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .action-btn { padding: 6px 14px; border-radius: 8px; border: none; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .action-btn.restore { background: var(--accent); color: white; }
+        .action-btn.copy    { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+        .action-btn.del     { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-state h3 { font-size: 18px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
+        #loading-state { text-align: center; padding: 60px 20px; color: #38bdf8; font-size: 13px; }
+        .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #1e3a5f; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #pagination { display: flex; gap: 6px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+        .page-btn { padding: 7px 13px; border-radius: 8px; border: 1px solid var(--border); background: #111c30; color: #94a3b8; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .page-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        #toast { position: fixed; bottom: 24px; right: 24px; background: #1e293b; border: 1px solid #334155; color: #f1f5f9; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transform: translateY(10px); transition: all 0.25s ease; pointer-events: none; }
+        #toast.show { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+<nav class="nav">
+    <a href="index.html" class="nav-brand"><span>🤖</span> AI Prompt Studio</a>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <a href="index.html" class="nav-link">📸 Image Studio</a>
+        <a href="video.html" class="nav-link">🎬 Video Studio</a>
+        <a href="dashboard.html" class="nav-link active">📊 My Dashboard</a>
+        <div id="nav-user-area"></div>
+    </div>
+</nav>
+<div class="container">
+    <div id="login-screen" style="display:none;">
+        <div style="font-size:52px; margin-bottom:16px;">🔐</div>
+        <h2>Sign In to View Dashboard</h2>
+        <p>Aapki prompt history Firebase me save hoti hai.<br>Dashboard dekhne ke liye Google se sign in karein.</p>
+        <button class="btn btn-primary" style="font-size:14px; padding:12px 28px;" onclick="_signInGoogle().then(()=>location.reload())">🔑 Sign In with Google</button>
+    </div>
+    <div id="dashboard-content" style="display:none;">
+        <div id="user-bar"></div>
+        <div class="toolbar">
+            <div class="toolbar-title">📜 Prompt History</div>
+            <input type="text" class="search-box" id="search-input" placeholder="🔍 Search..." oninput="filterAndRender()">
+            <select class="filter-select" id="sort-select" onchange="filterAndRender()">
+                <option value="newest">🕐 Newest First</option>
+                <option value="oldest">🕐 Oldest First</option>
+            </select>
+            <button class="btn btn-ghost" onclick="exportAllHistory()">📥 Export</button>
+            <button class="btn btn-red" onclick="clearAllHistory()">🗑️ Clear All</button>
+        </div>
+        <div id="loading-state"><div class="spinner"></div><br>History load ho rahi hai...</div>
+        <div id="history-container" style="display:none;"></div>
+        <div id="pagination"></div>
+    </div>
+</div>
+<div id="toast"></div>
+<script>
+let _allEntries = [];
+let _currentPage = 1;
+const PER_PAGE = 8;
+
+function showLoginScreen() {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('dashboard-content').style.display = 'none';
+    const n = document.getElementById('nav-user-area');
+    if(n) n.innerHTML = '<button class="btn btn-primary" onclick="_signInGoogle().then(()=>location.reload())">🔑 Sign In</button>';
+}
+
+function renderUserBar(user) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard-content').style.display = 'block';
+    const name = user.displayName || user.email?.split('@')[0] || 'User';
+    const photo = user.photoURL;
+    const av = photo ? '<img src="'+photo+'" alt="avatar">' : '<div class="avatar-placeholder">'+name.charAt(0).toUpperCase()+'</div>';
+    const n = document.getElementById('nav-user-area');
+    if(n) n.innerHTML = (photo?'<img src="'+photo+'" style="width:28px;height:28px;border-radius:50%;border:1px solid #6366f1;">':'')+'<span style="font-size:12px;font-weight:700;margin:0 6px;">'+_esc(name)+'</span><button class="btn btn-red" style="padding:5px 10px;font-size:11px;" onclick="_signOut().then(()=>location.reload())">Sign Out</button>';
+    document.getElementById('user-bar').innerHTML = av+'<div class="user-info"><div class="user-name">'+_esc(name)+'</div><div class="user-email">'+_esc(user.email||'')+'</div><div style="font-size:11px;color:#34d399;margin-top:3px;font-weight:600;">✅ Firebase Sync Active</div></div><div class="user-stats"><div class="stat-pill"><div class="stat-num" id="stat-total">—</div><div class="stat-lbl">Total Prompts</div></div><div class="stat-pill"><div class="stat-num" id="stat-today">—</div><div class="stat-lbl">Today</div></div><div class="stat-pill"><div class="stat-num" id="stat-week">—</div><div class="stat-lbl">This Week</div></div></div>';
+}
+
+function loadHistory(uid) {
+    const histRef = window._ref(window._db, 'users/'+uid+'/promptHistory');
+    window._onValue(histRef, (snap) => {
+        const data = snap.val();
+        _allEntries = [];
+        if (data) Object.keys(data).forEach(k => _allEntries.push({ _fbKey: k, ...data[k] }));
+        _allEntries.sort((a,b) => (b.ts_ms||0)-(a.ts_ms||0));
+        _updateStats();
+        filterAndRender();
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('history-container').style.display = 'flex';
+    });
+}
+
+function _updateStats() {
+    const now = Date.now(), tod = new Date(); tod.setHours(0,0,0,0);
+    const wk = now - 7*864e5;
+    const el = id => document.getElementById(id);
+    if(el('stat-total')) el('stat-total').textContent = _allEntries.length;
+    if(el('stat-today')) el('stat-today').textContent = _allEntries.filter(e=>e.ts_ms>=tod.getTime()).length;
+    if(el('stat-week'))  el('stat-week').textContent  = _allEntries.filter(e=>e.ts_ms>=wk).length;
+}
+
+function filterAndRender() {
+    const q = (document.getElementById('search-input')?.value||'').toLowerCase().trim();
+    const sort = document.getElementById('sort-select')?.value||'newest';
+    let entries = [..._allEntries];
+    if(q) entries = entries.filter(e=>(e.concept||'').toLowerCase().includes(q)||(e.midjourney||'').toLowerCase().includes(q));
+    if(sort==='oldest') entries.reverse();
+    _currentPage = 1;
+    _renderPage(entries);
+}
+
+function _renderPage(entries) {
+    const c = document.getElementById('history-container');
+    const p = document.getElementById('pagination');
+    c.innerHTML = '';
+    if(!entries.length) {
+        c.innerHTML = '<div class="empty-state"><div class="icon">🕐</div><h3>Koi History Nahi</h3><p>Abhi koi prompt generate nahi kiya.</p><a href="index.html" class="btn btn-primary" style="margin-top:16px;text-decoration:none;">⚡ Prompt Generate Karein</a></div>';
+        p.innerHTML = '';
+        return;
+    }
+    const total = Math.ceil(entries.length/PER_PAGE);
+    const items = entries.slice((_currentPage-1)*PER_PAGE, _currentPage*PER_PAGE);
+    items.forEach(e => c.appendChild(_buildCard(e)));
+    p.innerHTML = '';
+    if(total>1) for(let i=1;i<=total;i++){
+        const b=document.createElement('button');
+        b.className='page-btn'+(i===_currentPage?' active':'');
+        b.textContent=i;
+        const ei=entries;
+        b.onclick=()=>{_currentPage=i;_renderPage(ei);window.scrollTo({top:0,behavior:'smooth'});};
+        p.appendChild(b);
+    }
+}
+
+function _buildCard(entry) {
+    const card = document.createElement('div');
+    card.className = 'hist-card';
+    const engines = [
+        {key:'midjourney',label:'🎨 Midjourney',cls:'mj'},
+        {key:'flux',label:'⚡ Flux.1',cls:'flux'},
+        {key:'imagen',label:'🤖 Imagen 3',cls:'img'},
+        {key:'video',label:'🎬 Video',cls:'vid'}
+    ].filter(e=>entry[e.key]&&entry[e.key].length>5);
+    const first = engines[0]||{key:'midjourney',label:'🎨 Midjourney',cls:'mj'};
+    card.innerHTML = '<div style="font-size:11px;color:#475569;margin-bottom:4px;">🕐 '+_esc(entry.ts||'')+'</div>'
+        +'<div class="hist-concept">'+_esc(entry.concept||'Untitled Prompt')+'</div>'
+        +'<div class="engine-tabs" id="tabs-'+entry._fbKey+'">'+engines.map((e,i)=>'<span class="engine-tab '+e.cls+(i===0?' active':'')+'" onclick="_swTab(\''+entry._fbKey+'\',\''+e.key+'\',this)">'+e.label+'</span>').join('')+'</div>'
+        +'<div class="prompt-display" id="disp-'+entry._fbKey+'">'+_esc(entry[first.key]||'—')+'</div>'
+        +'<div class="hist-actions">'
+        +'<button class="action-btn restore" onclick="_restoreEntry(\''+entry._fbKey+'\')">↩️ Use in Studio</button>'
+        +'<button class="action-btn copy" onclick="_copyDisp(\''+entry._fbKey+'\')">📋 Copy Prompt</button>'
+        +'<button class="action-btn copy" onclick="_copyAll(\''+entry._fbKey+'\')">📋 Copy All 4</button>'
+        +'<button class="action-btn del" onclick="_delEntry(\''+entry._fbKey+'\')">🗑️ Delete</button>'
+        +'</div>';
+    card.dataset.j = JSON.stringify(entry);
+    return card;
+}
+
+function _swTab(fbKey, eKey, el) {
+    const card = el.closest('.hist-card');
+    const entry = JSON.parse(card.dataset.j||'{}');
+    const d = document.getElementById('disp-'+fbKey);
+    if(d) d.textContent = entry[eKey]||'—';
+    const tabs = document.getElementById('tabs-'+fbKey);
+    if(tabs) tabs.querySelectorAll('.engine-tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+}
+
+function _restoreEntry(fbKey) {
+    const entry = _allEntries.find(e=>e._fbKey===fbKey);
+    if(!entry) return;
+    localStorage.setItem('RESTORE_PROMPT', JSON.stringify(entry));
+    _showToast('✅ Studio me restore ho raha hai...');
+    setTimeout(()=>window.location.href='index.html?restore=1', 800);
+}
+
+function _copyDisp(fbKey) {
+    const d = document.getElementById('disp-'+fbKey);
+    const t = d?.textContent?.trim();
+    if(t&&t!=='—') _clip(t, '✅ Prompt copied!');
+}
+
+function _copyAll(fbKey) {
+    const e = _allEntries.find(x=>x._fbKey===fbKey);
+    if(!e) return;
+    _clip(['Concept: '+e.concept,'','Midjourney:',e.midjourney||'—','','Flux.1:',e.flux||'—','','Google Imagen 3:',e.imagen||'—','','Sora/Video:',e.video||'—'].join('\n'), '✅ Saare 4 engine prompts copied!');
+}
+
+function _delEntry(fbKey) {
+    if(!confirm('Kya aap is entry ko delete karna chahte hain?')) return;
+    const uid = window._currentUser?.uid;
+    if(!uid) return;
+    window._remove(window._ref(window._db, 'users/'+uid+'/promptHistory/'+fbKey));
+    _showToast('🗑️ Entry deleted');
+}
+
+function clearAllHistory() {
+    if(!confirm('⚠️ Kya aap poori Firebase history permanently delete karna chahte hain?')) return;
+    const uid = window._currentUser?.uid;
+    if(!uid) return;
+    window._remove(window._ref(window._db, 'users/'+uid+'/promptHistory'));
+    _showToast('🗑️ All history cleared');
+}
+
+function exportAllHistory() {
+    if(!_allEntries.length){ _showToast('Koi history nahi hai!'); return; }
+    const lines = _allEntries.map((e,i)=>['--- Entry '+(i+1)+' | '+e.ts+' ---','Concept: '+e.concept,'','Midjourney:',e.midjourney||'—','','Flux.1:',e.flux||'—','','Imagen 3:',e.imagen||'—','','Video:',e.video||'—'].join('\n')).join('\n\n');
+    const blob=new Blob([lines],{type:'text/plain;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='AI_Studio_History_'+Date.now()+'.txt';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    _showToast('📥 History exported!');
+}
+
+function _clip(text, msg) {
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(()=>_showToast(msg)); }
+    else{ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); _showToast(msg); }
+}
+
+let _tt;
+function _showToast(msg) {
+    const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+function _esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>

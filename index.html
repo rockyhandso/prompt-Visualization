@@ -1052,9 +1052,11 @@ Return ONLY a valid JSON object with these 4 keys:
 
         if (!concept || !midjourney || midjourney.includes('Generating')) return;
 
+        const ts_ms = Date.now();
         const entry = {
-            id: Date.now(),
-            ts: new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            id: ts_ms,
+            ts_ms,
+            ts: new Date(ts_ms).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
             concept,
             midjourney: midjourney || '',
             flux: flux || '',
@@ -1062,13 +1064,24 @@ Return ONLY a valid JSON object with these 4 keys:
             video: video || ''
         };
 
+        // 1. Save to localStorage (always, for offline access)
         let history = _loadHistory();
-        // Deduplicate by concept (keep latest)
         history = history.filter(h => h.concept !== concept);
         history.unshift(entry);
         if (history.length > 20) history = history.slice(0, 20);
         localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
         _renderHistory();
+
+        // 2. Also save to Firebase if user is signed in
+        const user = window._firebaseAuth?.currentUser || window._currentUser;
+        if (user && window._studioDB && window._studioPush) {
+            try {
+                const histRef = window._studioRef(window._studioDB, `users/${user.uid}/promptHistory`);
+                window._studioPush(histRef, entry);
+            } catch (e) {
+                console.warn('Firebase history save error:', e);
+            }
+        }
     }
 
     function _loadHistory() {
@@ -1170,8 +1183,34 @@ Return ONLY a valid JSON object with these 4 keys:
         URL.revokeObjectURL(url);
     }
 
-    // Load history on page init
-    document.addEventListener('DOMContentLoaded', () => { _renderHistory(); });
+    // Load history + handle dashboard restore on page init
+    document.addEventListener('DOMContentLoaded', () => {
+        _renderHistory();
+
+        // Restore from dashboard: ?restore=1 and localStorage RESTORE_PROMPT
+        if (new URLSearchParams(window.location.search).get('restore') === '1') {
+            try {
+                const stored = localStorage.getItem('RESTORE_PROMPT');
+                if (stored) {
+                    const entry = JSON.parse(stored);
+                    localStorage.removeItem('RESTORE_PROMPT');
+                    const subj = document.getElementById('subject-input');
+                    if (subj && entry.concept) subj.value = entry.concept;
+                    const outMid  = document.getElementById('prompt-output');
+                    const outFlux = document.getElementById('flux-prompt-output');
+                    const outImg  = document.getElementById('imagen-prompt-output');
+                    const outVid  = document.getElementById('video-motion-output');
+                    if (outMid  && entry.midjourney) outMid.innerText  = entry.midjourney;
+                    if (outFlux && entry.flux)       outFlux.innerText = entry.flux;
+                    if (outImg  && entry.imagen)     outImg.innerText  = entry.imagen;
+                    if (outVid  && entry.video)      outVid.innerText  = entry.video;
+                    // Clean URL
+                    window.history.replaceState({}, '', 'index.html');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } catch(e) { console.warn('Restore error:', e); }
+        }
+    });
 
     function copyVideoModePrompt() {
         const txt = document.getElementById('video-motion-output')?.innerText;
