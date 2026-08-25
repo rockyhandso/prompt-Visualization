@@ -594,6 +594,7 @@ function showApiErrorBanner(errorMsg, containerOrId, retryFn) {
 
 // ── 4. SLIDE-OUT SIDE DRAWER (OFFCANVAS MENU) ──────────────────────────
 function _createDrawerDOM() {
+    if (location.pathname.includes('admin') || location.pathname.includes('users') || location.pathname.includes('insights')) return;
     if (document.getElementById('slide-drawer-panel')) return;
     if (!document.body) return;
 
@@ -607,10 +608,12 @@ function _createDrawerDOM() {
                 background: rgba(6, 11, 24, 0.65);
                 backdrop-filter: blur(6px);
                 opacity: 0; visibility: hidden;
+                pointer-events: none;
                 transition: opacity 0.3s ease, visibility 0.3s ease;
             }
             #slide-drawer-backdrop.open {
                 opacity: 1; visibility: visible;
+                pointer-events: auto;
             }
             #slide-drawer-panel {
                 position: fixed; top: 0; right: 0; bottom: 0; width: 330px; max-width: 88vw;
@@ -775,9 +778,10 @@ let _optimizerCurrentResult = null;
         position: fixed; inset: 0; z-index: 9999;
         background: rgba(6, 11, 24, 0.85); backdrop-filter: blur(12px);
         display: flex; align-items: center; justify-content: center;
-        opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s ease;
+        opacity: 0; visibility: hidden; pointer-events: none;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
     }
-    #optimizer-modal-overlay.open { opacity: 1; visibility: visible; }
+    #optimizer-modal-overlay.open { opacity: 1; visibility: visible; pointer-events: auto; }
     #optimizer-modal-box {
         background: #0f1929; border: 1px solid #1e3a5f; border-radius: 20px;
         padding: 28px; width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto;

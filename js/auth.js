@@ -29,11 +29,11 @@ window._studioAuthReady = (function() {
         background: rgba(6, 11, 24, 0.85);
         backdrop-filter: blur(12px);
         display: flex; align-items: center; justify-content: center;
-        opacity: 0; visibility: hidden;
+        opacity: 0; visibility: hidden; pointer-events: none;
         transition: opacity 0.25s ease, visibility 0.25s ease;
     }
     #auth-overlay.open {
-        opacity: 1; visibility: visible;
+        opacity: 1; visibility: visible; pointer-events: auto;
     }
     #auth-modal {
         background: #0f1929;

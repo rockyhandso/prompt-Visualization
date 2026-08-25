@@ -114,6 +114,9 @@
             border-radius: 16px;
             padding: 32px;
             box-shadow: 0 0 40px rgba(59,130,246,0.1);
+            position: relative;
+            z-index: 100;
+            pointer-events: auto;
         }
 
         .pin-display {
@@ -142,6 +145,8 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
+            position: relative;
+            z-index: 101;
         }
 
         .num-btn {
@@ -153,9 +158,12 @@
             font-weight: 600;
             padding: 18px;
             border-radius: 12px;
-            cursor: pointer;
+            cursor: pointer !important;
             transition: all 0.15s;
             user-select: none;
+            position: relative;
+            z-index: 102;
+            pointer-events: auto !important;
         }
 
         .num-btn:hover  { background: #223060; border-color: var(--accent); }
