@@ -440,6 +440,11 @@
         </div>
 
         <div class="pin-error" id="pin-error">⛔ Incorrect PIN. Please try again. (Default: 1234)</div>
+
+        <div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <button type="button" onclick="quickLoginWithDefaultPin()" style="background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); color:#60a5fa; font-size:11px; font-weight:700; padding:6px 12px; border-radius:6px; cursor:pointer;">⚡ Quick Unlock (1234)</button>
+            <button type="button" onclick="resetPinToDefault()" style="background:none; border:none; color:var(--subtext); font-size:11px; cursor:pointer; text-decoration:underline;">🔄 Reset PIN to 1234</button>
+        </div>
     </div>
 </div>
 
@@ -742,11 +747,29 @@
         if (errEl) errEl.style.display = 'none';
     }
 
+    function quickLoginWithDefaultPin() {
+        localStorage.removeItem('ADMIN_SECURITY_PIN');
+        pinBuffer = '1234';
+        updateDots();
+        submitPin();
+    }
+
+    function resetPinToDefault() {
+        localStorage.removeItem('ADMIN_SECURITY_PIN');
+        pinBuffer = '';
+        const directInput = document.getElementById('direct-pin-input');
+        if (directInput) { directInput.value = ''; directInput.focus(); }
+        updateDots();
+        showToast('✅ Admin PIN default (1234) par reset ho gaya! Ab 1234 enter karein.');
+    }
+
     window.enterDigit = enterDigit;
     window.deleteDigit = deleteDigit;
     window.submitPin = submitPin;
     window.logout = logout;
     window.handleDirectPinInput = handleDirectPinInput;
+    window.quickLoginWithDefaultPin = quickLoginWithDefaultPin;
+    window.resetPinToDefault = resetPinToDefault;
 
     // Attach click listeners to all numpad buttons on load
     document.addEventListener('DOMContentLoaded', () => {
