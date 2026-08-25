@@ -449,6 +449,25 @@
         </div>
     </div>
 
+    <!-- ₹100 SUNDAY CONTEST BANNER -->
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(139,92,246,0.18));border:1px solid rgba(99,102,241,0.4);border-radius:12px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:20px;">🏆</span>
+            <div>
+                <div style="font-size:12px;font-weight:800;color:#f1f5f9;">Har Sunday ₹100 Jeeto! — Best AI Prompt Contest</div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:1px;">Prompt banao → Social media par share karo → Maximum likes laao → ₹100 Cash!</div>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div style="font-size:11px;color:#c7d2fe;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:5px 10px;white-space:nowrap;">
+                ⏱️ Sunday Draw In: <strong class="contest-countdown" style="color:#fbbf24;">Loading...</strong>
+            </div>
+            <button onclick="openContestSubmitModal()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;padding:7px 14px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 3px 12px rgba(99,102,241,0.4);">
+                🏆 Enter Contest
+            </button>
+        </div>
+    </div>
+
     <header style="margin-bottom: 24px; text-align: center;">
         <h1 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, #ffffff 30%, #818cf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;">
             Hinglish idea likho — Midjourney, Sora &amp; DALL-E ready prompt pao
@@ -570,6 +589,7 @@
                     </select>
                     <button id="live-regen-btn" type="button" class="api-btn" style="background: #3b82f6; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold; display: none;" onclick="generateLiveImagePreview(true)">🔄 Regenerate</button>
                     <button id="live-dl-btn" type="button" class="api-btn" style="background: #10b981; color: white; padding: 4px 10px; font-size: 11px; font-weight: bold; display: none;" onclick="downloadLiveImage()">⬇️ Download Image</button>
+                    <button id="live-contest-btn" type="button" class="api-btn" style="background: linear-gradient(135deg,#6366f1,#8b5cf6); color: white; padding: 4px 10px; font-size: 11px; font-weight: bold; display: none;" onclick="openContestSubmitModal()">🏆 Enter ₹100 Contest</button>
                 </div>
             </div>
 
@@ -1484,6 +1504,61 @@ Return ONLY the final prompt text string, without introductory phrases or quotes
     updatePrompt();
 </script>
 
+<!-- ₹100 SUNDAY CONTEST — PUBLIC GALLERY SECTION -->
+<div id="contest-gallery-section" style="background:rgba(15,25,41,0.92);border:1px solid #1e3a5f;border-radius:16px;padding:24px;margin-bottom:24px;" class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+        <div>
+            <div style="font-size:16px;font-weight:800;color:#f1f5f9;display:flex;align-items:center;gap:8px;">
+                🔥 Top Contest Entries
+                <span style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;animation:pulse 2s infinite;">LIVE</span>
+            </div>
+            <div style="font-size:11px;color:#64748b;margin-top:3px;">❤️ Like karein → aapka friend jeete → ₹100 Cash milta hai Sunday ko!</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div style="font-size:11px;color:#c7d2fe;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);border-radius:8px;padding:6px 12px;">
+                ⏱️ Sunday Draw: <strong class="contest-countdown" style="color:#fbbf24;">Loading...</strong>
+            </div>
+            <button onclick="openContestSubmitModal()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 3px 12px rgba(99,102,241,0.4);">
+                🏆 Enter ₹100 Contest
+            </button>
+        </div>
+    </div>
+
+    <!-- Gallery Grid -->
+    <div id="contest-gallery-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;">
+        <div style="text-align:center;color:#475569;padding:40px;grid-column:1/-1;">
+            <div style="font-size:36px;margin-bottom:12px;">⏳</div>
+            <div>Gallery load ho rahi hai...</div>
+        </div>
+    </div>
+
+    <!-- How to Participate -->
+    <div style="margin-top:20px;border-top:1px solid #1e3a5f;padding-top:16px;">
+        <div style="font-size:12px;font-weight:700;color:#818cf8;margin-bottom:10px;">📋 Kaise Participate Karein?</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+            <div style="background:#060b18;border:1px solid #1e3a5f;border-radius:10px;padding:12px;text-align:center;">
+                <div style="font-size:22px;margin-bottom:6px;">🎨</div>
+                <div style="font-size:11px;font-weight:700;color:#f1f5f9;margin-bottom:3px;">1. Prompt Generate Karo</div>
+                <div style="font-size:10px;color:#64748b;">Upar input box me apna idea likho aur best prompt banao</div>
+            </div>
+            <div style="background:#060b18;border:1px solid #1e3a5f;border-radius:10px;padding:12px;text-align:center;">
+                <div style="font-size:22px;margin-bottom:6px;">📸</div>
+                <div style="font-size:11px;font-weight:700;color:#f1f5f9;margin-bottom:3px;">2. Social Media Par Share Karo</div>
+                <div style="font-size:10px;color:#64748b;">Instagram, Twitter ya YouTube par post karo + <b>#AIPromptStudio</b></div>
+            </div>
+            <div style="background:#060b18;border:1px solid #1e3a5f;border-radius:10px;padding:12px;text-align:center;">
+                <div style="font-size:22px;margin-bottom:6px;">❤️</div>
+                <div style="font-size:11px;font-weight:700;color:#f1f5f9;margin-bottom:3px;">3. Maximum Likes Laao</div>
+                <div style="font-size:10px;color:#64748b;">Friends ko bulao ki yahan aake ❤️ Like karein</div>
+            </div>
+            <div style="background:linear-gradient(135deg,rgba(251,191,36,0.1),rgba(245,158,11,0.1));border:1px solid rgba(251,191,36,0.3);border-radius:10px;padding:12px;text-align:center;">
+                <div style="font-size:22px;margin-bottom:6px;">👑</div>
+                <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:3px;">4. Sunday ₹100 Jeeto!</div>
+                <div style="font-size:10px;color:#92400e;">Har Sunday evening winner announce + ₹100 UPI payment</div>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

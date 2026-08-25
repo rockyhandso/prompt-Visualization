@@ -1248,15 +1248,17 @@ async function generateLiveImagePreview(forceRegen = false) {
 }
 
 function _onLiveImgLoaded() {
-    const loading = document.getElementById('live-img-loading');
-    const wrap = document.getElementById('live-img-wrap');
-    const regenBtn = document.getElementById('live-regen-btn');
-    const dlBtn = document.getElementById('live-dl-btn');
+    const loading     = document.getElementById('live-img-loading');
+    const wrap        = document.getElementById('live-img-wrap');
+    const regenBtn    = document.getElementById('live-regen-btn');
+    const dlBtn       = document.getElementById('live-dl-btn');
+    const contestBtn  = document.getElementById('live-contest-btn');
 
-    if (loading) loading.style.display = 'none';
-    if (wrap) wrap.style.display = 'block';
-    if (regenBtn) regenBtn.style.display = 'inline-block';
-    if (dlBtn) dlBtn.style.display = 'inline-block';
+    if (loading)    loading.style.display    = 'none';
+    if (wrap)       wrap.style.display       = 'block';
+    if (regenBtn)   regenBtn.style.display   = 'inline-block';
+    if (dlBtn)      dlBtn.style.display      = 'inline-block';
+    if (contestBtn) contestBtn.style.display = 'inline-block';
 }
 
 function _onLiveImgError() {
@@ -1276,3 +1278,283 @@ function downloadLiveImage() {
     document.body.removeChild(a);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// ₹100 SUNDAY PROMPT CONTEST ENGINE
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Sunday Countdown Timer ────────────────────────────────────────────────
+function getNextSundayCountdown() {
+    const now  = new Date();
+    const day  = now.getDay(); // 0=Sun
+    const daysLeft = day === 0 ? 7 : 7 - day;
+    const nextSun = new Date(now);
+    nextSun.setDate(now.getDate() + daysLeft);
+    nextSun.setHours(20, 0, 0, 0);
+    const diff = nextSun - now;
+    if (diff <= 0) return { d:0, h:0, m:0, s:0 };
+    const d = Math.floor(diff / 864e5);
+    const h = Math.floor((diff % 864e5) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    return { d, h, m, s };
+}
+
+function startContestCountdown() {
+    function tick() {
+        const { d, h, m, s } = getNextSundayCountdown();
+        const txt = `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+        document.querySelectorAll('.contest-countdown').forEach(el => el.textContent = txt);
+    }
+    tick();
+    setInterval(tick, 1000);
+}
+window.startContestCountdown = startContestCountdown;
+
+// ── Promo Popup ──────────────────────────────────────────────────────────
+function showContestPromoPopup() {
+    const seen = localStorage.getItem('_contest_popup_date');
+    if (seen === new Date().toDateString()) return;
+    if (document.getElementById('contest-promo-popup')) return;
+
+    const popup = document.createElement('div');
+    popup.id = 'contest-promo-popup';
+    popup.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(6,11,24,0.88);backdrop-filter:blur(10px);padding:16px;';
+    popup.innerHTML = `
+        <div style="background:linear-gradient(135deg,#0f1929,#1e1b4b);border:1px solid #6366f1;border-radius:20px;padding:32px 26px;max-width:430px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(99,102,241,0.45);position:relative;">
+            <div style="font-size:52px;margin-bottom:10px;">🏆</div>
+            <div style="font-size:11px;font-weight:800;color:#818cf8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">Weekly Sunday Reward</div>
+            <div style="font-size:22px;font-weight:900;color:#f1f5f9;margin-bottom:10px;line-height:1.3;">Har Sunday ₹100 Jeeto! 🎉</div>
+            <div style="font-size:13px;color:#94a3b8;line-height:1.7;margin-bottom:18px;">
+                🎨 AI prompt se best image generate karo<br>
+                📸 Social media par share karo<br>
+                ❤️ Maximum likes laao — <strong style="color:#fbbf24;">₹100 Cash</strong> jeeto!<br>
+                <span style="font-size:11px;color:#818cf8;font-weight:700;">👑 Winner Every Sunday Announce Hoga</span>
+            </div>
+            <div style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);border-radius:10px;padding:10px;margin-bottom:18px;font-size:12px;color:#c7d2fe;">
+                ⏱️ Next Sunday Draw In: <strong class="contest-countdown" style="color:#fbbf24;font-size:13px;">Loading...</strong>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                <button onclick="closeContestPopup();window.scrollTo({top:document.getElementById('contest-gallery-section')?.offsetTop||0,behavior:'smooth'});"
+                    style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;padding:13px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 18px rgba(99,102,241,0.45);">
+                    ⚡ Abhi Participate Karein!
+                </button>
+                <button onclick="closeContestPopup()"
+                    style="background:transparent;color:#64748b;border:1px solid #1e3a5f;padding:9px;border-radius:10px;font-size:12px;cursor:pointer;">
+                    Baad mein dekhenge ✕
+                </button>
+            </div>
+        </div>`;
+    document.body.appendChild(popup);
+    startContestCountdown();
+}
+
+function closeContestPopup() {
+    const p = document.getElementById('contest-promo-popup');
+    if (p) p.style.display = 'none';
+    localStorage.setItem('_contest_popup_date', new Date().toDateString());
+}
+window.closeContestPopup = closeContestPopup;
+window.showContestPromoPopup = showContestPromoPopup;
+
+// ── Contest Submission Modal ─────────────────────────────────────────────
+function openContestSubmitModal() {
+    const u = window._firebaseAuth?.currentUser || window._currentUser;
+    if (!u) { alert('🔐 Contest me participate karne ke liye pehle Sign In karein!\n(Quick Menu ⚙️ > Sign In)'); return; }
+
+    if (!document.getElementById('contest-submit-modal')) _injectContestModal();
+    const concept    = document.getElementById('subject-input')?.value?.trim() || '';
+    const midjourney = document.getElementById('prompt-output')?.innerText?.trim() || '';
+    const imgEl      = document.getElementById('live-ai-img-element');
+    const imgSrc     = imgEl?.src && imgEl.src.startsWith('http') ? imgEl.src : '';
+
+    const pf = document.getElementById('cm-prefill-prompt');
+    if (pf) pf.textContent = midjourney || concept || '(Pehle prompt generate karein)';
+    const ip = document.getElementById('cm-img-preview');
+    if (ip) { ip.src = imgSrc; ip.style.display = imgSrc ? 'block' : 'none'; }
+    document.getElementById('contest-submit-modal').style.display = 'flex';
+}
+window.openContestSubmitModal = openContestSubmitModal;
+
+function closeContestModal() {
+    const m = document.getElementById('contest-submit-modal');
+    if (m) m.style.display = 'none';
+}
+window.closeContestModal = closeContestModal;
+
+function _injectContestModal() {
+    const modal = document.createElement('div');
+    modal.id = 'contest-submit-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:99998;display:flex;align-items:center;justify-content:center;background:rgba(6,11,24,0.92);backdrop-filter:blur(10px);padding:16px;';
+    modal.innerHTML = `
+        <div style="background:#0f1929;border:1px solid #6366f1;border-radius:18px;padding:24px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;position:relative;">
+            <button onclick="closeContestModal()" style="position:absolute;top:12px;right:12px;background:none;border:1px solid #1e3a5f;color:#94a3b8;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✕</button>
+            <div style="text-align:center;margin-bottom:16px;">
+                <div style="font-size:28px;">🏆</div>
+                <div style="font-size:16px;font-weight:800;color:#f1f5f9;margin-top:4px;">₹100 Sunday Contest Entry</div>
+                <div style="font-size:11px;color:#64748b;margin-top:2px;">Winner har Sunday evening announce hoga</div>
+            </div>
+            <div style="font-size:11px;color:#818cf8;font-weight:700;margin-bottom:4px;">📝 Your Prompt:</div>
+            <div id="cm-prefill-prompt" style="background:#060b18;border:1px solid #1e3a5f;border-radius:8px;padding:10px;font-size:11px;color:#94a3b8;margin-bottom:12px;max-height:60px;overflow:auto;line-height:1.5;"></div>
+            <img id="cm-img-preview" style="display:none;width:100%;border-radius:10px;margin-bottom:12px;max-height:150px;object-fit:cover;border:1px solid #1e3a5f;" alt="Entry">
+            <div style="font-size:11px;color:#818cf8;font-weight:700;margin-bottom:4px;">📱 Platform:</div>
+            <select id="cm-platform" style="width:100%;background:#060b18;border:1px solid #1e3a5f;border-radius:8px;padding:9px;color:#f8fafc;font-size:12px;margin-bottom:12px;font-family:inherit;">
+                <option value="">-- Select Platform --</option>
+                <option value="Instagram">📸 Instagram (Post / Reel)</option>
+                <option value="Twitter">🐦 Twitter / X</option>
+                <option value="YouTube">▶️ YouTube Shorts</option>
+                <option value="LinkedIn">💼 LinkedIn</option>
+                <option value="Facebook">📘 Facebook</option>
+            </select>
+            <div style="font-size:11px;color:#818cf8;font-weight:700;margin-bottom:4px;">🔗 Social Post URL:</div>
+            <input id="cm-post-url" type="url" placeholder="https://instagram.com/p/your-post" style="width:100%;background:#060b18;border:1px solid #1e3a5f;border-radius:8px;padding:9px;color:#f8fafc;font-size:12px;margin-bottom:12px;font-family:inherit;">
+            <div style="font-size:11px;color:#818cf8;font-weight:700;margin-bottom:4px;">💳 UPI ID / PhonePe / GPay Number:</div>
+            <input id="cm-upi" type="text" placeholder="yourname@upi  ya  9876543210" style="width:100%;background:#060b18;border:1px solid #1e3a5f;border-radius:8px;padding:9px;color:#f8fafc;font-size:12px;margin-bottom:14px;font-family:inherit;">
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px;font-size:11px;color:#fde68a;line-height:1.5;margin-bottom:14px;">
+                ⚠️ <b>Rules:</b> Post me site link ya <b>#AIPromptStudio</b> compulsory. Fake likes disqualify. 1 entry/week per user.
+            </div>
+            <button onclick="submitContestEntry()" style="width:100%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;padding:13px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(99,102,241,0.4);">
+                🚀 Submit Entry for Sunday Draw!
+            </button>
+            <div id="cm-status" style="margin-top:10px;text-align:center;font-size:12px;min-height:16px;color:#34d399;"></div>
+        </div>`;
+    document.body.appendChild(modal);
+}
+
+// ── Submit Entry to Firebase ─────────────────────────────────────────────
+async function submitContestEntry() {
+    const statusEl = document.getElementById('cm-status');
+    const u = window._firebaseAuth?.currentUser || window._currentUser;
+    if (!u) { if (statusEl) statusEl.textContent = '❌ Sign in required.'; return; }
+
+    const platform = document.getElementById('cm-platform')?.value?.trim();
+    const postUrl  = document.getElementById('cm-post-url')?.value?.trim();
+    const upiId    = document.getElementById('cm-upi')?.value?.trim();
+    const prompt   = document.getElementById('cm-prefill-prompt')?.textContent?.trim();
+    const imgSrc   = document.getElementById('cm-img-preview')?.src || '';
+
+    if (!platform)  { if (statusEl) statusEl.textContent = '❌ Platform select karein.'; return; }
+    if (!postUrl || !postUrl.startsWith('http')) { if (statusEl) statusEl.textContent = '❌ Valid post URL daalen.'; return; }
+    if (!upiId)     { if (statusEl) statusEl.textContent = '❌ UPI ID daalen.'; return; }
+
+    if (statusEl) statusEl.textContent = '⏳ Submitting...';
+
+    try {
+        const entry = {
+            uid: u.uid,
+            userName: u.displayName || u.email?.split('@')[0] || 'User',
+            userEmail: u.email || '',
+            userPhoto: u.photoURL || '',
+            prompt: prompt || '',
+            imageUrl: imgSrc,
+            platform, postUrl, upiId,
+            likeCount: 0,
+            likesMap: {},
+            status: 'pending',
+            createdAt: Date.now()
+        };
+        if (window._studioPush && window._studioRef && window._studioDB) {
+            await window._studioPush(window._studioRef(window._studioDB, 'contests/entries'), entry);
+        }
+        if (statusEl) statusEl.textContent = '✅ Entry submitted! Sunday ko winner announce hoga. Best of luck! 🏆';
+        setTimeout(() => { closeContestModal(); loadContestGallery(); }, 2000);
+    } catch (e) {
+        if (statusEl) statusEl.textContent = '❌ Error: ' + e.message;
+    }
+}
+window.submitContestEntry = submitContestEntry;
+
+// ── Like Entry ───────────────────────────────────────────────────────────
+async function likeContestEntry(entryKey) {
+    const u = window._firebaseAuth?.currentUser || window._currentUser;
+    if (!u) { alert('❤️ Like karne ke liye pehle Sign In karein!'); return; }
+    const btn = document.getElementById('like-btn-' + entryKey);
+    const countEl = document.getElementById('like-count-' + entryKey);
+    const already = btn?.dataset.liked === '1';
+
+    try {
+        const fbMod = await import('https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js');
+        const likeRef = fbMod.ref(window._studioDB, `contests/entries/${entryKey}/likesMap/${u.uid}`);
+        if (already) {
+            await fbMod.remove(likeRef);
+            if (countEl) countEl.textContent = Math.max(0, parseInt(countEl.textContent||'0') - 1);
+            if (btn) { btn.dataset.liked = '0'; btn.style.color = '#94a3b8'; btn.style.background = '#111c30'; btn.style.borderColor = '#1e3a5f'; }
+        } else {
+            await fbMod.set(likeRef, true);
+            if (countEl) countEl.textContent = parseInt(countEl.textContent||'0') + 1;
+            if (btn) { btn.dataset.liked = '1'; btn.style.color = '#ef4444'; btn.style.background = 'rgba(239,68,68,0.12)'; btn.style.borderColor = 'rgba(239,68,68,0.35)'; }
+        }
+    } catch(e) { console.warn('Like error:', e); }
+}
+window.likeContestEntry = likeContestEntry;
+
+// ── Load Contest Gallery ─────────────────────────────────────────────────
+function loadContestGallery() {
+    const container = document.getElementById('contest-gallery-grid');
+    if (!container || !window._studioDB || !window._studioRef) return;
+
+    container.innerHTML = '<div style="text-align:center;color:#38bdf8;padding:32px;grid-column:1/-1;">⏳ Gallery load ho rahi hai...</div>';
+
+    import('https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js').then(fbMod => {
+        const entriesRef = fbMod.ref(window._studioDB, 'contests/entries');
+        fbMod.onValue(entriesRef, (snap) => {
+            const data = snap.val();
+            container.innerHTML = '';
+            const u = window._firebaseAuth?.currentUser || window._currentUser;
+            const myUid = u?.uid || '';
+
+            if (!data) {
+                container.innerHTML = '<div style="text-align:center;color:#475569;padding:40px;grid-column:1/-1;"><div style="font-size:36px;margin-bottom:12px;">🎨</div><div style="font-size:14px;">Koi entry nahi hai abhi. <b style=\'color:#818cf8;\'>Pehle wale bano!</b></div></div>';
+                return;
+            }
+
+            const entries = Object.entries(data)
+                .map(([k,v]) => ({ key:k, ...v }))
+                .filter(e => e.status !== 'disqualified')
+                .sort((a,b) => (b.likeCount||0) - (a.likeCount||0))
+                .slice(0, 12);
+
+            entries.forEach((entry, idx) => {
+                const isLiked  = myUid && entry.likesMap?.[myUid];
+                const isWinner = entry.status === 'winner';
+                const card = document.createElement('div');
+                card.style.cssText = `background:#0f1929;border:1px solid ${isWinner?'#fbbf24':'#1e3a5f'};border-radius:14px;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;`;
+                card.onmouseenter = () => { card.style.transform = 'translateY(-4px)'; card.style.boxShadow = '0 12px 32px rgba(99,102,241,0.2)'; };
+                card.onmouseleave = () => { card.style.transform = ''; card.style.boxShadow = ''; };
+                const medal = idx===0?'🥇 #1':idx===1?'🥈 #2':idx===2?'🥉 #3':'';
+                card.innerHTML = `
+                    ${isWinner?'<div style="background:linear-gradient(135deg,#92400e,#78350f);color:#fbbf24;text-align:center;font-size:11px;font-weight:800;padding:6px;letter-spacing:0.5px;">👑 SUNDAY WINNER — ₹100 WON!</div>':''}
+                    ${medal&&!isWinner?`<div style="background:rgba(99,102,241,0.15);color:#a5b4fc;text-align:center;font-size:10px;font-weight:800;padding:4px;">${medal} TOP ENTRY</div>`:''}
+                    ${entry.imageUrl?`<img src="${_cEsc(entry.imageUrl)}" style="width:100%;height:155px;object-fit:cover;display:block;" onerror="this.style.display='none'" alt="Entry">`:'<div style="height:90px;background:#060b18;display:flex;align-items:center;justify-content:center;font-size:36px;">🎨</div>'}
+                    <div style="padding:12px;">
+                        <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
+                            ${entry.userPhoto?`<img src="${_cEsc(entry.userPhoto)}" style="width:22px;height:22px;border-radius:50%;border:1px solid #6366f1;" onerror="this.style.display='none">`:'<div style="width:22px;height:22px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:white;flex-shrink:0;">' + _cEsc((entry.userName||'U').charAt(0).toUpperCase()) + '</div>'}
+                            <div style="font-size:12px;font-weight:700;color:#f1f5f9;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_cEsc(entry.userName||'Anonymous')}</div>
+                            <div style="font-size:9px;color:#6366f1;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.25);border-radius:5px;padding:2px 6px;flex-shrink:0;">${_cEsc(entry.platform||'')}</div>
+                        </div>
+                        <div style="font-size:11px;color:#64748b;margin-bottom:9px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${_cEsc((entry.prompt||'').substring(0,100))}${(entry.prompt||'').length>100?'...':''}</div>
+                        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                            <button id="like-btn-${entry.key}" data-liked="${isLiked?'1':'0'}"
+                                onclick="likeContestEntry('${entry.key}')"
+                                style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;border:1px solid ${isLiked?'rgba(239,68,68,0.35)':'#1e3a5f'};background:${isLiked?'rgba(239,68,68,0.12)':'#111c30'};color:${isLiked?'#ef4444':'#94a3b8'};font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;">
+                                ❤️ <span id="like-count-${entry.key}">${entry.likeCount||0}</span>
+                            </button>
+                            ${entry.postUrl?`<a href="${_cEsc(entry.postUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#818cf8;font-weight:700;text-decoration:none;border:1px solid #1e3a5f;border-radius:8px;padding:5px 9px;background:#060b18;">🔗 View Post</a>`:''}
+                        </div>
+                    </div>`;
+                container.appendChild(card);
+            });
+        }, { onlyOnce: false });
+    }).catch(e => console.warn('Gallery load error:', e));
+}
+window.loadContestGallery = loadContestGallery;
+
+function _cEsc(str) {
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Auto-init on page load
+document.addEventListener('DOMContentLoaded', () => {
+    startContestCountdown();
+    setTimeout(showContestPromoPopup, 2800);
+    setTimeout(loadContestGallery, 1200);
+});
