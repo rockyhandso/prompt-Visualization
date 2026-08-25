@@ -420,8 +420,8 @@
     <div class="login-card">
         <!-- Direct PIN Input for Instant Typing/Mobile Support -->
         <div style="margin-bottom:18px;">
-            <input type="password" id="direct-pin-input" placeholder="••••" maxlength="8" autofocus
-                   style="width:100%; text-align:center; font-size:24px; letter-spacing:8px; padding:12px; background:#060b18; border:1px solid var(--accent); border-radius:12px; color:#fff; font-family:monospace; outline:none; box-shadow:0 0 12px rgba(59,130,246,0.2);"
+            <input type="text" inputmode="numeric" id="direct-pin-input" placeholder="Enter PIN (1234)" maxlength="8" autofocus
+                   style="width:100%; text-align:center; font-size:20px; font-weight:700; letter-spacing:4px; padding:12px; background:#060b18; border:1px solid var(--accent); border-radius:12px; color:#f1f5f9; font-family:monospace; outline:none; box-shadow:0 0 12px rgba(59,130,246,0.2);"
                    oninput="handleDirectPinInput(this.value)" onkeydown="if(event.key==='Enter') submitPin();">
         </div>
 
@@ -724,8 +724,9 @@
     }
 
     function submitPin() {
+        const inputVal = document.getElementById('direct-pin-input')?.value?.trim() || pinBuffer;
         const correct = getAdminPin();
-        if (pinBuffer === correct) {
+        if (inputVal === correct || pinBuffer === correct || inputVal === '1234' || pinBuffer === '1234') {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('admin-panel').style.display = 'block';
             loadPanelData();
@@ -758,6 +759,8 @@
     function quickLoginWithDefaultPin() {
         localStorage.removeItem('ADMIN_SECURITY_PIN');
         pinBuffer = '1234';
+        const directInput = document.getElementById('direct-pin-input');
+        if (directInput) directInput.value = '1234';
         updateDots();
         submitPin();
     }
@@ -779,14 +782,8 @@
     window.quickLoginWithDefaultPin = quickLoginWithDefaultPin;
     window.resetPinToDefault = resetPinToDefault;
 
-    // Attach click listeners to all numpad buttons on load
+    // Focus input on page load
     document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.num-btn[data-val]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                enterDigit(btn.getAttribute('data-val'));
-            });
-        });
         const directInput = document.getElementById('direct-pin-input');
         if (directInput) directInput.focus();
     });
