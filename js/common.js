@@ -1323,12 +1323,15 @@ function showContestPromoPopup() {
         <div style="background:linear-gradient(135deg,#0f1929,#1e1b4b);border:1px solid #6366f1;border-radius:20px;padding:32px 26px;max-width:430px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(99,102,241,0.45);position:relative;">
             <div style="font-size:52px;margin-bottom:10px;">🏆</div>
             <div style="font-size:11px;font-weight:800;color:#818cf8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">Weekly Sunday Reward</div>
-            <div style="font-size:22px;font-weight:900;color:#f1f5f9;margin-bottom:10px;line-height:1.3;">Har Sunday ₹100 Jeeto! 🎉</div>
+            <div style="font-size:22px;font-weight:900;color:#f1f5f9;margin-bottom:10px;line-height:1.3;">Har Sunday <span style="color:#fbbf24;">1 Lucky Winner</span> ko ₹100! 🎉</div>
+            <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#fca5a5;font-weight:700;">
+                ⚠️ Sirf 1 winner ko milega ₹100 — sabse zyada likes wale ko!
+            </div>
             <div style="font-size:13px;color:#94a3b8;line-height:1.7;margin-bottom:18px;">
                 🎨 AI prompt se best image generate karo<br>
-                📸 Social media par share karo<br>
-                ❤️ Maximum likes laao — <strong style="color:#fbbf24;">₹100 Cash</strong> jeeto!<br>
-                <span style="font-size:11px;color:#818cf8;font-weight:700;">👑 Winner Every Sunday Announce Hoga</span>
+                📸 Social media par share karo + <b style="color:#f1f5f9;">#AIPromptStudio</b><br>
+                ❤️ Maximum likes laao → <strong style="color:#fbbf24;">₹100 Cash</strong> jeeto!<br>
+                <span style="font-size:11px;color:#818cf8;font-weight:700;">👑 Har Sunday evening — Sirf 1 Winner Announce Hoga</span>
             </div>
             <div style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);border-radius:10px;padding:10px;margin-bottom:18px;font-size:12px;color:#c7d2fe;">
                 ⏱️ Next Sunday Draw In: <strong class="contest-countdown" style="color:#fbbf24;font-size:13px;">Loading...</strong>
@@ -1391,7 +1394,7 @@ function _injectContestModal() {
             <div style="text-align:center;margin-bottom:16px;">
                 <div style="font-size:28px;">🏆</div>
                 <div style="font-size:16px;font-weight:800;color:#f1f5f9;margin-top:4px;">₹100 Sunday Contest Entry</div>
-                <div style="font-size:11px;color:#64748b;margin-top:2px;">Winner har Sunday evening announce hoga</div>
+                <div style="font-size:11px;color:#64748b;margin-top:2px;">Har Sunday — <b style="color:#fca5a5;">Sirf 1 Winner</b> ko ₹100 milega!</div>
             </div>
             <div style="font-size:11px;color:#818cf8;font-weight:700;margin-bottom:4px;">📝 Your Prompt:</div>
             <div id="cm-prefill-prompt" style="background:#060b18;border:1px solid #1e3a5f;border-radius:8px;padding:10px;font-size:11px;color:#94a3b8;margin-bottom:12px;max-height:60px;overflow:auto;line-height:1.5;"></div>
@@ -1410,7 +1413,7 @@ function _injectContestModal() {
             <div style="font-size:11px;color:#818cf8;font-weight:700;margin-bottom:4px;">💳 UPI ID / PhonePe / GPay Number:</div>
             <input id="cm-upi" type="text" placeholder="yourname@upi  ya  9876543210" style="width:100%;background:#060b18;border:1px solid #1e3a5f;border-radius:8px;padding:9px;color:#f8fafc;font-size:12px;margin-bottom:14px;font-family:inherit;">
             <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:10px;font-size:11px;color:#fde68a;line-height:1.5;margin-bottom:14px;">
-                ⚠️ <b>Rules:</b> Post me site link ya <b>#AIPromptStudio</b> compulsory. Fake likes disqualify. 1 entry/week per user.
+                ⚠️ <b>Rules:</b> Post me site link ya <b>#AIPromptStudio</b> compulsory. Fake likes disqualify. 1 entry/week per user. <b style="color:#fca5a5;">Sirf 1 winner ko ₹100 milega</b> — sabse zyada valid likes wale ko.
             </div>
             <button onclick="submitContestEntry()" style="width:100%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;padding:13px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(99,102,241,0.4);">
                 🚀 Submit Entry for Sunday Draw!
