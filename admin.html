@@ -404,12 +404,19 @@
 <body>
 
 <!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
-<div id="login-screen">
+<div id="login-screen" style="position:relative; z-index:100; width:100%; max-width:420px; text-align:center;">
     <div class="lock-icon">🔐</div>
     <div class="login-title">Admin Panel</div>
-    <div class="login-sub">Enter your security PIN to continue</div>
+    <div class="login-sub">Enter your security PIN to continue (Default: <b>1234</b>)</div>
 
     <div class="login-card">
+        <!-- Direct PIN Input for Instant Typing/Mobile Support -->
+        <div style="margin-bottom:18px;">
+            <input type="password" id="direct-pin-input" placeholder="••••" maxlength="8" autofocus
+                   style="width:100%; text-align:center; font-size:24px; letter-spacing:8px; padding:12px; background:#060b18; border:1px solid var(--accent); border-radius:12px; color:#fff; font-family:monospace; outline:none; box-shadow:0 0 12px rgba(59,130,246,0.2);"
+                   oninput="handleDirectPinInput(this.value)" onkeydown="if(event.key==='Enter') submitPin();">
+        </div>
+
         <div class="pin-display">
             <div class="pin-dot" id="d1"></div>
             <div class="pin-dot" id="d2"></div>
@@ -418,21 +425,21 @@
         </div>
 
         <div class="numpad">
-            <button type="button" class="num-btn" onclick="enterDigit('1')">1</button>
-            <button type="button" class="num-btn" onclick="enterDigit('2')">2</button>
-            <button type="button" class="num-btn" onclick="enterDigit('3')">3</button>
-            <button type="button" class="num-btn" onclick="enterDigit('4')">4</button>
-            <button type="button" class="num-btn" onclick="enterDigit('5')">5</button>
-            <button type="button" class="num-btn" onclick="enterDigit('6')">6</button>
-            <button type="button" class="num-btn" onclick="enterDigit('7')">7</button>
-            <button type="button" class="num-btn" onclick="enterDigit('8')">8</button>
-            <button type="button" class="num-btn" onclick="enterDigit('9')">9</button>
+            <button type="button" class="num-btn" data-val="1" onclick="enterDigit('1')">1</button>
+            <button type="button" class="num-btn" data-val="2" onclick="enterDigit('2')">2</button>
+            <button type="button" class="num-btn" data-val="3" onclick="enterDigit('3')">3</button>
+            <button type="button" class="num-btn" data-val="4" onclick="enterDigit('4')">4</button>
+            <button type="button" class="num-btn" data-val="5" onclick="enterDigit('5')">5</button>
+            <button type="button" class="num-btn" data-val="6" onclick="enterDigit('6')">6</button>
+            <button type="button" class="num-btn" data-val="7" onclick="enterDigit('7')">7</button>
+            <button type="button" class="num-btn" data-val="8" onclick="enterDigit('8')">8</button>
+            <button type="button" class="num-btn" data-val="9" onclick="enterDigit('9')">9</button>
             <button type="button" class="num-btn del" onclick="deleteDigit()">⌫ DEL</button>
-            <button type="button" class="num-btn" onclick="enterDigit('0')">0</button>
+            <button type="button" class="num-btn" data-val="0" onclick="enterDigit('0')">0</button>
             <button type="button" class="num-btn enter" onclick="submitPin()">ENTER</button>
         </div>
 
-        <div class="pin-error" id="pin-error">⛔ Incorrect PIN. Please try again.</div>
+        <div class="pin-error" id="pin-error">⛔ Incorrect PIN. Please try again. (Default: 1234)</div>
     </div>
 </div>
 
@@ -666,27 +673,40 @@
     // are now provided by js/common.js — no duplication needed here.
 
     function getAdminPin() {
-        return localStorage.getItem('ADMIN_SECURITY_PIN') || DEFAULT_ADMIN_PIN;
+        return localStorage.getItem('ADMIN_SECURITY_PIN') || (typeof DEFAULT_ADMIN_PIN !== 'undefined' ? DEFAULT_ADMIN_PIN : '1234');
     }
 
     // ── PIN LOGIN LOGIC ──────────────────────────────────
     let pinBuffer = '';
 
+    function handleDirectPinInput(val) {
+        pinBuffer = String(val || '').trim();
+        updateDots();
+        if (pinBuffer.length >= 4) {
+            submitPin();
+        }
+    }
+
     function enterDigit(d) {
         if (pinBuffer.length >= 4) return;
-        pinBuffer += d;
+        pinBuffer += String(d);
+        const directInput = document.getElementById('direct-pin-input');
+        if (directInput) directInput.value = pinBuffer;
         updateDots();
         if (pinBuffer.length === 4) setTimeout(submitPin, 150);
     }
 
     function deleteDigit() {
         pinBuffer = pinBuffer.slice(0, -1);
+        const directInput = document.getElementById('direct-pin-input');
+        if (directInput) directInput.value = pinBuffer;
         updateDots();
     }
 
     function updateDots() {
         for (let i = 1; i <= 4; i++) {
-            document.getElementById('d' + i).classList.toggle('filled', i <= pinBuffer.length);
+            const dot = document.getElementById('d' + i);
+            if (dot) dot.classList.toggle('filled', i <= pinBuffer.length);
         }
     }
 
@@ -698,11 +718,15 @@
             loadPanelData();
         } else {
             const errEl = document.getElementById('pin-error');
-            errEl.style.display = 'block';
-            errEl.style.animation = 'none';
-            void errEl.offsetWidth;
-            errEl.style.animation = 'shake 0.3s ease';
+            if (errEl) {
+                errEl.style.display = 'block';
+                errEl.style.animation = 'none';
+                void errEl.offsetWidth;
+                errEl.style.animation = 'shake 0.3s ease';
+            }
             pinBuffer = '';
+            const directInput = document.getElementById('direct-pin-input');
+            if (directInput) { directInput.value = ''; directInput.focus(); }
             updateDots();
         }
     }
@@ -711,18 +735,36 @@
         document.getElementById('admin-panel').style.display = 'none';
         document.getElementById('login-screen').style.display = 'block';
         pinBuffer = '';
+        const directInput = document.getElementById('direct-pin-input');
+        if (directInput) { directInput.value = ''; directInput.focus(); }
         updateDots();
-        document.getElementById('pin-error').style.display = 'none';
+        const errEl = document.getElementById('pin-error');
+        if (errEl) errEl.style.display = 'none';
     }
 
     window.enterDigit = enterDigit;
     window.deleteDigit = deleteDigit;
     window.submitPin = submitPin;
     window.logout = logout;
+    window.handleDirectPinInput = handleDirectPinInput;
+
+    // Attach click listeners to all numpad buttons on load
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.num-btn[data-val]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                enterDigit(btn.getAttribute('data-val'));
+            });
+        });
+        const directInput = document.getElementById('direct-pin-input');
+        if (directInput) directInput.focus();
+    });
 
     // Keyboard support
     document.addEventListener('keydown', function(e) {
-        if (document.getElementById('login-screen').style.display !== 'none') {
+        if (document.activeElement && document.activeElement.id === 'direct-pin-input') return;
+        const loginScr = document.getElementById('login-screen');
+        if (loginScr && loginScr.style.display !== 'none') {
             if (e.key >= '0' && e.key <= '9') enterDigit(e.key);
             if (e.key === 'Backspace') deleteDigit();
             if (e.key === 'Enter') submitPin();
