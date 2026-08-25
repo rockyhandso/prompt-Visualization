@@ -376,13 +376,17 @@ function _clearAuthError() {
 }
 function _friendlyError(e) {
     const code = e.code || '';
+    if (code.includes('unauthorized-domain')) return 'Yeh domain sign-in ke liye authorized nahi hai. Domain settings me rockyhandso.github.io add karein.';
     if (code.includes('popup-closed')) return 'Sign-in popup band ho gayi. Dobara try karein.';
     if (code.includes('user-not-found')) return 'Yeh email registered nahi hai. Sign Up karein.';
     if (code.includes('wrong-password') || code.includes('invalid-credential')) return 'Password galat hai. Dobara try karein.';
     if (code.includes('email-already-in-use')) return 'Yeh email already registered hai. Sign In karein.';
     if (code.includes('weak-password')) return 'Password kam se kam 6 characters ka hona chahiye.';
     if (code.includes('network-request-failed')) return 'Network error. Internet connection check karein.';
-    return e.message || 'Sign-in fail ho gaya. Dobara try karein.';
+    
+    // Sanitize any raw error message to never expose backend/provider branding or internal error codes
+    let msg = (e.message || '').replace(/firebase:?\s*/gi, '').replace(/\(auth\/[a-z0-9-]+\)\.?/gi, '').trim();
+    return msg || 'Sign-in fail ho gaya. Dobara try karein.';
 }
 
 // ─── Navbar & Drawer Auth Sync ──────────────────────────────────────────────

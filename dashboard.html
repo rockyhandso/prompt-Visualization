@@ -37,6 +37,25 @@
       window._auth     = auth;
       window._signOut  = () => signOut(auth);
       window._signInGoogle = () => signInWithPopup(auth, googleProvider);
+      window._handleDashboardSignIn = async () => {
+        const errEl = document.getElementById('dash-auth-error');
+        if (errEl) errEl.style.display = 'none';
+        try {
+          await signInWithPopup(auth, googleProvider);
+          location.reload();
+        } catch(e) {
+          if (errEl) {
+            let msg = 'Sign-in fail ho gaya. Dobara try karein.';
+            if (e.code === 'auth/unauthorized-domain') {
+              msg = 'Yeh domain authorized nahi hai. Domain settings check karein.';
+            } else if (e.code === 'auth/popup-closed-by-user') {
+              msg = 'Sign-in popup band ho gayi.';
+            }
+            errEl.textContent = msg;
+            errEl.style.display = 'block';
+          }
+        }
+      };
 
       onAuthStateChanged(auth, (user) => {
         window._currentUser = user;
@@ -126,8 +145,8 @@
     <div id="login-screen" style="display:none;">
         <div style="font-size:52px; margin-bottom:16px;">🔐</div>
         <h2>Sign In to View Dashboard</h2>
-        <p>Aapki prompt history cloud me save hoti hai.<br>Dashboard dekhne ke liye Google se sign in karein.</p>
-        <button class="btn btn-primary" style="font-size:14px; padding:12px 28px;" onclick="_signInGoogle().then(()=>location.reload())">🔑 Sign In with Google</button>
+        <button class="btn btn-primary" style="font-size:14px; padding:12px 28px;" onclick="_handleDashboardSignIn()">🔑 Sign In with Google</button>
+        <div id="dash-auth-error" style="color:#f87171; font-size:12px; margin-top:12px; display:none; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:8px 12px;"></div>
     </div>
     <div id="dashboard-content" style="display:none;">
         <div id="user-bar"></div>
