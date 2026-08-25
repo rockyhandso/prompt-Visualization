@@ -43,6 +43,86 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="js/common.js"></script>
+    <script>
+      const DEFAULT_ADMIN_PIN = "1234";
+      let pinBuffer = '';
+
+      function getAdminPin() {
+          return localStorage.getItem('ADMIN_SECURITY_PIN') || DEFAULT_ADMIN_PIN;
+      }
+
+      function enterDigit(d) {
+          if (pinBuffer.length >= 4) return;
+          pinBuffer += String(d);
+          updateDots();
+          if (pinBuffer.length === 4) {
+              setTimeout(submitPin, 120);
+          }
+      }
+
+      function deleteDigit() {
+          pinBuffer = pinBuffer.slice(0, -1);
+          updateDots();
+      }
+
+      function updateDots() {
+          for (let i = 1; i <= 4; i++) {
+              const dot = document.getElementById('d' + i);
+              if (dot) dot.classList.toggle('filled', i <= pinBuffer.length);
+          }
+      }
+
+      function submitPin() {
+          const correct = getAdminPin();
+          if (pinBuffer === correct || pinBuffer === '1234') {
+              const loginEl = document.getElementById('login-screen');
+              const adminEl = document.getElementById('admin-panel');
+              if (loginEl) loginEl.style.display = 'none';
+              if (adminEl) adminEl.style.display = 'block';
+              window.scrollTo(0, 0);
+              try {
+                  if (typeof loadPanelData === 'function') loadPanelData();
+              } catch(e) {
+                  console.error('loadPanelData error:', e);
+              }
+          } else {
+              const errEl = document.getElementById('pin-error');
+              if (errEl) {
+                  errEl.style.display = 'block';
+                  errEl.style.animation = 'none';
+                  void errEl.offsetWidth;
+                  errEl.style.animation = 'shake 0.3s ease';
+              }
+              pinBuffer = '';
+              updateDots();
+          }
+      }
+
+      function logout() {
+          const adminEl = document.getElementById('admin-panel');
+          const loginEl = document.getElementById('login-screen');
+          if (adminEl) adminEl.style.display = 'none';
+          if (loginEl) loginEl.style.display = 'block';
+          pinBuffer = '';
+          updateDots();
+          const errEl = document.getElementById('pin-error');
+          if (errEl) errEl.style.display = 'none';
+      }
+
+      window.enterDigit = enterDigit;
+      window.deleteDigit = deleteDigit;
+      window.submitPin = submitPin;
+      window.logout = logout;
+
+      document.addEventListener('keydown', function(e) {
+          const loginScr = document.getElementById('login-screen');
+          if (loginScr && loginScr.style.display !== 'none') {
+              if (e.key >= '0' && e.key <= '9') enterDigit(e.key);
+              if (e.key === 'Backspace') deleteDigit();
+              if (e.key === 'Enter') submitPin();
+          }
+      });
+    </script>
     <style>
         :root {
             --bg: #060b18;
@@ -670,90 +750,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-    // ── ENCRYPTION CORE (from js/common.js) ──────────────────────────────────
-    // encryptKey, decryptKey, getApiKey, SECURITY_SALT, DEFAULT_ADMIN_PIN
-    // are now provided by js/common.js — no duplication needed here.
-
-    function getAdminPin() {
-        return localStorage.getItem('ADMIN_SECURITY_PIN') || (typeof DEFAULT_ADMIN_PIN !== 'undefined' ? DEFAULT_ADMIN_PIN : '1234');
-    }
-
-    // ── PIN LOGIN LOGIC ──────────────────────────────────
-    let pinBuffer = '';
-
-    function enterDigit(d) {
-        if (pinBuffer.length >= 4) return;
-        pinBuffer += String(d);
-        updateDots();
-        if (pinBuffer.length === 4) {
-            setTimeout(submitPin, 120);
-        }
-    }
-
-    function deleteDigit() {
-        pinBuffer = pinBuffer.slice(0, -1);
-        updateDots();
-    }
-
-    function updateDots() {
-        for (let i = 1; i <= 4; i++) {
-            const dot = document.getElementById('d' + i);
-            if (dot) dot.classList.toggle('filled', i <= pinBuffer.length);
-        }
-    }
-
-    function submitPin() {
-        const correct = getAdminPin();
-        if (pinBuffer === correct || pinBuffer === '1234') {
-            const loginEl = document.getElementById('login-screen');
-            const adminEl = document.getElementById('admin-panel');
-            if (loginEl) loginEl.style.display = 'none';
-            if (adminEl) {
-                adminEl.style.display = 'block';
-                window.scrollTo(0, 0);
-            }
-            try {
-                loadPanelData();
-            } catch(e) {
-                console.error('loadPanelData error:', e);
-            }
-        } else {
-            const errEl = document.getElementById('pin-error');
-            if (errEl) {
-                errEl.style.display = 'block';
-                errEl.style.animation = 'none';
-                void errEl.offsetWidth;
-                errEl.style.animation = 'shake 0.3s ease';
-            }
-            pinBuffer = '';
-            updateDots();
-        }
-    }
-
-    function logout() {
-        document.getElementById('admin-panel').style.display = 'none';
-        document.getElementById('login-screen').style.display = 'block';
-        pinBuffer = '';
-        updateDots();
-        const errEl = document.getElementById('pin-error');
-        if (errEl) errEl.style.display = 'none';
-    }
-
-    window.enterDigit = enterDigit;
-    window.deleteDigit = deleteDigit;
-    window.submitPin = submitPin;
-    window.logout = logout;
-
-    // Keyboard support
-    document.addEventListener('keydown', function(e) {
-        const loginScr = document.getElementById('login-screen');
-        if (loginScr && loginScr.style.display !== 'none') {
-            if (e.key >= '0' && e.key <= '9') enterDigit(e.key);
-            if (e.key === 'Backspace') deleteDigit();
-            if (e.key === 'Enter') submitPin();
-        }
-    });
-
     // ── PANEL DATA ──────────────────────────────────────
     function loadPanelData() {
         const key = getApiKey();
