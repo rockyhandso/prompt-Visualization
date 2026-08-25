@@ -699,9 +699,16 @@ function _createDrawerDOM() {
         </div>
 
         <!-- 5. FEEDBACK -->
-        <div>
+        <div style="margin-bottom:10px;">
             <a href="feedback.html" style="display:block; text-align:center; padding:10px; background:#060b18; border:1px solid #1e3a5f; border-radius:8px; color:#94a3b8; font-size:12px; text-decoration:none; font-weight:600;">
                 💬 Send Feedback or Report Bug
+            </a>
+        </div>
+
+        <!-- 6. ADMIN CONTROL PANEL -->
+        <div>
+            <a href="admin.html" style="display:block; text-align:center; padding:10px; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.35); border-radius:8px; color:#818cf8; font-size:12px; text-decoration:none; font-weight:700;">
+                ⚙️ Admin Control Panel (PIN Protected)
             </a>
         </div>
     `;
