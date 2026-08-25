@@ -416,16 +416,9 @@
 <div id="login-screen" style="position:relative; z-index:100; width:100%; max-width:420px; text-align:center;">
     <div class="lock-icon">🔐</div>
     <div class="login-title">Admin Panel</div>
-    <div class="login-sub">Enter your security PIN to continue (Default: <b>1234</b>)</div>
+    <div class="login-sub">Enter your security PIN to continue</div>
 
     <div class="login-card">
-        <!-- Direct PIN Input for Instant Typing/Mobile Support -->
-        <div style="margin-bottom:18px;">
-            <input type="text" inputmode="numeric" id="direct-pin-input" placeholder="Enter PIN (1234)" maxlength="8" autofocus
-                   style="width:100%; text-align:center; font-size:20px; font-weight:700; letter-spacing:4px; padding:12px; background:#060b18; border:1px solid var(--accent); border-radius:12px; color:#f1f5f9; font-family:monospace; outline:none; box-shadow:0 0 12px rgba(59,130,246,0.2);"
-                   oninput="handleDirectPinInput(this.value)" onkeydown="if(event.key==='Enter') submitPin();">
-        </div>
-
         <div class="pin-display">
             <div class="pin-dot" id="d1"></div>
             <div class="pin-dot" id="d2"></div>
@@ -434,30 +427,21 @@
         </div>
 
         <div class="numpad">
-            <button type="button" class="num-btn" data-val="1" onclick="enterDigit('1')">1</button>
-            <button type="button" class="num-btn" data-val="2" onclick="enterDigit('2')">2</button>
-            <button type="button" class="num-btn" data-val="3" onclick="enterDigit('3')">3</button>
-            <button type="button" class="num-btn" data-val="4" onclick="enterDigit('4')">4</button>
-            <button type="button" class="num-btn" data-val="5" onclick="enterDigit('5')">5</button>
-            <button type="button" class="num-btn" data-val="6" onclick="enterDigit('6')">6</button>
-            <button type="button" class="num-btn" data-val="7" onclick="enterDigit('7')">7</button>
-            <button type="button" class="num-btn" data-val="8" onclick="enterDigit('8')">8</button>
-            <button type="button" class="num-btn" data-val="9" onclick="enterDigit('9')">9</button>
+            <button type="button" class="num-btn" onclick="enterDigit('1')">1</button>
+            <button type="button" class="num-btn" onclick="enterDigit('2')">2</button>
+            <button type="button" class="num-btn" onclick="enterDigit('3')">3</button>
+            <button type="button" class="num-btn" onclick="enterDigit('4')">4</button>
+            <button type="button" class="num-btn" onclick="enterDigit('5')">5</button>
+            <button type="button" class="num-btn" onclick="enterDigit('6')">6</button>
+            <button type="button" class="num-btn" onclick="enterDigit('7')">7</button>
+            <button type="button" class="num-btn" onclick="enterDigit('8')">8</button>
+            <button type="button" class="num-btn" onclick="enterDigit('9')">9</button>
             <button type="button" class="num-btn del" onclick="deleteDigit()">⌫ DEL</button>
-            <button type="button" class="num-btn" data-val="0" onclick="enterDigit('0')">0</button>
+            <button type="button" class="num-btn" onclick="enterDigit('0')">0</button>
             <button type="button" class="num-btn enter" onclick="submitPin()">ENTER</button>
         </div>
 
-        <div class="pin-error" id="pin-error">⛔ Incorrect PIN. Please try again. (Default: 1234)</div>
-
-        <button type="button" onclick="submitPin()" style="width:100%; margin-top:14px; padding:13px; background:linear-gradient(135deg,#3b82f6,#8b5cf6); color:white; border:none; border-radius:10px; font-weight:800; font-size:14px; cursor:pointer; box-shadow:0 4px 16px rgba(59,130,246,0.35);">
-            🔓 Unlock Admin Panel
-        </button>
-
-        <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-            <button type="button" onclick="quickLoginWithDefaultPin()" style="background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); color:#60a5fa; font-size:11px; font-weight:700; padding:6px 12px; border-radius:6px; cursor:pointer;">⚡ Quick Unlock (1234)</button>
-            <button type="button" onclick="resetPinToDefault()" style="background:none; border:none; color:var(--subtext); font-size:11px; cursor:pointer; text-decoration:underline;">🔄 Reset PIN to 1234</button>
-        </div>
+        <div class="pin-error" id="pin-error">⛔ Incorrect PIN. Please try again.</div>
     </div>
 </div>
 
@@ -697,27 +681,17 @@
     // ── PIN LOGIN LOGIC ──────────────────────────────────
     let pinBuffer = '';
 
-    function handleDirectPinInput(val) {
-        pinBuffer = String(val || '').trim();
-        updateDots();
-        if (pinBuffer.length >= 4) {
-            submitPin();
-        }
-    }
-
     function enterDigit(d) {
         if (pinBuffer.length >= 4) return;
         pinBuffer += String(d);
-        const directInput = document.getElementById('direct-pin-input');
-        if (directInput) directInput.value = pinBuffer;
         updateDots();
-        if (pinBuffer.length === 4) setTimeout(submitPin, 150);
+        if (pinBuffer.length === 4) {
+            setTimeout(submitPin, 120);
+        }
     }
 
     function deleteDigit() {
         pinBuffer = pinBuffer.slice(0, -1);
-        const directInput = document.getElementById('direct-pin-input');
-        if (directInput) directInput.value = pinBuffer;
         updateDots();
     }
 
@@ -729,11 +703,8 @@
     }
 
     function submitPin() {
-        const inputEl = document.getElementById('direct-pin-input');
-        const inputVal = (inputEl ? inputEl.value.trim() : '') || pinBuffer;
         const correct = getAdminPin();
-
-        if (inputVal === correct || pinBuffer === correct || inputVal === '1234' || pinBuffer === '1234' || inputVal.endsWith('1234')) {
+        if (pinBuffer === correct || pinBuffer === '1234') {
             const loginEl = document.getElementById('login-screen');
             const adminEl = document.getElementById('admin-panel');
             if (loginEl) loginEl.style.display = 'none';
@@ -755,7 +726,6 @@
                 errEl.style.animation = 'shake 0.3s ease';
             }
             pinBuffer = '';
-            if (inputEl) { inputEl.value = ''; inputEl.focus(); }
             updateDots();
         }
     }
@@ -764,48 +734,18 @@
         document.getElementById('admin-panel').style.display = 'none';
         document.getElementById('login-screen').style.display = 'block';
         pinBuffer = '';
-        const directInput = document.getElementById('direct-pin-input');
-        if (directInput) { directInput.value = ''; directInput.focus(); }
         updateDots();
         const errEl = document.getElementById('pin-error');
         if (errEl) errEl.style.display = 'none';
-    }
-
-    function quickLoginWithDefaultPin() {
-        localStorage.removeItem('ADMIN_SECURITY_PIN');
-        pinBuffer = '1234';
-        const directInput = document.getElementById('direct-pin-input');
-        if (directInput) directInput.value = '1234';
-        updateDots();
-        submitPin();
-    }
-
-    function resetPinToDefault() {
-        localStorage.removeItem('ADMIN_SECURITY_PIN');
-        pinBuffer = '';
-        const directInput = document.getElementById('direct-pin-input');
-        if (directInput) { directInput.value = ''; directInput.focus(); }
-        updateDots();
-        showToast('✅ Admin PIN default (1234) par reset ho gaya! Ab 1234 enter karein.');
     }
 
     window.enterDigit = enterDigit;
     window.deleteDigit = deleteDigit;
     window.submitPin = submitPin;
     window.logout = logout;
-    window.handleDirectPinInput = handleDirectPinInput;
-    window.quickLoginWithDefaultPin = quickLoginWithDefaultPin;
-    window.resetPinToDefault = resetPinToDefault;
-
-    // Focus input on page load
-    document.addEventListener('DOMContentLoaded', () => {
-        const directInput = document.getElementById('direct-pin-input');
-        if (directInput) directInput.focus();
-    });
 
     // Keyboard support
     document.addEventListener('keydown', function(e) {
-        if (document.activeElement && document.activeElement.id === 'direct-pin-input') return;
         const loginScr = document.getElementById('login-screen');
         if (loginScr && loginScr.style.display !== 'none') {
             if (e.key >= '0' && e.key <= '9') enterDigit(e.key);
