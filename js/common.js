@@ -1461,8 +1461,18 @@ async function submitContestEntry() {
             status: 'pending',
             createdAt: Date.now()
         };
-        if (window._studioPush && window._studioRef && window._studioDB) {
-            await window._studioPush(window._studioRef(window._studioDB, 'contests/entries'), entry);
+        try {
+            const fbMod = await import('https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js');
+            const db = window._studioDB || window._rtdb;
+            if (db) {
+                const entriesRef = fbMod.ref(db, 'contests/entries');
+                await fbMod.push(entriesRef, entry);
+            } else if (window._studioPush && window._studioRef && window._studioDB) {
+                await window._studioPush(window._studioRef(window._studioDB, 'contests/entries'), entry);
+            }
+        } catch(dbErr) {
+            console.error('Database write error:', dbErr);
+            throw dbErr;
         }
         if (statusEl) statusEl.textContent = '✅ Entry submitted! Sunday ko winner announce hoga. Best of luck! 🏆';
         setTimeout(() => { closeContestModal(); loadContestGallery(); }, 2000);
