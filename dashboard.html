@@ -126,7 +126,7 @@
     <div id="login-screen" style="display:none;">
         <div style="font-size:52px; margin-bottom:16px;">🔐</div>
         <h2>Sign In to View Dashboard</h2>
-        <p>Aapki prompt history Firebase me save hoti hai.<br>Dashboard dekhne ke liye Google se sign in karein.</p>
+        <p>Aapki prompt history cloud me save hoti hai.<br>Dashboard dekhne ke liye Google se sign in karein.</p>
         <button class="btn btn-primary" style="font-size:14px; padding:12px 28px;" onclick="_signInGoogle().then(()=>location.reload())">🔑 Sign In with Google</button>
     </div>
     <div id="dashboard-content" style="display:none;">
@@ -289,7 +289,7 @@ function _delEntry(fbKey) {
 }
 
 function clearAllHistory() {
-    if(!confirm('⚠️ Kya aap poori Firebase history permanently delete karna chahte hain?')) return;
+    if(!confirm('⚠️ Kya aap poori prompt history permanently delete karna chahte hain? Yeh action undo nahi hogi.')) return;
     const uid = window._currentUser?.uid;
     if(!uid) return;
     window._remove(window._ref(window._db, 'users/'+uid+'/promptHistory'));

@@ -314,19 +314,21 @@ window._toggleAuthMode = function() {
 // ─── Google Sign-In ─────────────────────────────────────────────────────────
 window._signInWithGoogle = async function() {
     if (!window._firebaseAuth || !window._googleProvider) {
-        _showAuthError('Auth system abhi load ho raha hai, ek second ruko...');
+        _showAuthError('Sign-in system abhi load ho raha hai, ek second ruko...');
         return;
     }
     const btn = document.getElementById('auth-google-btn');
-    if (btn) btn.disabled = true;
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
     _clearAuthError();
     try {
-        const { signInWithPopup } = window._emailPassModule;
-        await signInWithPopup(window._firebaseAuth, window._googleProvider);
-        // onAuthStateChanged will handle the rest
+        // signInWithPopup stored directly from the module import
+        const signInFn = window._emailPassModule?.signInWithPopup;
+        if (!signInFn) throw new Error('Sign-in module not ready. Page refresh karein.');
+        await signInFn(window._firebaseAuth, window._googleProvider);
+        // onAuthStateChanged handles the rest
     } catch (e) {
         _showAuthError(_friendlyError(e));
-        if (btn) btn.disabled = false;
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
     }
 };
 
@@ -472,10 +474,13 @@ function _saveUserToRTDB(user) {
     else { document.addEventListener('studioRtdbReady', doSave, { once: true }); }
 }
 
-// ─── Replay Queued Initialization (if called before script finished) ──────
-if (typeof _preAuthInitQueue !== 'undefined' && _preAuthInitQueue) {
-    window._studioAuthReady(..._preAuthInitQueue);
-} else if (window._studioAuthReady && typeof window._studioAuthReady._getQueued === 'function') {
-    const q = window._studioAuthReady._getQueued();
-    if (q) window._studioAuthReady(...q);
-}
+
+// ─── Replay Queued Initialization (module script runs before auth.js) ──────
+(function() {
+    try {
+        const q = window._studioAuthReady?._getQueued?.();
+        if (q && Array.isArray(q)) {
+            window._studioAuthReady(...q);
+        }
+    } catch(e) { console.warn('Auth replay error:', e); }
+})();
