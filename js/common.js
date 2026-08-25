@@ -1312,6 +1312,8 @@ window.startContestCountdown = startContestCountdown;
 
 // ── Promo Popup ──────────────────────────────────────────────────────────
 function showContestPromoPopup() {
+    // Only show on main studio page (index.html)
+    if (!document.getElementById('subject-input') && !document.getElementById('contest-gallery-section')) return;
     const seen = localStorage.getItem('_contest_popup_date');
     if (seen === new Date().toDateString()) return;
     if (document.getElementById('contest-promo-popup')) return;

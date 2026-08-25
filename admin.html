@@ -418,18 +418,18 @@
         </div>
 
         <div class="numpad">
-            <button class="num-btn" onclick="enterDigit('1')">1</button>
-            <button class="num-btn" onclick="enterDigit('2')">2</button>
-            <button class="num-btn" onclick="enterDigit('3')">3</button>
-            <button class="num-btn" onclick="enterDigit('4')">4</button>
-            <button class="num-btn" onclick="enterDigit('5')">5</button>
-            <button class="num-btn" onclick="enterDigit('6')">6</button>
-            <button class="num-btn" onclick="enterDigit('7')">7</button>
-            <button class="num-btn" onclick="enterDigit('8')">8</button>
-            <button class="num-btn" onclick="enterDigit('9')">9</button>
-            <button class="num-btn del" onclick="deleteDigit()">⌫ DEL</button>
-            <button class="num-btn" onclick="enterDigit('0')">0</button>
-            <button class="num-btn enter" onclick="submitPin()">ENTER</button>
+            <button type="button" class="num-btn" onclick="enterDigit('1')">1</button>
+            <button type="button" class="num-btn" onclick="enterDigit('2')">2</button>
+            <button type="button" class="num-btn" onclick="enterDigit('3')">3</button>
+            <button type="button" class="num-btn" onclick="enterDigit('4')">4</button>
+            <button type="button" class="num-btn" onclick="enterDigit('5')">5</button>
+            <button type="button" class="num-btn" onclick="enterDigit('6')">6</button>
+            <button type="button" class="num-btn" onclick="enterDigit('7')">7</button>
+            <button type="button" class="num-btn" onclick="enterDigit('8')">8</button>
+            <button type="button" class="num-btn" onclick="enterDigit('9')">9</button>
+            <button type="button" class="num-btn del" onclick="deleteDigit()">⌫ DEL</button>
+            <button type="button" class="num-btn" onclick="enterDigit('0')">0</button>
+            <button type="button" class="num-btn enter" onclick="submitPin()">ENTER</button>
         </div>
 
         <div class="pin-error" id="pin-error">⛔ Incorrect PIN. Please try again.</div>
@@ -714,6 +714,11 @@
         updateDots();
         document.getElementById('pin-error').style.display = 'none';
     }
+
+    window.enterDigit = enterDigit;
+    window.deleteDigit = deleteDigit;
+    window.submitPin = submitPin;
+    window.logout = logout;
 
     // Keyboard support
     document.addEventListener('keydown', function(e) {
