@@ -1517,7 +1517,10 @@ function loadContestGallery() {
             }
 
             const entries = Object.entries(data)
-                .map(([k,v]) => ({ key:k, ...v }))
+                .map(([k,v]) => {
+                    const count = v.likesMap ? Object.keys(v.likesMap).length : (v.likeCount || 0);
+                    return { key: k, ...v, likeCount: count };
+                })
                 .filter(e => e.status !== 'disqualified')
                 .sort((a,b) => (b.likeCount||0) - (a.likeCount||0))
                 .slice(0, 12);

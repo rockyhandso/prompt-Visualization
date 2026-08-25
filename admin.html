@@ -829,7 +829,10 @@
                 window._rtdbOnValue(cRef, (snap) => {
                     const val = snap.val();
                     if (val) {
-                        adminContestEntries = Object.keys(val).map(k => ({ key: k, ...val[k] })).reverse();
+                        adminContestEntries = Object.keys(val).map(k => {
+                            const count = val[k].likesMap ? Object.keys(val[k].likesMap).length : (val[k].likeCount || 0);
+                            return { key: k, ...val[k], likeCount: count };
+                        }).reverse();
                     } else {
                         adminContestEntries = [];
                     }
