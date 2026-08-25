@@ -1475,7 +1475,14 @@ window.submitContestEntry = submitContestEntry;
 // ── Like Entry ───────────────────────────────────────────────────────────
 async function likeContestEntry(entryKey) {
     const u = window._firebaseAuth?.currentUser || window._currentUser;
-    if (!u) { alert('❤️ Like karne ke liye pehle Sign In karein!'); return; }
+    if (!u) {
+        if (typeof openAuthModal === 'function') {
+            openAuthModal();
+        } else {
+            alert('❤️ Like karne ke liye pehle Sign In karein!');
+        }
+        return;
+    }
     const btn = document.getElementById('like-btn-' + entryKey);
     const countEl = document.getElementById('like-count-' + entryKey);
     const already = btn?.dataset.liked === '1';
@@ -1495,6 +1502,18 @@ async function likeContestEntry(entryKey) {
     } catch(e) { console.warn('Like error:', e); }
 }
 window.likeContestEntry = likeContestEntry;
+
+function shareContestEntry(key, name) {
+    const url = window.location.origin + window.location.pathname + '#contest-gallery-grid';
+    const text = `🔥 Hey! Maine AI Prompt Contest me entry submit ki hai. Meri art ko ❤️ LIKE karke ₹100 jeetne me support karein!\n👉 ${url}`;
+    if (navigator.share) {
+        navigator.share({ title: 'Vote for my AI Prompt', text: text, url: url }).catch(() => {});
+    } else {
+        const waUrl = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(text);
+        window.open(waUrl, '_blank');
+    }
+}
+window.shareContestEntry = shareContestEntry;
 
 // ── Load Contest Gallery ─────────────────────────────────────────────────
 function loadContestGallery() {
@@ -1529,6 +1548,7 @@ function loadContestGallery() {
                 const isLiked  = myUid && entry.likesMap?.[myUid];
                 const isWinner = entry.status === 'winner';
                 const card = document.createElement('div');
+                card.id = 'contest-card-' + entry.key;
                 card.style.cssText = `background:#0f1929;border:1px solid ${isWinner?'#fbbf24':'#1e3a5f'};border-radius:14px;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;`;
                 card.onmouseenter = () => { card.style.transform = 'translateY(-4px)'; card.style.boxShadow = '0 12px 32px rgba(99,102,241,0.2)'; };
                 card.onmouseleave = () => { card.style.transform = ''; card.style.boxShadow = ''; };
@@ -1550,7 +1570,11 @@ function loadContestGallery() {
                                 style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;border:1px solid ${isLiked?'rgba(239,68,68,0.35)':'#1e3a5f'};background:${isLiked?'rgba(239,68,68,0.12)':'#111c30'};color:${isLiked?'#ef4444':'#94a3b8'};font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;">
                                 ❤️ <span id="like-count-${entry.key}">${entry.likeCount||0}</span>
                             </button>
-                            ${entry.postUrl?`<a href="${_cEsc(entry.postUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#818cf8;font-weight:700;text-decoration:none;border:1px solid #1e3a5f;border-radius:8px;padding:5px 9px;background:#060b18;">🔗 View Post</a>`:''}
+                            <button onclick="shareContestEntry('${entry.key}', '${_cEsc(entry.userName||'Artist')}')"
+                                style="display:flex;align-items:center;gap:4px;padding:5px 9px;border-radius:8px;border:1px solid #1e3a5f;background:#060b18;color:#22c55e;font-size:11px;font-weight:700;cursor:pointer;">
+                                📲 Share
+                            </button>
+                            ${entry.postUrl?`<a href="${_cEsc(entry.postUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#818cf8;font-weight:700;text-decoration:none;border:1px solid #1e3a5f;border-radius:8px;padding:5px 9px;background:#060b18;">🔗 Post</a>`:''}
                         </div>
                     </div>`;
                 container.appendChild(card);
