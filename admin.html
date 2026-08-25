@@ -44,11 +44,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="js/common.js"></script>
     <script>
-      const DEFAULT_ADMIN_PIN = "1234";
-      let pinBuffer = '';
+      var pinBuffer = '';
 
       function getAdminPin() {
-          return localStorage.getItem('ADMIN_SECURITY_PIN') || DEFAULT_ADMIN_PIN;
+          return localStorage.getItem('ADMIN_SECURITY_PIN') || (typeof DEFAULT_ADMIN_PIN !== 'undefined' ? DEFAULT_ADMIN_PIN : '1234');
       }
 
       function enterDigit(d) {
@@ -79,7 +78,7 @@
               const adminEl = document.getElementById('admin-panel');
               if (loginEl) loginEl.style.display = 'none';
               if (adminEl) adminEl.style.display = 'block';
-              window.scrollTo(0, 0);
+              if (typeof window.scrollTo === 'function') { try { window.scrollTo(0, 0); } catch(e){} }
               try {
                   if (typeof loadPanelData === 'function') loadPanelData();
               } catch(e) {
@@ -752,7 +751,7 @@
 <script>
     // ── PANEL DATA ──────────────────────────────────────
     function loadPanelData() {
-        const key = getApiKey();
+        const key = getApiKey() || '';
         const masked = key.length > 8
             ? key.substring(0, 6) + '••••••' + key.substring(key.length - 4)
             : '••••••••';
@@ -929,10 +928,6 @@
         } catch(e) {
             showToast('❌ Error: ' + e.message, 'danger');
         }
-    }
-
-    function escapeHtml(str) {
-        return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     // ── FEEDBACKS MANAGER IN ADMIN ────────────────────────
