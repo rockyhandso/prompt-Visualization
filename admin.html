@@ -73,7 +73,7 @@
 
       function submitPin() {
           const correct = getAdminPin();
-          if (pinBuffer === correct || pinBuffer === '1234') {
+          if (pinBuffer === correct) {
               const loginEl = document.getElementById('login-screen');
               const adminEl = document.getElementById('admin-panel');
               if (loginEl) loginEl.style.display = 'none';
