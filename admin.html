@@ -44,36 +44,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="js/common.js"></script>
     <script>
-      var pinBuffer = '';
+      var DEFAULT_ADMIN_PASS = "Admin@1234";
 
-      function getAdminPin() {
-          return localStorage.getItem('ADMIN_SECURITY_PIN') || (typeof DEFAULT_ADMIN_PIN !== 'undefined' ? DEFAULT_ADMIN_PIN : '1234');
+      function getAdminPassword() {
+          return localStorage.getItem('ADMIN_SECURITY_PIN') || DEFAULT_ADMIN_PASS;
       }
 
-      function enterDigit(d) {
-          if (pinBuffer.length >= 4) return;
-          pinBuffer += String(d);
-          updateDots();
-          if (pinBuffer.length === 4) {
-              setTimeout(submitPin, 120);
+      function togglePasswordVisibility(inputId, btn) {
+          const input = document.getElementById(inputId);
+          if (!input) return;
+          if (input.type === 'password') {
+              input.type = 'text';
+              if (btn) btn.textContent = '🙈';
+          } else {
+              input.type = 'password';
+              if (btn) btn.textContent = '👁️';
           }
       }
 
-      function deleteDigit() {
-          pinBuffer = pinBuffer.slice(0, -1);
-          updateDots();
-      }
+      function submitAdminPassword() {
+          const input = document.getElementById('admin-password-input');
+          const val = (input ? input.value : '').trim();
+          const correct = getAdminPassword();
 
-      function updateDots() {
-          for (let i = 1; i <= 4; i++) {
-              const dot = document.getElementById('d' + i);
-              if (dot) dot.classList.toggle('filled', i <= pinBuffer.length);
-          }
-      }
-
-      function submitPin() {
-          const correct = getAdminPin();
-          if (pinBuffer === correct) {
+          if (val === correct || (val === '1234' && !localStorage.getItem('ADMIN_SECURITY_PIN')) || (val === 'Admin@1234' && !localStorage.getItem('ADMIN_SECURITY_PIN'))) {
               const loginEl = document.getElementById('login-screen');
               const adminEl = document.getElementById('admin-panel');
               if (loginEl) loginEl.style.display = 'none';
@@ -92,8 +86,32 @@
                   void errEl.offsetWidth;
                   errEl.style.animation = 'shake 0.3s ease';
               }
-              pinBuffer = '';
-              updateDots();
+              if (input) {
+                  input.focus();
+                  input.select();
+              }
+          }
+      }
+
+      function checkPasswordStrength(val) {
+          const textEl = document.getElementById('pwd-strength-text');
+          if (!textEl) return;
+          if (!val) { textEl.textContent = '—'; textEl.style.color = '#94a3b8'; return; }
+          let score = 0;
+          if (val.length >= 6) score++;
+          if (/[A-Z]/.test(val)) score++;
+          if (/[0-9]/.test(val)) score++;
+          if (/[^A-Za-z0-9]/.test(val)) score++;
+
+          if (score <= 1) {
+              textEl.textContent = '🔴 Weak (Add letters, numbers & special symbols)';
+              textEl.style.color = '#ef4444';
+          } else if (score === 2 || score === 3) {
+              textEl.textContent = '🟡 Medium (Good password)';
+              textEl.style.color = '#f59e0b';
+          } else {
+              textEl.textContent = '🟢 Strong (High-Security Cyber Master Key)';
+              textEl.style.color = '#10b981';
           }
       }
 
@@ -102,25 +120,17 @@
           const loginEl = document.getElementById('login-screen');
           if (adminEl) adminEl.style.display = 'none';
           if (loginEl) loginEl.style.display = 'block';
-          pinBuffer = '';
-          updateDots();
+          const input = document.getElementById('admin-password-input');
+          if (input) input.value = '';
           const errEl = document.getElementById('pin-error');
           if (errEl) errEl.style.display = 'none';
       }
 
-      window.enterDigit = enterDigit;
-      window.deleteDigit = deleteDigit;
-      window.submitPin = submitPin;
+      window.togglePasswordVisibility = togglePasswordVisibility;
+      window.submitAdminPassword = submitAdminPassword;
+      window.submitPin = submitAdminPassword;
+      window.checkPasswordStrength = checkPasswordStrength;
       window.logout = logout;
-
-      document.addEventListener('keydown', function(e) {
-          const loginScr = document.getElementById('login-screen');
-          if (loginScr && loginScr.style.display !== 'none') {
-              if (e.key >= '0' && e.key <= '9') enterDigit(e.key);
-              if (e.key === 'Backspace') deleteDigit();
-              if (e.key === 'Enter') submitPin();
-          }
-      });
     </script>
     <style>
         :root {
@@ -492,35 +502,39 @@
 <body>
 
 <!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
-<div id="login-screen" style="position:relative; z-index:100; width:100%; max-width:420px; text-align:center;">
-    <div class="lock-icon">🔐</div>
-    <div class="login-title">Admin Panel</div>
-    <div class="login-sub">Enter your security PIN to continue</div>
+<div id="login-screen" style="position:relative; z-index:100; width:100%; max-width:440px; text-align:center; margin:40px auto;">
+    <div class="lock-icon" style="font-size:48px; margin-bottom:6px;">🔐</div>
+    <div class="login-title" style="font-size:24px; font-weight:800; color:#f8fafc; letter-spacing:-0.5px;">Admin Control Panel</div>
+    <div class="login-sub" style="font-size:13px; color:#94a3b8; margin-top:4px; margin-bottom:20px;">
+        High-Security Access (Letters, Numbers &amp; Special Symbols)
+    </div>
 
-    <div class="login-card">
-        <div class="pin-display">
-            <div class="pin-dot" id="d1"></div>
-            <div class="pin-dot" id="d2"></div>
-            <div class="pin-dot" id="d3"></div>
-            <div class="pin-dot" id="d4"></div>
+    <div class="login-card" style="background:#0f1929; border:1px solid #1e3a5f; border-radius:16px; padding:24px; box-shadow:0 12px 40px rgba(0,0,0,0.5);">
+        <div style="text-align:left; margin-bottom:6px; font-size:12px; font-weight:700; color:#818cf8; text-transform:uppercase; letter-spacing:0.5px;">
+            🔑 Master Admin Password
+        </div>
+        <div style="position:relative; margin-bottom:16px;">
+            <input type="password" id="admin-password-input" placeholder="Enter password (e.g. Admin@1234)" autofocus
+                   style="width:100%; padding:14px 44px 14px 14px; background:#060b18; border:1px solid #3b82f6; border-radius:10px; color:#ffffff; font-size:15px; font-family:inherit; outline:none; box-sizing:border-box; transition:all 0.2s; box-shadow:0 0 12px rgba(59,130,246,0.15);"
+                   onkeydown="if(event.key==='Enter') submitAdminPassword();">
+            <button type="button" onclick="togglePasswordVisibility('admin-password-input', this)"
+                    style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; font-size:16px; padding:4px;">
+                👁️
+            </button>
         </div>
 
-        <div class="numpad">
-            <button type="button" class="num-btn" onclick="enterDigit('1')">1</button>
-            <button type="button" class="num-btn" onclick="enterDigit('2')">2</button>
-            <button type="button" class="num-btn" onclick="enterDigit('3')">3</button>
-            <button type="button" class="num-btn" onclick="enterDigit('4')">4</button>
-            <button type="button" class="num-btn" onclick="enterDigit('5')">5</button>
-            <button type="button" class="num-btn" onclick="enterDigit('6')">6</button>
-            <button type="button" class="num-btn" onclick="enterDigit('7')">7</button>
-            <button type="button" class="num-btn" onclick="enterDigit('8')">8</button>
-            <button type="button" class="num-btn" onclick="enterDigit('9')">9</button>
-            <button type="button" class="num-btn del" onclick="deleteDigit()">⌫ DEL</button>
-            <button type="button" class="num-btn" onclick="enterDigit('0')">0</button>
-            <button type="button" class="num-btn enter" onclick="submitPin()">ENTER</button>
+        <button type="button" onclick="submitAdminPassword()"
+                style="width:100%; padding:14px; background:linear-gradient(135deg,#3b82f6,#8b5cf6); color:white; border:none; border-radius:10px; font-weight:800; font-size:14px; cursor:pointer; box-shadow:0 4px 20px rgba(59,130,246,0.4); transition:transform 0.15s, box-shadow 0.15s;">
+            🔓 Unlock Admin Panel
+        </button>
+
+        <div class="pin-error" id="pin-error" style="margin-top:14px; display:none; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; padding:10px; border-radius:8px; font-size:12px; font-weight:600;">
+            ⛔ Incorrect Password. Please check uppercase/lowercase letters, numbers and symbols.
         </div>
 
-        <div class="pin-error" id="pin-error">⛔ Incorrect PIN. Please try again.</div>
+        <div style="margin-top:16px; font-size:11px; color:#64748b; line-height:1.4;">
+            Default Master Password: <code style="background:#060b18; color:#38bdf8; padding:2px 6px; border-radius:4px; font-family:monospace; border:1px solid #1e3a5f;">Admin@1234</code>
+        </div>
     </div>
 </div>
 
@@ -565,23 +579,31 @@
             <button class="action-btn btn-success" onclick="saveApiKey()">💾 Save & Encrypt API Key</button>
         </div>
 
-        <!-- ── CHANGE PIN ── -->
+        <!-- ── CHANGE MASTER PASSWORD ── -->
         <div class="section-card">
             <div class="card-icon">🔒</div>
-            <div class="card-title">Change Admin PIN</div>
-            <div class="card-desc">Update your 4‑digit admin security PIN used to access this control panel and key settings.</div>
+            <div class="card-title">Change Master Admin Password</div>
+            <div class="card-desc">Set a strong alphanumeric password with special characters (e.g. <code>MyP@ss#2026</code>) to protect this control panel.</div>
 
             <div class="info-row">
-                <span class="info-label">Current PIN</span>
+                <span class="info-label">Current Password</span>
                 <span class="info-value" id="current-pin-display">••••</span>
             </div>
 
             <div class="divider"></div>
-            <div class="field-label">New PIN (min 4 digits)</div>
-            <input type="password" class="field-input" id="new-pin" placeholder="Enter new PIN…" maxlength="8" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-            <div class="field-label">Confirm New PIN</div>
-            <input type="password" class="field-input" id="confirm-pin" placeholder="Re-enter new PIN…" maxlength="8" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-            <button class="action-btn btn-primary" onclick="changePin()" style="margin-top:4px;">🔄 Update PIN</button>
+            <div class="field-label">New Master Password (letters, numbers, @#$%)</div>
+            <div style="position:relative; margin-bottom:10px;">
+                <input type="password" class="field-input" id="new-pin" placeholder="Enter strong password…" style="padding-right:40px; margin-bottom:0;" oninput="checkPasswordStrength(this.value)">
+                <button type="button" onclick="togglePasswordVisibility('new-pin', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; font-size:15px;">👁️</button>
+            </div>
+            <div id="pwd-strength-bar" style="font-size:11px; margin-bottom:10px; color:#94a3b8;">Strength: <span id="pwd-strength-text" style="font-weight:700;">—</span></div>
+
+            <div class="field-label">Confirm New Password</div>
+            <div style="position:relative; margin-bottom:12px;">
+                <input type="password" class="field-input" id="confirm-pin" placeholder="Re-enter new password…" style="padding-right:40px; margin-bottom:0;">
+                <button type="button" onclick="togglePasswordVisibility('confirm-pin', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; font-size:15px;">👁️</button>
+            </div>
+            <button class="action-btn btn-primary" onclick="changePin()" style="margin-top:4px;">🔄 Update Master Password</button>
         </div>
 
         <!-- ── ENCRYPTION INFO ── -->
@@ -763,7 +785,7 @@
         badge.textContent = hasCustom ? '✅ Custom Key Saved' : '⚠️ Using Default Key';
 
         document.getElementById('current-pin-display').textContent =
-            localStorage.getItem('ADMIN_SECURITY_PIN') ? '(custom PIN set)' : '(default: 1234)';
+            localStorage.getItem('ADMIN_SECURITY_PIN') ? '🔒 (Custom Master Password Set)' : '🔑 (Default: Admin@1234)';
 
         loadAdminFeedbacks();
         loadAdminContestEntries();
@@ -1092,17 +1114,19 @@
         showToast('✅ API Key encrypted & saved successfully!');
     }
 
-    // ── CHANGE PIN ───────────────────────────────────────
+    // ── CHANGE MASTER PASSWORD ───────────────────────────
     function changePin() {
         const np = document.getElementById('new-pin').value.trim();
         const cp = document.getElementById('confirm-pin').value.trim();
-        if (!np || np.length < 4) { showToast('❌ PIN kam se kam 4 digits ka hona chahiye!', 'danger'); return; }
-        if (np !== cp) { showToast('❌ PINs match nahi kar rahi! Dobara enter karein.', 'danger'); return; }
+        if (!np || np.length < 4) { showToast('❌ Password kam se kam 4 characters ka hona chahiye!', 'danger'); return; }
+        if (np !== cp) { showToast('❌ Passwords match nahi kar rahe! Dobara check karein.', 'danger'); return; }
         localStorage.setItem('ADMIN_SECURITY_PIN', np);
         document.getElementById('new-pin').value = '';
         document.getElementById('confirm-pin').value = '';
+        const strengthEl = document.getElementById('pwd-strength-text');
+        if (strengthEl) { strengthEl.textContent = '—'; strengthEl.style.color = '#94a3b8'; }
         loadPanelData();
-        showToast('✅ Admin PIN successfully updated!');
+        showToast('✅ Admin Master Password successfully updated!');
     }
 
     // ── RESET THEME ──────────────────────────────────────
