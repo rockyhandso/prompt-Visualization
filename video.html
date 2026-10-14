@@ -677,6 +677,48 @@
                 </div>
             </div>
 
+            <!-- BACKGROUND MUSIC & AUDIO TRACK BUILDER -->
+            <div class="section-title" style="color: #ec4899; margin-top: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                <span>🎵 Background Music &amp; Audio Track Builder</span>
+                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                    <button type="button" class="api-btn" style="background:#8b5cf6; color:white; padding:3px 8px; font-size:10px;" onclick="autoSuggestMusicFromConcept()" title="Auto-detect mood and suggest BGM soundtrack from prompt">🤖 Auto-Suggest</button>
+                    <button type="button" class="api-btn" style="background:#ec4899; color:white; padding:3px 8px; font-size:10px;" onclick="addMusicTrackRow()">➕ Add Music</button>
+                </div>
+            </div>
+            <div style="background: #020617; border: 1px solid #ec4899; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                <div style="font-size: 11px; color: #94a3b8; margin-bottom: 10px;">
+                    Video ke liye background score, BGM instruments, mood aur soundscape add karein &mdash; ye Sora, Veo aur Kling ke liye structured audio prompt me jud jayega.
+                </div>
+
+                <!-- Quick Genre Chips -->
+                <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;">
+                    <span style="font-size: 10px; color: #94a3b8; align-self: center; font-weight: 600;">Presets:</span>
+                    <button type="button" class="api-btn" style="background: #1e1b4b; border: 1px solid #6366f1; color: #c7d2fe; font-size: 10px; padding: 2px 7px;" onclick="addMusicPreset('Cinematic Hans Zimmer Orchestral', 'Epic & Dramatic', 'Heavy brass, cello crescendo, massive taiko trailer drums', 'Full Cinematic Background Score')">🎻 Hans Zimmer</button>
+                    <button type="button" class="api-btn" style="background: #2e1065; border: 1px solid #a855f7; color: #f3e8ff; font-size: 10px; padding: 2px 7px;" onclick="addMusicPreset('Cyberpunk Synthwave & Darksynth', 'High-Adrenaline & Fast BPM', 'Analog synth bassline, arpeggiated retro leads, punchy 80s drums', 'Begins with Action')">🎹 Cyberpunk</button>
+                    <button type="button" class="api-btn" style="background: #064e3b; border: 1px solid #10b981; color: #a7f3d0; font-size: 10px; padding: 2px 7px;" onclick="addMusicPreset('Indian Classical Fusion', 'Emotional, Touching & Soulful', 'Haunting bansuri flute, meditative sitar, resonant tabla rhythm', 'Soft Ambient Low Volume Under Dialogue')">🪈 Indian Classical</button>
+                    <button type="button" class="api-btn" style="background: #1e293b; border: 1px solid #0284c7; color: #bae6fd; font-size: 10px; padding: 2px 7px;" onclick="addMusicPreset('Lo-Fi Chillhop Beats', 'Calm, Peaceful & Relaxing', 'Vinyl crackle, warm Rhodes piano chords, mellow boom-bap drums', 'Full Cinematic Background Score')">🎧 Lo-Fi Beats</button>
+                    <button type="button" class="api-btn" style="background: #450a0a; border: 1px solid #ef4444; color: #fecaca; font-size: 10px; padding: 2px 7px;" onclick="addMusicPreset('Dark Horror Ambience & Drones', 'Spooky Horror & Tension-Building', 'Sub-bass rumble, dissonant strings, sudden screeching violin drops', 'Slow Build-Up to Explosive Climax')">🕯️ Horror Drone</button>
+                    <button type="button" class="api-btn" style="background: #701a75; border: 1px solid #f43f5e; color: #fce7f3; font-size: 10px; padding: 2px 7px;" onclick="addMusicPreset('Bollywood Romantic Acoustic', 'Romantic & Melodic Warmth', 'Acoustic guitar strumming, melodic strings, gentle dholak beats', 'Full Cinematic Background Score')">🎸 Bollywood Melodic</button>
+                </div>
+
+                <div id="music-track-list" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Dynamic Music Rows populated by JS -->
+                </div>
+
+                <!-- Action Button: Merge Music into Base Concept -->
+                <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr; gap: 6px;">
+                    <button type="button" class="api-btn" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; padding: 9px; font-size: 12px; font-weight: bold; border: 1px solid #f472b6;" onclick="insertMusicIntoBaseConcept()" title="In sabhi music tracks ko structured soundtrack script me convert karke Base Concept box me bhej dein">
+                        ⚡ Add Music Soundtrack into Base Concept Box
+                    </button>
+                </div>
+
+                <!-- Real-time Structured Music Preview -->
+                <div id="music-preview-box" style="margin-top: 10px; background: #1e1028; border: 1px dashed #ec4899; border-radius: 6px; padding: 8px; font-size: 11px; color: #fbcfe8; font-family: monospace; display: none;">
+                    <div style="font-size: 10px; color: #f472b6; font-weight: bold; margin-bottom: 3px;">🎵 Structured Music &amp; Audio Preview:</div>
+                    <span id="music-preview-text"></span>
+                </div>
+            </div>
+
             <div class="section-title">Sound Cues & Audio FX (Sora / Veo)</div>
             <div class="tag-group" id="audio-tags">
                 <span class="tag active" onclick="toggleTag(this)">Roaring Engine Audio</span>
@@ -1754,6 +1796,167 @@ Return ONLY a valid JSON array of strings containing max 4 character description
         alert("✅ Character Dialogue Script structured format mein Base Video Concept box mein add ho gaya!");
     }
 
+    // ── STRUCTURED MUSIC & SOUNDTRACK BUILDER ────────────────
+    let musicRowCount = 0;
+
+    function addMusicTrackRow(defaultGenre = '', defaultMood = 'Epic & Dramatic', defaultInstruments = '', defaultPlacement = 'Full Cinematic Background Score') {
+        musicRowCount++;
+        const container = document.getElementById('music-track-list');
+        if (!container) return;
+
+        const row = document.createElement('div');
+        row.className = 'music-track-row';
+        row.id = `music-row-${musicRowCount}`;
+        row.style.cssText = 'background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px; position: relative;';
+
+        const datalistId = `music-genre-list-${musicRowCount}`;
+
+        row.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 11px; font-weight: bold; color: #f472b6;">Music Track #${container.children.length + 1}</span>
+                <button type="button" class="api-btn" style="background: #ef4444; color: white; padding: 2px 6px; font-size: 10px;" onclick="removeMusicTrackRow('${row.id}')">🗑️ Remove</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 8px; margin-bottom: 6px;">
+                <div>
+                    <div style="font-size: 10px; color: #94a3b8; margin-bottom: 2px;">Music Genre / Style (e.g. Synthwave)</div>
+                    <input type="text" class="input-box music-genre-input" list="${datalistId}" style="margin-bottom:0; font-size:12px;" placeholder="e.g. Hans Zimmer Orchestral" value="${defaultGenre}" oninput="updatePrompt()">
+                    <datalist id="${datalistId}">
+                        <option value="Cinematic Hans Zimmer Orchestral">
+                        <option value="Cyberpunk Synthwave & Darksynth">
+                        <option value="Indian Classical Fusion (Bansuri & Sitar)">
+                        <option value="Lo-Fi Chillhop Beats">
+                        <option value="Epic Action Trailer Drums & Brass">
+                        <option value="Dark Horror Ambience & Drones">
+                        <option value="Bollywood Romantic Acoustic Guitar">
+                        <option value="Heavy Metal Distorted Guitars">
+                        <option value="Futuristic Phonk & 808 Bass">
+                        <option value="Emotional Solo Piano & Soft Strings">
+                    </datalist>
+                </div>
+                <div>
+                    <div style="font-size: 10px; color: #94a3b8; margin-bottom: 2px;">Instruments &amp; Sound Details</div>
+                    <input type="text" class="input-box music-inst-input" style="margin-bottom:0; font-size:12px;" placeholder="e.g. 808 sub-bass, heavy cello, violin crescendo" value="${defaultInstruments}" oninput="updatePrompt()">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div>
+                    <div style="font-size: 10px; color: #94a3b8; margin-bottom: 2px;">Mood &amp; Tempo / Vibe:</div>
+                    <select class="input-box music-mood-select" style="margin-bottom:0; font-size:11px; padding:4px 8px; width:100%;" onchange="updatePrompt()">
+                        <option value="Epic & Dramatic" ${defaultMood === 'Epic & Dramatic' ? 'selected' : ''}>Epic & Dramatic</option>
+                        <option value="High-Adrenaline & Fast BPM" ${defaultMood === 'High-Adrenaline & Fast BPM' ? 'selected' : ''}>High-Adrenaline & Fast BPM</option>
+                        <option value="Dark, Mysterious & Eerie" ${defaultMood === 'Dark, Mysterious & Eerie' ? 'selected' : ''}>Dark, Mysterious & Eerie</option>
+                        <option value="Emotional, Touching & Soulful" ${defaultMood === 'Emotional, Touching & Soulful' ? 'selected' : ''}>Emotional, Touching & Soulful</option>
+                        <option value="Calm, Peaceful & Relaxing" ${defaultMood === 'Calm, Peaceful & Relaxing' ? 'selected' : ''}>Calm, Peaceful & Relaxing</option>
+                        <option value="Uplifting, Victorious & Inspiring" ${defaultMood === 'Uplifting, Victorious & Inspiring' ? 'selected' : ''}>Uplifting, Victorious & Inspiring</option>
+                        <option value="Spooky Horror & Tension-Building" ${defaultMood === 'Spooky Horror & Tension-Building' ? 'selected' : ''}>Spooky Horror & Tension-Building</option>
+                        <option value="Romantic & Melodic Warmth" ${defaultMood === 'Romantic & Melodic Warmth' ? 'selected' : ''}>Romantic & Melodic Warmth</option>
+                    </select>
+                </div>
+                <div>
+                    <div style="font-size: 10px; color: #94a3b8; margin-bottom: 2px;">Audio Cue &amp; Timing:</div>
+                    <select class="input-box music-cue-select" style="margin-bottom:0; font-size:11px; padding:4px 8px; width:100%;" onchange="updatePrompt()">
+                        <option value="Full Cinematic Background Score" ${defaultPlacement === 'Full Cinematic Background Score' ? 'selected' : ''}>Full Cinematic Background Score</option>
+                        <option value="Slow Build-Up to Explosive Climax" ${defaultPlacement === 'Slow Build-Up to Explosive Climax' ? 'selected' : ''}>Slow Build-Up to Explosive Climax</option>
+                        <option value="Heavy Bass Drop on Action Impact" ${defaultPlacement === 'Heavy Bass Drop on Action Impact' ? 'selected' : ''}>Heavy Bass Drop on Action Impact</option>
+                        <option value="Soft Ambient Low Volume Under Dialogue" ${defaultPlacement === 'Soft Ambient Low Volume Under Dialogue' ? 'selected' : ''}>Soft Ambient Low Volume Under Dialogue</option>
+                        <option value="Sudden Dramatic Silence on Suspense" ${defaultPlacement === 'Sudden Dramatic Silence on Suspense' ? 'selected' : ''}>Sudden Dramatic Silence on Suspense</option>
+                        <option value="Emotional Strings Fading Out" ${defaultPlacement === 'Emotional Strings Fading Out' ? 'selected' : ''}>Emotional Strings Fading Out</option>
+                    </select>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(row);
+        updatePrompt();
+    }
+
+    function removeMusicTrackRow(rowId) {
+        const row = document.getElementById(rowId);
+        if (row) {
+            row.remove();
+            updatePrompt();
+        }
+    }
+
+    function addMusicPreset(genre, mood, inst, placement) {
+        addMusicTrackRow(genre, mood, inst, placement);
+    }
+
+    function generateStructuredMusicText() {
+        const musicRows = document.querySelectorAll('.music-track-row');
+        let tracks = [];
+
+        musicRows.forEach((row, idx) => {
+            const genre = row.querySelector('.music-genre-input')?.value.trim();
+            const inst  = row.querySelector('.music-inst-input')?.value.trim();
+            const mood  = row.querySelector('.music-mood-select')?.value;
+            const cue   = row.querySelector('.music-cue-select')?.value;
+
+            if (genre || inst) {
+                let genreStr = genre || `Track #${idx + 1}`;
+                let moodStr  = mood ? `[Mood: ${mood}]` : '';
+                let instStr  = inst ? `[Instruments: ${inst}]` : '';
+                let cueStr   = cue ? `[Cue: ${cue}]` : '';
+                tracks.push(`${genreStr} ${moodStr} ${instStr} ${cueStr}`.replace(/\s+/g, ' ').trim());
+            }
+        });
+
+        if (tracks.length === 0) return "";
+        return `[Audio Soundtrack & BGM: ${tracks.map(t => `(${t})`).join(' ')}]`;
+    }
+
+    function insertMusicIntoBaseConcept() {
+        const musicText = generateStructuredMusicText();
+        if (!musicText) {
+            alert("Pehle kam se kam ek music track ya genre enter karein!");
+            return;
+        }
+
+        const inputEl = document.getElementById('subject-input');
+        let currentVal = inputEl.value.trim();
+
+        const regexMusicBlock = /\[Audio Soundtrack & BGM:.*?\]/i;
+        if (regexMusicBlock.test(currentVal)) {
+            inputEl.value = currentVal.replace(regexMusicBlock, musicText);
+        } else {
+            inputEl.value = currentVal ? `${currentVal} with ${musicText}` : musicText;
+        }
+
+        updatePrompt();
+        if (typeof triggerAutoSaveConcept === 'function') triggerAutoSaveConcept(300);
+        alert("✅ Background Music Soundtrack structured format mein Base Video Concept box mein add ho gaya!");
+    }
+
+    function autoSuggestMusicFromConcept() {
+        const text = document.getElementById('subject-input').value.toLowerCase();
+        if (!text) {
+            alert("Pehle Base Video Concept box mein koi idea likhein!");
+            return;
+        }
+
+        if (text.includes('cyberpunk') || text.includes('neon') || text.includes('robot') || text.includes('future') || text.includes('sci-fi')) {
+            addMusicTrackRow('Cyberpunk Synthwave & Darksynth', 'High-Adrenaline & Fast BPM', 'Analog synth bassline, arpeggiated retro leads, punchy 80s drums', 'Begins with Action');
+            alert("✅ Auto-suggested Cyberpunk Synthwave Music based on your prompt!");
+        } else if (text.includes('fight') || text.includes('action') || text.includes('war') || text.includes('battle') || text.includes('chase') || text.includes('car')) {
+            addMusicTrackRow('Cinematic Hans Zimmer Orchestral', 'Epic & Intense Action', 'Heavy brass, cello crescendo, massive taiko trailer drums', 'Full Background Score');
+            alert("✅ Auto-suggested Epic Action Orchestral Music based on your prompt!");
+        } else if (text.includes('sad') || text.includes('love') || text.includes('emotional') || text.includes('rain') || text.includes('alone') || text.includes('tears')) {
+            addMusicTrackRow('Emotional Solo Piano & Soft Strings', 'Emotional, Touching & Soulful', 'Melancholic grand piano chords, slow cello melody, soft ambient reverb', 'Soft Ambient Low Volume Under Dialogue');
+            alert("✅ Auto-suggested Emotional Piano & Strings Music based on your prompt!");
+        } else if (text.includes('horror') || text.includes('ghost') || text.includes('dark') || text.includes('monster') || text.includes('creepy') || text.includes('night')) {
+            addMusicTrackRow('Dark Horror Ambience & Drones', 'Spooky Horror & Tension-Building', 'Sub-bass rumble, dissonant strings, sudden screeching violin drops', 'Slow Build-Up to Explosive Climax');
+            alert("✅ Auto-suggested Dark Horror Suspense Score based on your prompt!");
+        } else if (text.includes('india') || text.includes('mumbai') || text.includes('delhi') || text.includes('village') || text.includes('mandir') || text.includes('raja')) {
+            addMusicTrackRow('Indian Classical Fusion (Bansuri & Sitar)', 'Emotional, Touching & Soulful', 'Haunting bansuri flute, meditative sitar, resonant tabla rhythm', 'Soft Ambient Low Volume Under Dialogue');
+            alert("✅ Auto-suggested Indian Classical Fusion Music based on your prompt!");
+        } else {
+            addMusicTrackRow('Cinematic Hans Zimmer Orchestral', 'Epic & Dramatic', 'Dynamic orchestral strings, low brass pulses, subtle percussion', 'Full Cinematic Background Score');
+            alert("✅ Auto-suggested Cinematic Orchestral Score for your video!");
+        }
+    }
+
     // PROMPT FORMATTER FOR VIDEO
     function updatePrompt() {
         const subject = document.getElementById('subject-input').value.trim();
@@ -1776,6 +1979,19 @@ Return ONLY a valid JSON array of strings containing max 4 character description
                 previewBox.style.display = 'block';
             } else {
                 previewBox.style.display = 'none';
+            }
+        }
+
+        // Update Real-time Structured Music Preview Box
+        const structuredMusic = generateStructuredMusicText();
+        const musicPreviewBox = document.getElementById('music-preview-box');
+        const musicPreviewText = document.getElementById('music-preview-text');
+        if (musicPreviewBox && musicPreviewText) {
+            if (structuredMusic) {
+                musicPreviewText.textContent = structuredMusic;
+                musicPreviewBox.style.display = 'block';
+            } else {
+                musicPreviewBox.style.display = 'none';
             }
         }
 
@@ -1802,6 +2018,12 @@ Return ONLY a valid JSON array of strings containing max 4 character description
             dialogueSegment = `. Cinematic Multi-Character Script & Lip-Sync: ${scriptSegments.map(s => `(${s})`).join(' ')}`;
         }
 
+        let musicSegment = "";
+        // If subject doesn't already contain embedded music, attach it cleanly
+        if (structuredMusic && !subject.includes('[Audio Soundtrack & BGM:')) {
+            musicSegment = `. ${structuredMusic}`;
+        }
+
         const activeRatioTag = document.querySelector('#ratio-tags .tag.active');
         const activeRatio = activeRatioTag ? activeRatioTag.getAttribute('data-ratio') : '16:9';
 
@@ -1815,17 +2037,17 @@ Return ONLY a valid JSON array of strings containing max 4 character description
         if (engine === 'runway') {
             let cameraFlag = cameraMotion.length > 0 ? `, camera ${cameraMotion[0].toLowerCase()}` : '';
             let negFlag = negAttributes ? ` --no ${negAttributes}` : '';
-            finalPos = `${subject}, ${posAttributes}${dialogueSegment}${cameraFlag} --ar ${activeRatio}${negFlag}`;
+            finalPos = `${subject}, ${posAttributes}${dialogueSegment}${musicSegment}${cameraFlag} --ar ${activeRatio}${negFlag}`;
             document.getElementById('negative-container').style.display = 'none';
         } else if (engine === 'sora' || engine === 'veo') {
             let soundText = audioAttributes ? `. Audio Cues: ${audioAttributes}` : '';
-            finalPos = `A cinematic high-definition video of ${subject}. Camera Motion: ${posAttributes}${dialogueSegment}. Aspect Ratio ${activeRatio}${soundText}.`;
+            finalPos = `A cinematic high-definition video of ${subject}. Camera Motion: ${posAttributes}${dialogueSegment}${musicSegment}. Aspect Ratio ${activeRatio}${soundText}.`;
             document.getElementById('negative-container').style.display = 'none';
         } else if (engine === 'luma') {
-            finalPos = `${subject}, ${posAttributes}${dialogueSegment} --ar ${activeRatio}`;
+            finalPos = `${subject}, ${posAttributes}${dialogueSegment}${musicSegment} --ar ${activeRatio}`;
             document.getElementById('negative-container').style.display = 'none';
         } else {
-            finalPos = `${subject}, ${posAttributes}${dialogueSegment}`;
+            finalPos = `${subject}, ${posAttributes}${dialogueSegment}${musicSegment}`;
             document.getElementById('negative-container').style.display = 'block';
         }
 
